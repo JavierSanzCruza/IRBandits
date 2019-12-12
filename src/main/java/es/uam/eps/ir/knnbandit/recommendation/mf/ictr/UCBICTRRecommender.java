@@ -1,0 +1,79 @@
+package es.uam.eps.ir.knnbandit.recommendation.mf.ictr;
+
+import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.recommendation.mf.Particle;
+import es.uam.eps.ir.knnbandit.recommendation.mf.ictr.particles.ICTRParticle;
+import es.uam.eps.ir.knnbandit.recommendation.mf.ictr.particles.ICTRParticleFactory;
+import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+
+/**
+ * UCB variant of the ICTR recommender.
+ *
+ * @param <U> Type of the users.
+ * @param <I> Type of the items.
+ */
+public class UCBICTRRecommender<U, I> extends ICTRRecommender<U, I>
+{
+    /**
+     * Parameter that indicates the amplitude of the upper confidence bound.
+     */
+    private final double gamma;
+
+    /**
+     * Constructor.
+     *
+     * @param uIndex        User index.
+     * @param iIndex        Item index.
+     * @param prefData      Preference data.
+     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param K             Number of latent factors to use.
+     * @param numParticles  Number of particles to use.
+     * @param factory       A factory for the particles.
+     * @param gamma         Estimates the importance of the UCB.
+     */
+    public UCBICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, int K, int numParticles, ICTRParticleFactory factory, double gamma)
+    {
+        super(uIndex, iIndex, prefData, ignoreUnknown, K, numParticles, factory);
+        this.gamma = gamma;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param uIndex        User index.
+     * @param iIndex        Item index.
+     * @param prefData      Preference data.
+     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param notReciprocal True if reciprocal users can be recommended, false otherwise.
+     * @param K             Number of latent factors to use.
+     * @param numParticles  Number of particles to use.
+     * @param factory       A factory for the particles.
+     * @param gamma         Estimates the importance of the UCB.
+     */
+    public UCBICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal, int K, int numParticles, ICTRParticleFactory factory, double gamma)
+    {
+        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, K, numParticles, factory);
+        this.gamma = gamma;
+    }
+
+    @Override
+    protected double getEstimatedReward(int uidx, int iidx)
+    {
+        double average = 0.0;
+        double averageVar = 0.0;
+        int counter = 0;
+        for (Particle<U, I> particle : particles)
+        {
+            double reward = particle.getEstimatedReward(uidx, iidx);
+            double var = ((ICTRParticle<U, I>) particle).getVariance(iidx);
+            ++counter;
+        }
+
+        average /= (counter + 0.0);
+        averageVar /= (counter + 0.0);
+
+        return average + gamma * Math.sqrt(averageVar);
+
+    }
+}
