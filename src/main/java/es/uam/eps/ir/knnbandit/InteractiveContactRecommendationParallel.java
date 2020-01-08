@@ -90,6 +90,7 @@ public class InteractiveContactRecommendationParallel
 
         boolean directed = args[5].equalsIgnoreCase("true");
         boolean notReciprocal = !directed || args[6].equalsIgnoreCase("true");
+        boolean alsoWithoutTraining = args[9].equalsIgnoreCase("true");
 
         String trainingData = args[7];
         int numParts = Parsers.ip.parse(args[8]);
@@ -173,17 +174,29 @@ public class InteractiveContactRecommendationParallel
 
         int trainingSize = train.size();
 
-        IntStream.range(0, numParts).parallel().forEach(part ->
+        int auxNumParts = (alsoWithoutTraining) ? numParts + 1 : numParts;
+        IntStream.range(0, auxNumParts).parallel().forEach(part ->
         {
             // Step 1: Prepare the training data.
+            String data = (part != numParts+1) ? "for the " + (part + 1) + "/" + numParts + " split" : "for the non-training split";
             long aaa = System.nanoTime();
-            int val = trainingSize*(part+1);
-            val /= numParts;
+            long bbb;
+            List<Tuple2<Integer, Integer>> partTrain;
+            if(part == (numParts + 1))
+            {
+                partTrain = new ArrayList<>();
+                System.out.println("Prepared data for the non-training data version");
+            }
+            else
+            {
+                int val = trainingSize * (part + 1);
+                val /= numParts;
 
-            List<Tuple2<Integer, Integer>> partTrain = train.subList(0, val);
-            long bbb = System.nanoTime();
+                partTrain = train.subList(0, val);
+                bbb = System.nanoTime();
 
-            System.out.println("Prepared training data " + (part+1) + "/" + numParts + ": " + val + " recommendations (" + (bbb-aaa)/1000000.0 + " ms.)");
+                System.out.println("Prepared training data " + (part + 1) + "/" + numParts + ": " + val + " recommendations (" + (bbb - aaa) / 1000000.0 + " ms.)");
+            }
 
             String outputFolder = output + part + File.separator;
             File folder = new File(outputFolder);
@@ -203,13 +216,13 @@ public class InteractiveContactRecommendationParallel
             Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
             metricNames.forEach(name -> localMetrics.put(name, metrics.get(name).get()));
 
-            System.out.println("Starting algorithm " + algorithmName + " for the " + (part+1) + "/" + numParts + " split");
+            System.out.println("Starting algorithm " + algorithmName + " " + data);
 
             RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, numIter, notReciprocal);
             loop.init(partTrain, true);
 
             bbb = System.nanoTime();
-            System.out.println("Algorithm " + algorithmName + " for the " + (part+1) + "/" + numParts + " split has been initialized (" + (bbb-aaa)/1000000.0 + " ms.)");
+            System.out.println("Algorithm " + algorithmName + " " + data + " has been initialized (" + (bbb-aaa)/1000000.0 + " ms.)");
 
             List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
             String fileName = outputFolder + algorithmName + ".txt";
@@ -285,7 +298,7 @@ public class InteractiveContactRecommendationParallel
                     }
 
                     bbb = System.nanoTime();
-                    System.out.println("Algorithm " + algorithmName + " for the " + (part+1) + "/" + numParts + " split has finished recovering from previous executions (" + (bbb-aaa)/1000000.0 + " ms.)");
+                    System.out.println("Algorithm " + algorithmName + " " + data + " has finished recovering from previous executions (" + (bbb-aaa)/1000000.0 + " ms.)");
                 }
 
                 while (!loop.hasEnded())

@@ -244,6 +244,7 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
     }
 
     private void set_min_Q()
+
     {
         // First, find p_u * p_u^t
         DenseDoubleMatrix2D[] A2P = new DenseDoubleMatrix2D[this.numUsers()];

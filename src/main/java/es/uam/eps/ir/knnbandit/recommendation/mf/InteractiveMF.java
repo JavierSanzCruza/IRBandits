@@ -10,6 +10,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.mf;
 
 import cern.colt.matrix.DoubleMatrix1D;
+import cern.colt.matrix.DoubleMatrix2D;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
@@ -118,13 +119,13 @@ public class InteractiveMF<U, I> extends InteractiveRecommender<U, I>
             return list.get(rng.nextInt(list.size()));
         }
 
-        DoubleMatrix1D r = factorization.getItemMatrix().zMult(pu, null);
+        DoubleMatrix2D itemMatrix = factorization.getItemMatrix();
         double max = Double.NEGATIVE_INFINITY;
         IntList top = new IntArrayList();
 
         for (int iidx : list)
         {
-            double val = r.getQuick(iidx);
+            double val = itemMatrix.viewRow(iidx).zDotProduct(pu);
             if (Double.isNaN(val))
             {
                 val = Double.NEGATIVE_INFINITY;

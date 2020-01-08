@@ -86,6 +86,7 @@ public class InteractiveRecommendationParallel
         boolean useRatings = args[6].equalsIgnoreCase("true");
         String trainingData = args[7];
         int numParts = Parsers.ip.parse(args[8]);
+        boolean alsoWithoutTraining = args[9].equalsIgnoreCase("true");
 
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x :
                 (double x) -> (x >= threshold ? 1.0 : 0.0);
@@ -128,7 +129,7 @@ public class InteractiveRecommendationParallel
         Set<Long> users = new HashSet<>();
         //Set<String> items = new HashSet<>();
         Set<Long> items = new HashSet<>();
-        //List<Tuple3<Long, String, Double>> triplets = new ArrayList<>();
+        //List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
         List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
         int numrel = 0;
 
@@ -160,7 +161,7 @@ public class InteractiveRecommendationParallel
         //FastUpdateableItemIndex<String> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
         FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
 
-        //SimpleFastPreferenceData<Long, String> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
+        //SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
         SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
 
         System.out.println("Users: " + uIndex.numUsers());
@@ -168,7 +169,7 @@ public class InteractiveRecommendationParallel
         int numRel = numrel;
 
         // Initialize the metrics to compute.
-        //Map<String, Supplier<CumulativeMetric<Long, String>>> metrics = new HashMap<>();
+        //Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
         Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
         metrics.put("recall", () -> new CumulativeRecall<>(prefData, numRel, 0.5));
         metrics.put("gini", () -> new CumulativeGini<>(items.size()));
@@ -178,7 +179,7 @@ public class InteractiveRecommendationParallel
         List<String> algorithmNames = readAlgorithmList(algorithms, numParts);
 
         List<InteractiveRecommender<Long, Long>> recs = new ArrayList<>();
-        // List<InteractiveRecommender<Long, String>> recs = new ArrayList<>();
+        // List<InteractiveRecommender<Long, Long>> recs = new ArrayList<>();
         // Select the algorithms
         long a = System.currentTimeMillis();
         AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
@@ -193,18 +194,30 @@ public class InteractiveRecommendationParallel
 
         int trainingSize = train.size();
 
-        IntStream.range(0, numParts).parallel().forEach(part ->
+        int auxNumParts = alsoWithoutTraining ? numParts + 1: numParts;
+        IntStream.range(0, auxNumParts).parallel().forEach(part ->
         {
-            // Step 1: Prepare the training data.
+            List<Tuple2<Integer,Integer>> partTrain;
+
+            String data = (part != numParts+1) ? "for the " + (part + 1) + "/" + numParts + " split" : "for the non-training split";
             long aaa = System.nanoTime();
-            int val = trainingSize*(part+1);
-            val /= numParts;
+            long bbb;
+            if(part == (numParts + 1))
+            {
+                partTrain = new ArrayList<>();
+                System.out.println("Prepared data for the non-training data version");
+            }
+            else
+            {
+                // Step 1: Prepare the training data.
+                int val = trainingSize * (part + 1);
+                val /= numParts;
 
-            List<Tuple2<Integer, Integer>> partTrain = train.subList(0, val);
-            long bbb = System.nanoTime();
+                partTrain = train.subList(0, val);
+                bbb = System.nanoTime();
 
-            System.out.println("Prepared training data " + (part+1) + "/" + numParts + ": " + val + " recommendations (" + (bbb-aaa)/1000000.0 + " ms.)");
-
+                System.out.println("Prepared training data " + (part + 1) + "/" + numParts + ": " + val + " recommendations (" + (bbb - aaa) / 1000000.0 + " ms.)");
+            }
             String outputFolder = output + part + File.separator;
             File folder = new File(outputFolder);
             if (!folder.exists())
@@ -218,19 +231,19 @@ public class InteractiveRecommendationParallel
 
             // Step 2: Retrieve the algorithm to apply:
             String algorithmName = algorithmNames.get(part);
-            InteractiveRecommender<Long,Long> rec = recs.get(part);
-            // InteractiveRecommender<Long, String> rec = recs.get(part);
+            InteractiveRecommender<Long, Long> rec = recs.get(part);
+            // InteractiveRecommender<Long, Long> rec = recs.get(part);
 
             Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
             metricNames.forEach(name -> localMetrics.put(name, metrics.get(name).get()));
+            System.out.println("Starting algorithm " + algorithmName + " " + data);
 
-            System.out.println("Starting algorithm " + algorithmName + " for the " + (part+1) + "/" + numParts + " split");
 
             RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, numIter, false);
             loop.init(partTrain, false);
 
             bbb = System.nanoTime();
-            System.out.println("Algorithm " + algorithmName + " for the " + (part+1) + "/" + numParts + " split has been initialized (" + (bbb-aaa)/1000000.0 + " ms.)");
+            System.out.println("Algorithm " + algorithmName + " " + data + " has been initialized (" + (bbb-aaa)/1000000.0 + " ms.)");
 
             List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
             String fileName = outputFolder + algorithmName + ".txt";
@@ -306,7 +319,7 @@ public class InteractiveRecommendationParallel
                     }
 
                     bbb = System.nanoTime();
-                    System.out.println("Algorithm " + algorithmName + " for the " + (part+1) + "/" + numParts + " split has finished recovering from previous executions (" + (bbb-aaa)/1000000.0 + " ms.)");
+                    System.out.println("Algorithm " + algorithmName + " " + data + " has finished recovering from previous executions (" + (bbb-aaa)/1000000.0 + " ms.)");
                 }
 
                 while (!loop.hasEnded())
@@ -342,7 +355,7 @@ public class InteractiveRecommendationParallel
                 e.printStackTrace();
             }
             bbb = System.nanoTime();
-            System.out.println("Algorithm " + algorithmName + " for the " + (part+1) + "/" + numParts + " split has finished (" + (bbb-aaa)/1000000.0 + " ms.)");
+            System.out.println("Algorithm " + algorithmName + " " + data + " has finished (" + (bbb-aaa)/1000000.0 + " ms.)");
         });
     }
 

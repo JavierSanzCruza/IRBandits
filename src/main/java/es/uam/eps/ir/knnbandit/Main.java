@@ -57,6 +57,10 @@ public class Main
      */
     private final static String CONTACTTRAININGSTATS = "contacttrainstats";
 
+    private final static String GENERALPARALLEL = "generalparallel";
+
+    private final static String CONTACTPARALLEL = "contactparallel";
+
     /**
      * Main method. Executes the main method in the class specified by the first
      * argument with the rest of run time arguments.
@@ -91,6 +95,12 @@ public class Main
                     break;
                 case CONTACTVALID:
                     className = "es.uam.eps.ir.knnbandit.InteractiveContactRecommendationValidation";
+                    break;
+                case GENERALPARALLEL:
+                    className  = "es.uam.eps.ir.knnbandit.InteractiveRecommendationParallel";
+                    break;
+                case CONTACTPARALLEL:
+                    className = "es.uam.eps.ir.knnbandit.InteractiveContactRecommendationParallel";
                     break;
                 case TRAININGSTATS:
                     className = "es.uam.eps.ir.knnbandit.TrainingStatistics";

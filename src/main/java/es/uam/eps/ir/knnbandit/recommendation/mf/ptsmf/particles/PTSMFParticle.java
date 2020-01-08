@@ -298,7 +298,7 @@ public abstract class PTSMFParticle<U, I> extends FastParticle<U, I>
             particle.Ai[iidx] = new DenseDoubleMatrix2D(this.K, this.K);
             particle.bi[iidx] = new DenseDoubleMatrix1D(this.K);
             particle.Ai[iidx].assign(this.Ai[iidx]);
-            particle.bu[iidx].assign(this.bi[iidx]);
+            particle.bi[iidx].assign(this.bi[iidx]);
         }
     }
 

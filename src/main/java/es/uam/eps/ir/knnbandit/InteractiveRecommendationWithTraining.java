@@ -125,10 +125,10 @@ public class InteractiveRecommendationWithTraining
 
         // Then, we read the ratings.
         Set<Long> users = new HashSet<>();
-        Set<String> items = new HashSet<>();
-        //Set<Long> items = new HashSet<>();
-        //List<Tuple3<Long, String, Double>> triplets = new ArrayList<>();
-        List<Tuple3<Long, String, Double>> triplets = new ArrayList<>();
+        //Set<String> items = new HashSet<>();
+        Set<Long> items = new HashSet<>();
+        //List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
+        List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
         int numrel = 0;
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(input))))
@@ -138,8 +138,8 @@ public class InteractiveRecommendationWithTraining
             {
                 String[] split = line.split("::");
                 Long user = Parsers.lp.parse(split[0]);
-                String item = split[1];
-                //Long item = Parsers.lp.parse(split[1]);
+                //String item = split[1];
+                Long item = Parsers.lp.parse(split[1]);
                 double val = Parsers.dp.parse(split[2]);
 
                 users.add(user);
@@ -156,31 +156,31 @@ public class InteractiveRecommendationWithTraining
         }
 
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
-        FastUpdateableItemIndex<String> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
-        //FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
+        //FastUpdateableItemIndex<String> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
+        FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
 
-        //SimpleFastPreferenceData<Long, String> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
-        SimpleFastPreferenceData<Long, String> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
+        //SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
+        SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
 
         System.out.println("Users: " + uIndex.numUsers());
         System.out.println("Items: " + iIndex.numItems());
         int numRel = numrel;
 
         // Initialize the metrics to compute.
-        //Map<String, Supplier<CumulativeMetric<Long, String>>> metrics = new HashMap<>();
-        Map<String, Supplier<CumulativeMetric<Long, String>>> metrics = new HashMap<>();
+        //Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
+        Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
         metrics.put("recall", () -> new CumulativeRecall<>(prefData, numRel, 0.5));
         metrics.put("gini", () -> new CumulativeGini<>(items.size()));
         List<String> metricNames = new ArrayList<>(metrics.keySet());
 
         // Select the algorithms.
         long a = System.currentTimeMillis();
-        //AlgorithmSelector<Long, String> algorithmSelector = new AlgorithmSelector<>();
-        AlgorithmSelector<Long, String> algorithmSelector = new AlgorithmSelector<>();
+        //AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
+        AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
         algorithmSelector.configure(uIndex, iIndex, prefData, useRatings ? threshold : 0.5);
         algorithmSelector.addFile(algorithms);
-        //Map<String, InteractiveRecommender<Long, String>> recs = algorithmSelector.getRecs();
-        Map<String, InteractiveRecommender<Long, String>> recs = algorithmSelector.getRecs();
+        //Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
+        Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
         long b = System.currentTimeMillis();
 
         System.out.println("Recommenders ready (" + (b - a) + " ms.)");
@@ -212,14 +212,14 @@ public class InteractiveRecommendationWithTraining
                 long aaa = System.currentTimeMillis();
                 System.out.println("Algorithm " + re.getKey() + " started");
 
-                InteractiveRecommender<Long, String> rec = re.getValue();
-                //InteractiveRecommender<Long, String> rec = re.getValue();
-                //Map<String, CumulativeMetric<Long, String>> localMetrics = new HashMap<>();
-                Map<String, CumulativeMetric<Long, String>> localMetrics = new HashMap<>();
+                InteractiveRecommender<Long, Long> rec = re.getValue();
+                //InteractiveRecommender<Long, Long> rec = re.getValue();
+                //Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
+                Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
                 metricNames.forEach(name -> localMetrics.put(name, metrics.get(name).get()));
 
-                //RecommendationLoop<Long, String> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, numIter, UntieRandomNumber.RNG, false);
-                RecommendationLoop<Long, String> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, numIter, UntieRandomNumber.RNG, false);
+                //RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, numIter, UntieRandomNumber.RNG, false);
+                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, numIter, UntieRandomNumber.RNG, false);
 
                 loop.init(partTrain, false);
 

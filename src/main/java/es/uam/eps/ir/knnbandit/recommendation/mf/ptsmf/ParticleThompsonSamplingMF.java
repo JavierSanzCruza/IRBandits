@@ -81,7 +81,15 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
     {
         for (int b = 0; b < numParticles; ++b)
         {
-            particleList.add(factory.create(this.uIndex, this.iIndex));
+            Particle<U,I> particle = factory.create(this.uIndex, this.iIndex);
+            this.uIndex.getAllUidx().forEach(uidx ->
+                this.trainData.getUidxPreferences(uidx).forEach(pref ->
+                {
+                    int iidx = pref.v1;
+                    double val = pref.v2;
+                    particle.update(uidx, iidx, val);
+                }));
+            particleList.add(particle);
         }
     }
 
@@ -170,9 +178,6 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
         }
 
         this.particleList.clear();
-        for(Particle<U,I> aux : defList)
-        {
-            this.particleList.add(aux);
-        }
+        this.particleList.addAll(defList);
     }
 }
