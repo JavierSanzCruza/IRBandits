@@ -73,47 +73,58 @@ public class Main
         {
             String main = args[0];
             String className;
+            int from = 1;
             switch (main)
             {
                 case GENERAL:
-                    className = "es.uam.eps.ir.knnbandit.InteractiveRecommendation";
+                    String dataset = args[1];
+                    from = 2;
+                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".InteractiveRecommendation";
                     break;
                 case CONTACT:
-                    className = "es.uam.eps.ir.knnbandit.InteractiveContactRecommendation";
+                    className = "es.uam.eps.ir.knnbandit.main.contact.InteractiveContactRecommendation";
                     break;
                 case GENERALTRAIN:
-                    className = "es.uam.eps.ir.knnbandit.InteractiveRecommendationWithTraining";
+                    dataset = args[1];
+                    from = 2;
+                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".InteractiveRecommendationWithTraining";
                     break;
                 case CONTACTTRAIN:
-                    className = "es.uam.eps.ir.knnbandit.InteractiveContactRecommendationWithTraining";
-                    break;
-                case SUMMARIZE:
-                    className = "es.uam.eps.ir.knnbandit.OutputResumer";
+                    className = "es.uam.eps.ir.knnbandit.main.contact.InteractiveContactRecommendationWithTraining";
                     break;
                 case GENERALVALID:
-                    className = "es.uam.eps.ir.knnbandit.InteractiveRecommendationValidation";
+                    dataset = args[1];
+                    from = 2;
+                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".InteractiveRecommendationValidation";
                     break;
                 case CONTACTVALID:
-                    className = "es.uam.eps.ir.knnbandit.InteractiveContactRecommendationValidation";
+                    className = "es.uam.eps.ir.knnbandit.main.contact.InteractiveContactRecommendationValidation";
                     break;
                 case GENERALPARALLEL:
-                    className  = "es.uam.eps.ir.knnbandit.InteractiveRecommendationParallel";
+                    dataset = args[1];
+                    from = 2;
+                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".InteractiveRecommendationParallel";
                     break;
                 case CONTACTPARALLEL:
-                    className = "es.uam.eps.ir.knnbandit.InteractiveContactRecommendationParallel";
+                    className = "es.uam.eps.ir.knnbandit.main.contact.InteractiveContactRecommendationParallel";
+                    break;
+                case SUMMARIZE:
+                    className = "es.uam.eps.ir.knnbandit.main.OutputResumer";
                     break;
                 case TRAININGSTATS:
-                    className = "es.uam.eps.ir.knnbandit.TrainingStatistics";
+                    dataset = args[1];
+                    from = 2;
+                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".TrainingStatistics";
                     break;
                 case CONTACTTRAININGSTATS:
-                    className = "es.uam.eps.ir.knnbandit.TrainingContactStatistics";
+                    className = "es.uam.eps.ir.knnbandit.main.contact.TrainingContactStatistics";
                     break;
                 default:
                     System.err.println("ERROR: Invalid configuration.");
                     return;
             }
 
-            String[] executionArgs = Arrays.copyOfRange(args, 1, args.length);
+            String[] executionArgs = Arrays.copyOfRange(args, from, args.length);
             Class[] argTypes = {executionArgs.getClass()};
             Object[] passedArgs = {executionArgs};
             Class.forName(className).getMethod("main", argTypes).invoke(null, passedArgs);

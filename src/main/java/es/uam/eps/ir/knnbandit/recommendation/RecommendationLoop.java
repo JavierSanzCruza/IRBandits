@@ -10,17 +10,16 @@
 package es.uam.eps.ir.knnbandit.recommendation;
 
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
+import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
 import es.uam.eps.ir.ranksys.fast.index.FastUserIndex;
-import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
+import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
+import org.ranksys.fast.preference.FastPointWisePreferenceData;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Class for simulating the recommendation loop.
@@ -56,7 +55,7 @@ public class RecommendationLoop<U, I>
     /**
      * Total number of iterations.
      */
-    private final int nIter;
+    private final EndCondition endCondition;
     /**
      *
      */
@@ -65,7 +64,7 @@ public class RecommendationLoop<U, I>
      * List of recommendable users.
      */
     private final IntList userList = new IntArrayList();
-    private final FastPreferenceData<U, I> prefData;
+    private final FastPointWisePreferenceData<U, I> prefData;
     /**
      * Random number generator.
      */
@@ -86,10 +85,10 @@ public class RecommendationLoop<U, I>
      * @param itemIndex     Index containing the items.
      * @param recommender   The interactive recommendation algorithm.
      * @param metrics       The map of metrics.
-     * @param nIter         Total number of iterations. 0 for iterating until no more recommendations can be done.
+     * @param endCondition  Condition that establishes whether the loop has finished or not.
      * @param notReciprocal s
      */
-    public RecommendationLoop(FastUserIndex<U> userIndex, FastItemIndex<I> itemIndex, FastPreferenceData<U, I> prefData, InteractiveRecommender<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, int nIter, boolean notReciprocal)
+    public RecommendationLoop(FastUserIndex<U> userIndex, FastItemIndex<I> itemIndex, FastPointWisePreferenceData<U, I> prefData, InteractiveRecommender<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, boolean notReciprocal)
     {
         this.userIndex = userIndex;
         this.itemIndex = itemIndex;
@@ -99,7 +98,7 @@ public class RecommendationLoop<U, I>
         this.metrics = metrics;
         this.numUsers = userIndex.numUsers();
         this.rngSeed = 0;
-        this.nIter = nIter;
+        this.endCondition = endCondition;
 
         rng = new Random(rngSeed);
         this.iteration = 0;
@@ -113,11 +112,11 @@ public class RecommendationLoop<U, I>
      * @param itemIndex     Index containing the items.
      * @param recommender   The interactive recommendation algorithm.
      * @param metrics       The map of metrics.
-     * @param nIter         Total number of iterations. 0 for iterating until no more recommendations can be done.
+     * @param endCondition  Condition that establishes whether the loop has finished or not.
      * @param rngSeed       seed for a random number generator.
      * @param notReciprocal d
      */
-    public RecommendationLoop(FastUserIndex<U> userIndex, FastItemIndex<I> itemIndex, FastPreferenceData<U, I> prefData, InteractiveRecommender<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, int nIter, int rngSeed, boolean notReciprocal)
+    public RecommendationLoop(FastUserIndex<U> userIndex, FastItemIndex<I> itemIndex, FastPointWisePreferenceData<U, I> prefData, InteractiveRecommender<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, int rngSeed, boolean notReciprocal)
     {
         this.userIndex = userIndex;
         this.itemIndex = itemIndex;
@@ -126,12 +125,13 @@ public class RecommendationLoop<U, I>
         this.recommender = recommender;
         this.metrics = metrics;
         this.numUsers = userIndex.numUsers();
-        this.rngSeed = 0;
+        this.rngSeed = rngSeed;
         rng = new Random(rngSeed);
-        this.nIter = nIter;
+        this.endCondition = endCondition;
         this.iteration = 0;
         this.notReciprocal = notReciprocal;
     }
+
 
     /**
      * Initializes everything without training data.
@@ -143,6 +143,7 @@ public class RecommendationLoop<U, I>
         this.userList.clear();
         this.prefData.getUidxWithPreferences().forEach(userList::add);
         this.numUsers = this.userList.size();
+        this.endCondition.init();
     }
 
 
@@ -158,6 +159,7 @@ public class RecommendationLoop<U, I>
         this.userList.clear();
         this.prefData.getUidxWithPreferences().forEach(userList::add);
         this.numUsers = this.userList.size();
+        this.endCondition.init();
     }
 
     /**
@@ -171,7 +173,7 @@ public class RecommendationLoop<U, I>
         {
             return true;
         }
-        return nIter > 0 && this.iteration >= nIter;
+        return endCondition.hasEnded();
     }
 
     /**
@@ -186,6 +188,9 @@ public class RecommendationLoop<U, I>
 
         this.recommender.update(uidx, iidx);
         this.metrics.forEach((name, metric) -> metric.update(uidx, iidx));
+        Optional<? extends IdxPref> optional = prefData.getPreference(uidx, iidx);
+        double value = optional.map(idxPref -> idxPref.v2).orElse(Double.NEGATIVE_INFINITY);
+        this.endCondition.update(uidx, iidx, value);
         ++this.iteration;
     }
 
@@ -243,6 +248,9 @@ public class RecommendationLoop<U, I>
         int defIidx = iidx;
         recommender.update(defUidx, defIidx);
         metrics.forEach((name, metric) -> metric.update(defUidx, defIidx));
+        Optional<? extends IdxPref> optional = prefData.getPreference(uidx, iidx);
+        double value = optional.map(idxPref -> idxPref.v2).orElse(Double.NEGATIVE_INFINITY);
+        this.endCondition.update(uidx, iidx, value);
         ++this.iteration;
         return new Tuple2<>(uidx, iidx);
     }

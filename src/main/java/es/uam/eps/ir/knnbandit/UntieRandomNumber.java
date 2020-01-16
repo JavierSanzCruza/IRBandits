@@ -9,6 +9,11 @@
  */
 package es.uam.eps.ir.knnbandit;
 
+import org.ranksys.formats.parsing.Parsers;
+
+import java.io.*;
+import java.util.Random;
+
 /**
  * Value for a random number seed.
  *
@@ -17,5 +22,44 @@ package es.uam.eps.ir.knnbandit;
  */
 public class UntieRandomNumber
 {
+    /**
+     * The configured seed.
+     */
     public static int RNG = 0;
+
+    /**
+     * Configures the random number seed.
+     * @param resume true if we want to use a previous seed.
+     * @param route the route from which to read the previous seed / to write the new seed.
+     */
+    public static void configure(boolean resume, String route) throws IOException
+    {
+        if (resume)
+        {
+            File f = new File(route + "rngseed");
+            if (f.exists())
+            {
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f))))
+                {
+                    UntieRandomNumber.RNG = Parsers.ip.parse(br.readLine());
+                }
+            }
+            else
+            {
+                Random rng = new Random();
+                UntieRandomNumber.RNG = rng.nextInt();
+            }
+        }
+        else
+        {
+            Random rng = new Random();
+            UntieRandomNumber.RNG = rng.nextInt();
+        }
+
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(route + "rngseed"))))
+        {
+            bw.write("" + UntieRandomNumber.RNG);
+        }
+    }
+
 }

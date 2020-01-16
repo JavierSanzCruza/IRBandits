@@ -38,6 +38,9 @@ public class CumulativeRecall<U, I> implements CumulativeMetric<U, I>
      * Preference data.
      */
     private final SimpleFastPreferenceData<U, I> prefData;
+    /**
+     * Number of training relevant (user,item) pairs.
+     */
     private int toRemove;
     /**
      * Number of currently discovered (user, item) pairs.
@@ -74,7 +77,7 @@ public class CumulativeRecall<U, I> implements CumulativeMetric<U, I>
     public void initialize(List<Tuple2<Integer, Integer>> train, boolean notReciprocal)
     {
         this.current = 0.0;
-        int toRemove = train.stream().mapToInt(pref ->
+        this.toRemove = train.stream().mapToInt(pref ->
         {
             int uidx = pref.v1;
             int iidx = pref.v2;

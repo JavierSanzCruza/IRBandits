@@ -7,7 +7,7 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit;
+package es.uam.eps.ir.knnbandit.main.contact;
 
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
@@ -17,6 +17,9 @@ import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.io.GraphReader;
 import es.uam.eps.ir.knnbandit.graph.io.TextGraphReader;
 import es.uam.eps.ir.knnbandit.io.Reader;
+import es.uam.eps.ir.knnbandit.partition.Partition;
+import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
+import es.uam.eps.ir.knnbandit.partition.UniformPartition;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
@@ -65,6 +68,9 @@ public class TrainingContactStatistics
         int numSplits = Parsers.ip.parse(args[2]);
         boolean directed = args[3].equalsIgnoreCase("true");
         boolean notReciprocal = !directed || args[4].equalsIgnoreCase("true");
+        int auxNumParts = Parsers.ip.parse(args[5]);
+        boolean relevantPartition = auxNumParts < 0;
+        int numParts = Math.abs(auxNumParts);
 
         Set<Long> users = new HashSet<>();
         List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
@@ -104,10 +110,13 @@ public class TrainingContactStatistics
         System.out.println("Training");
         System.out.println("Num.Split\tNum.Recs\tRatings\tRel.Ratings");
 
+
+        Partition partition = relevantPartition ? new RelevantPartition(prefData, x -> true) : new UniformPartition();
+        List<Integer> splitPoints = partition.split(train, numParts);
+
         for (int part = 0; part < numSplits; ++part)
         {
-            int val = trainingSize * (part + 1);
-            val /= numSplits;
+            int val = splitPoints.get(part);
 
             List<Tuple2<Integer, Integer>> partTrain = train.subList(0, val);
 

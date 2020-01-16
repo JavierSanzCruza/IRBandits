@@ -7,18 +7,30 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit;
+package es.uam.eps.ir.knnbandit.main.contact;
 
+import es.uam.eps.ir.knnbandit.main.general.movielens.InteractiveRecommendation;
+import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.SimpleFastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.SimpleFastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.graph.Graph;
+import es.uam.eps.ir.knnbandit.graph.io.GraphReader;
+import es.uam.eps.ir.knnbandit.graph.io.TextGraphReader;
 import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
+import es.uam.eps.ir.knnbandit.partition.Partition;
+import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
+import es.uam.eps.ir.knnbandit.partition.UniformPartition;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.RecommendationLoop;
+import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
+import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
+import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;
+import es.uam.eps.ir.knnbandit.recommendation.loop.end.PercentagePositiveRatingsEndCondition;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
@@ -28,8 +40,6 @@ import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.DoublePredicate;
-import java.util.function.DoubleUnaryOperator;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,161 +50,123 @@ import java.util.logging.Logger;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class InteractiveRecommendationWithTraining
+public class InteractiveContactRecommendationWithTraining
 {
     /**
-     * @param args Execution arguments
+     * Executes contact recommendation systems in simulated interactive loops.
+     *
+     * @param args Execution arguments:
      *             <ol>
-     *                  <li><b>Algorithms:</b> the recommender systems to apply validation for</li>
-     *                  <li><b>Input:</b> Full preference data</li>
-     *                  <li><b>Output:</b> Folder in which to store the output</li>
-     *                  <li><b>Num. Iter:</b> Number of iterations for the validation. 0 if we want to run out of recommendable items</li>
-     *                  <li><b>Threshold:</b> Relevance threshold</li>
-     *                  <li><b>Resume:</b> True if we want to resume previous executions, false to overwrite them</li>
-     *                  <li><b>Use ratings:</b>True if we want to take the true rating value, false if we want to binarize them</li>
-     *                  <li><b>Training data:</b>File containing the training data (a previous execution of a recommender over the cold start problem)</li>
-     *                  <li><b>Num. partitions:</b> Number of training partitions we are going to use. Ex: if this argument is equal to 5, we will
-     *                         execute the loop 5 times: one with 20% of the training, one with 40%, etc. </li>
+     *                 <li><b>Algorithms:</b> configuration file for the algorithms</li>
+     *                 <li><b>Input:</b> preference data</li>
+     *                 <li><b>Output:</b> folder in which to store the output</li>
+     *                 <li><b>Num. Iter:</b> number of iterations. 0 if we want to apply until full coverage.</li>
+     *                 <li><b>Directed:</b> true if the graph is directed, false otherwise</li>
+     *                 <li><b>Resume:</b> true if we want to retrieve data from previous executions, false to overwrite</li>
+     *                 <li><b>Not reciprocal:</b> true if we don't want to recommend reciprocal edges, false otherwise</li>
+     *                 <li><b>Training data:</b> file containing the training data</li>
+     *                 <li><b>Num. partitions:</b> number of partitions to make with the training data</li>
      *             </ol>
+     *
+     * @throws IOException           if something fails while reading / writing.
+     * @throws UnconfiguredException if something fails while retrieving the algorithms.
      */
     public static void main(String[] args) throws IOException, UnconfiguredException
     {
         if (args.length < 9)
         {
-            System.err.println("ERROR: Invalid arguments");
+            System.err.println("ERROR:iInvalid arguments");
             System.err.println("Usage:");
-            System.err.println("Algorithms: the recommender systems to apply validation for");
-            System.err.println("Input: Full preference data");
-            System.err.println("Output: Folder in which to store the output");
-            System.err.println("Num. Iter: Number of iterations for the validation. 0 if we want to run out of recommendable items");
-            System.err.println("Threshold: Relevance threshold");
-            System.err.println("Resume: True if we want to resume previous executions, false to overwrite them");
-            System.err.println("Use ratings:True if we want to take the true rating value, false if we want to binarize them");
-            System.err.println("Training data:File containing the training data (a previous execution of a recommender over the cold start problem)");
-            System.err.println("Num. partitions: Number of training partitions we are going to use. Ex: if this argument is equal to 5, we will execute the loop 5 times: one with 20% of the training, one with 40%, etc. ");
+            System.err.println("Algorithms: configuration file for the algorithms");
+            System.err.println("Input: preference data");
+            System.err.println("Output: folder in which to store the output");
+            System.err.println("Num. Iter: number of iterations. 0 if we want to apply until full coverage.");
+            System.err.println("Resume: true if we want to retrieve data from previous executions, false to overwrite");
+            System.err.println("Directed: true if the graph is directed, false otherwise");
+            System.err.println("Not reciprocal: true if we don't want to recommend reciprocal edges, false otherwise");
+            System.err.println("Training data: file containing the training data");
+            System.err.println("Num. partitions: number of partitions to make with the training data");
             return;
         }
 
-        // First, read the program arguments.
+        // Read the program arguments.
         String algorithms = args[0];
         String input = args[1];
         String output = args[2];
-        int numIter = Parsers.ip.parse(args[3]);
-        double threshold = Parsers.dp.parse(args[4]);
-        boolean resume = args[5].equalsIgnoreCase("true");
-        boolean useRatings = args[6].equalsIgnoreCase("true");
-        String trainingData = args[7];
-        int numParts = Parsers.ip.parse(args[8]);
+        int auxIter = Parsers.ip.parse(args[3]);
+        boolean resume = args[4].equalsIgnoreCase("true");
 
-        DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x :
-                (double x) -> (x >= threshold ? 1.0 : 0.0);
-        DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
+        // Define the stop condition.
+        Double inIter = Parsers.dp.parse(args[3]);
+        boolean iterationsStop = auxIter == 0.0 || auxIter >= 1.0;
+        int numIter = (iterationsStop && auxIter > 1.0) ? inIter.intValue() : Integer.MAX_VALUE;
+
+        // Contact recommendation specific values
+        boolean directed = args[5].equalsIgnoreCase("true");
+        boolean notReciprocal = !directed || args[6].equalsIgnoreCase("true");
+
+        // Read training data.
+        String trainingData = args[7];
+        int auxNumParts = Parsers.ip.parse(args[8]);
+        boolean relevantPartition = auxNumParts < 0;
+        int numParts = Math.abs(auxNumParts);
 
         Reader reader = new Reader();
         List<Tuple2<Integer, Integer>> train = reader.read(trainingData, "\t", true);
 
         // First, we identify and find the random seed which will be used for unties.
-        // This is stored in a file in the output folder named "rngseed". If it does not exist,
-        // the number is created.
-        if (resume)
-        {
-            File f = new File(output + "rngseed");
-            if (f.exists())
-            {
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f))))
-                {
-                    UntieRandomNumber.RNG = Parsers.ip.parse(br.readLine());
-                }
-            }
-            else
-            {
-                Random rng = new Random();
-                UntieRandomNumber.RNG = rng.nextInt();
-            }
-        }
-        else
-        {
-            Random rng = new Random();
-            UntieRandomNumber.RNG = rng.nextInt();
-        }
+        UntieRandomNumber.configure(resume, output);
 
-        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output + "rngseed"))))
-        {
-            bw.write("" + UntieRandomNumber.RNG);
-        }
-
-        // Then, we read the ratings.
+        // Read the ratings.
         Set<Long> users = new HashSet<>();
-        //Set<String> items = new HashSet<>();
-        Set<Long> items = new HashSet<>();
-        //List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
         List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
-        int numrel = 0;
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(input))))
-        {
-            String line;
-            while ((line = br.readLine()) != null)
-            {
-                String[] split = line.split("::");
-                Long user = Parsers.lp.parse(split[0]);
-                //String item = split[1];
-                Long item = Parsers.lp.parse(split[1]);
-                double val = Parsers.dp.parse(split[2]);
+        Graph<Long> graph;
+        GraphReader<Long> greader = new TextGraphReader<>(directed, false, false, "\t", Parsers.lp);
+        graph = greader.read(input);
 
-                users.add(user);
-                items.add(item);
+        graph.getAllNodes().forEach(users::add);
+        int numEdges = ((int) graph.getEdgeCount()) * (directed ? 1 : 2);
+        int numRecipr = graph.getAllNodes().mapToInt(graph::getMutualNodesCount).sum();
+        int numrel = numEdges - ((notReciprocal) ? numRecipr / 2 : 0);
 
-                double rating = weightFunction.applyAsDouble(val);
-                if (relevance.test(rating))
-                {
-                    numrel++;
-                }
-
-                triplets.add(new Tuple3<>(user, item, rating));
-            }
-        }
+        graph.getAllNodes().forEach(u -> graph.getAdjacentNodes(u).forEach(v -> triplets.add(new Tuple3<>(u, v, 1.0))));
 
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
-        //FastUpdateableItemIndex<String> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
-        FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
-
-        //SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
+        FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(users.stream());
         SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
 
-        System.out.println("Users: " + uIndex.numUsers());
-        System.out.println("Items: " + iIndex.numItems());
-        int numRel = numrel;
+        System.out.println("Num items:" + users.size());
+        System.out.println("Num. users: " + prefData.numUsersWithPreferences());
+        System.out.println("Total number of relevants: " + numrel);
 
         // Initialize the metrics to compute.
-        //Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
         Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
-        metrics.put("recall", () -> new CumulativeRecall<>(prefData, numRel, 0.5));
-        metrics.put("gini", () -> new CumulativeGini<>(items.size()));
+        metrics.put("recall", () -> new CumulativeRecall<>(prefData, numrel, 0.5));
+        metrics.put("gini", () -> new CumulativeGini<>(users.size()));
         List<String> metricNames = new ArrayList<>(metrics.keySet());
 
-        // Select the algorithms.
+        // Select the algorithms
         long a = System.currentTimeMillis();
-        //AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
         AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
-        algorithmSelector.configure(uIndex, iIndex, prefData, useRatings ? threshold : 0.5);
+        algorithmSelector.configure(uIndex, iIndex, prefData, 0.5, notReciprocal);
         algorithmSelector.addFile(algorithms);
-        //Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
         Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
         long b = System.currentTimeMillis();
+        System.out.println("Recommenders prepared (" + (b - a) + " ms.)");
 
-        System.out.println("Recommenders ready (" + (b - a) + " ms.)");
-
+        // Execute the recommendations for the different splits.
         int trainingSize = train.size();
+
+        Partition partition = relevantPartition ? new RelevantPartition(prefData, x -> true) : new UniformPartition();
+        List<Integer> splitPoints = partition.split(train, numParts);
 
         for (int part = 0; part < numParts; ++part)
         {
-            int val = trainingSize * (part + 1);
-            val /= numParts;
+            System.out.println("Training: " + splitPoints.get(part) + " recommendations (" + (part + 1) + "/" + numParts + ")");
+            List<Tuple2<Integer, Integer>> partTrain = train.subList(0, splitPoints.get(part));
 
-            System.out.println("Training: " + val + " recommendations (" + (part + 1) + "/" + numParts + ")");
-            List<Tuple2<Integer, Integer>> partTrain = train.subList(0, val);
-
+            // Create the folders to store the recommendations.
             File folder = new File(output + part + File.separator);
             if (!folder.exists())
             {
@@ -207,28 +179,39 @@ public class InteractiveRecommendationWithTraining
 
             String outputFolder = output + part + File.separator;
 
+            int notRel = partTrain.stream().mapToInt(tuple ->
+            {
+                int uidx = tuple.v1;
+                int iidx = tuple.v2;
+                if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0 && prefData.getPreference(uidx, iidx).isPresent())
+                {
+                    return 1;
+                }
+
+                return 0;
+            }).sum();
+
+            // Execute the recommendations.
             recs.entrySet().parallelStream().forEach(re ->
             {
                 long aaa = System.currentTimeMillis();
-                System.out.println("Algorithm " + re.getKey() + " started");
 
+                // Get the recommender and metrics.
                 InteractiveRecommender<Long, Long> rec = re.getValue();
-                //InteractiveRecommender<Long, Long> rec = re.getValue();
-                //Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
                 Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
                 metricNames.forEach(name -> localMetrics.put(name, metrics.get(name).get()));
 
-                //RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, numIter, UntieRandomNumber.RNG, false);
-                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, numIter, UntieRandomNumber.RNG, false);
-
-                loop.init(partTrain, false);
-
+                // Configure and initialize the recommendation loop:
+                EndCondition endcond = iterationsStop ? (auxIter == 0.0 ? new NoLimitsEndCondition() : new NumIterEndCondition(numIter)) : new PercentagePositiveRatingsEndCondition(numrel-notRel, inIter, 0.5);
+                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, endcond, UntieRandomNumber.RNG, notReciprocal);
+                loop.init(partTrain, true);
                 long bbb = System.currentTimeMillis();
                 System.out.println("Algorithm " + re.getKey() + " initialized (" + (bbb - aaa) + " ms.)");
 
                 List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
                 String fileName = outputFolder + re.getKey() + ".txt";
 
+                // If there are previous executions, retrieve them:
                 if (resume)
                 {
                     File f = new File(fileName);
@@ -265,8 +248,10 @@ public class InteractiveRecommendationWithTraining
                     }
                 }
 
+                // Write the new file.
                 try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFolder + re.getKey() + ".txt"))))
                 {
+                    // Write the header.
                     bw.write("Num.Iter\tUser\tItem");
                     for (String metric : metricNames)
                     {
@@ -274,6 +259,7 @@ public class InteractiveRecommendationWithTraining
                     }
                     bw.write("\tTime\n");
 
+                    // If we have retrieved previous info, write it into the file.
                     if (resume && !list.isEmpty())
                     {
                         for (Tuple3<Integer, Integer, Long> triplet : list)
@@ -299,6 +285,7 @@ public class InteractiveRecommendationWithTraining
                         }
                     }
 
+                    // Then, execute the recommender until it ends.
                     while (!loop.hasEnded())
                     {
                         StringBuilder builder = new StringBuilder();
@@ -331,9 +318,8 @@ public class InteractiveRecommendationWithTraining
                 {
                     e.printStackTrace();
                 }
-
                 bbb = System.currentTimeMillis();
-                System.out.println("Algorithm " + re.getKey() + " finished (" + (bbb - aaa) + " ms.)");
+                System.err.println("Algorithm " + re.getKey() + " finished (" + (bbb - aaa) + " ms.)");
             });
         }
     }

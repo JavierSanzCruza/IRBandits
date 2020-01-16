@@ -7,13 +7,16 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit;
+package es.uam.eps.ir.knnbandit.main.general.movielens;
 
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.SimpleFastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.SimpleFastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.io.Reader;
+import es.uam.eps.ir.knnbandit.partition.Partition;
+import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
+import es.uam.eps.ir.knnbandit.partition.UniformPartition;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
@@ -59,10 +62,13 @@ public class TrainingStatistics
             System.err.println("\tNum. splits: Number of splits");
         }
 
+
         String testFile = args[0];
         double threshold = Parsers.dp.parse(args[1]);
         String trainingFile = args[2];
-        int numSplits = Parsers.ip.parse(args[3]);
+        int auxNumParts = Parsers.ip.parse(args[3]);
+        boolean relevantPartition = auxNumParts < 0;
+        int numParts = Math.abs(auxNumParts);
 
         DoubleUnaryOperator weightFunction = (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = (double x) -> (x > 0.0);
@@ -72,10 +78,8 @@ public class TrainingStatistics
         List<Tuple2<Integer, Integer>> train = reader.read(trainingFile, "\t", true);
 
         Set<Long> users = new HashSet<>();
-        //Set<String> items = new HashSet<>();
         Set<Long> items = new HashSet<>();
 
-        //List<Tuple3<Long, String, Double>> triplets = new ArrayList<>();
         List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
 
         int numrel = 0;
@@ -89,7 +93,6 @@ public class TrainingStatistics
             {
                 String[] split = line.split("::");
                 Long user = Parsers.lp.parse(split[0]);
-                //String item = split[1];
                 Long item = Parsers.lp.parse(split[1]);
                 double val = Parsers.dp.parse(split[2]);
 
@@ -110,8 +113,6 @@ public class TrainingStatistics
 
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
         FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
-        //FastUpdateableItemIndex<String> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
-        //SimpleFastPreferenceData<Long, String> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
         SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
 
         // Print the general data:
@@ -125,11 +126,12 @@ public class TrainingStatistics
         System.out.println("Training");
         System.out.println("Num.Split\tNum.Recs\tRatings\tRel.Ratings");
 
-        for (int part = 0; part < numSplits; ++part)
-        {
-            int val = trainingSize * (part + 1);
-            val /= numSplits;
+        Partition partition = relevantPartition ? new RelevantPartition(prefData, relevance) : new UniformPartition();
+        List<Integer> splitPoints = partition.split(train, numParts);
 
+        for (int part = 0; part < numParts; ++part)
+        {
+            int val = splitPoints.get(part);
             List<Tuple2<Integer, Integer>> partTrain = train.subList(0, val);
 
             long trainCount = partTrain.stream().filter(t ->
