@@ -241,7 +241,7 @@ public abstract class InteractiveRecommender<U, I>
             {
                 value = 0.0;
                 known = false;
-                if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+                if (prefData.numItems(iidx) > 0 && prefData.numUsers(uidx) > 0)
                 {
                     Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
                     if(realvalue.isPresent())
@@ -306,7 +306,7 @@ public abstract class InteractiveRecommender<U, I>
             {
                 known = false;
                 value = 0.0;
-                if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+                if (prefData.numItems(iidx) > 0 && prefData.numUsers(uidx) > 0)
                 {
                     Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
                     if(realvalue.isPresent())
