@@ -165,11 +165,14 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
             }
         }
 
-        // We finally apply ALS for training the algorithm.
-        for (int i = 0; i < this.numIter; ++i)
+        if(this.trainData.numPreferences() > 0)
         {
-            set_min_P();
-            set_min_Q();
+            // We finally apply ALS for training the algorithm.
+            for (int i = 0; i < this.numIter; ++i)
+            {
+                set_min_P();
+                set_min_Q();
+            }
         }
     }
 
@@ -211,7 +214,7 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
                     int iidx = iv.v1;
                     double rui = iv.v2;
 
-                    A.assign(A2P[iidx], (x, y) -> x + y);
+                    A.assign(A2P[iidx], Double::sum);
                     b.assign(Q.viewRow(iidx), (x, y) -> x + rui * y);
                 });
             }
@@ -275,7 +278,7 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
                     int uidx = iv.v1;
                     double rui = iv.v2;
 
-                    A.assign(A2P[uidx], (x, y) -> x + y);
+                    A.assign(A2P[uidx], Double::sum);
                     b.assign(P.viewRow(uidx), (x, y) -> x + rui * y);
                 });
             }

@@ -163,6 +163,34 @@ public class RecommendationLoop<U, I>
     }
 
     /**
+     * Given some training data, initializes the recommendation loop.
+     *
+     * @param fullTrain the training data (including ratings not available in the preference data).
+     * @param cleanTrain the training data (excluding ratings not available in the preference data).
+     * @param contactRec true if contact recommendation, false otherwise.
+     */
+    public void init(List<Tuple2<Integer, Integer>> fullTrain, List<Tuple2<Integer,Integer>> cleanTrain, List<IntList> availability, boolean contactRec)
+    {
+        if(this.recommender.usesAll())
+        {
+            this.recommender.init(fullTrain, contactRec);
+        }
+        else
+        {
+            this.recommender.init(cleanTrain, availability, contactRec);
+        }
+
+        this.metrics.forEach((name, metric) -> metric.initialize(fullTrain, notReciprocal));
+        this.userList.clear();
+        this.prefData.getUidxWithPreferences().forEach(userList::add);
+        this.numUsers = this.userList.size();
+        this.endCondition.init();
+    }
+
+
+
+
+    /**
      * Checks if the loop has ended or not.
      *
      * @return true if the loop has ended, false otherwise.
@@ -188,10 +216,36 @@ public class RecommendationLoop<U, I>
 
         this.recommender.update(uidx, iidx);
         this.metrics.forEach((name, metric) -> metric.update(uidx, iidx));
-        Optional<? extends IdxPref> optional = prefData.getPreference(uidx, iidx);
-        double value = optional.map(idxPref -> idxPref.v2).orElse(Double.NEGATIVE_INFINITY);
+
+        double value = Double.NEGATIVE_INFINITY;
+        if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+        {
+            Optional<? extends IdxPref> optional = prefData.getPreference(uidx, iidx);
+            value = optional.map(idxPref -> idxPref.v2).orElse(Double.NEGATIVE_INFINITY);
+        }
         this.endCondition.update(uidx, iidx, value);
         ++this.iteration;
+    }
+
+    public void updateMetrics(Tuple2<Integer, Integer> tuple)
+    {
+        int uidx = tuple.v1;
+        int iidx = tuple.v2;
+        this.metrics.forEach((name, metric) -> metric.update(uidx, iidx));
+
+        double value = Double.NEGATIVE_INFINITY;
+        if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+        {
+            Optional<? extends IdxPref> optional = prefData.getPreference(uidx, iidx);
+            value = optional.map(idxPref -> idxPref.v2).orElse(Double.NEGATIVE_INFINITY);
+        }
+        this.endCondition.update(uidx, iidx, value);
+        ++this.iteration;
+    }
+
+    public void updateRecs(List<Tuple2<Integer, Integer>> tuple)
+    {
+        tuple.forEach(t -> this.recommender.update(t.v1, t.v2));
     }
 
     /**

@@ -83,10 +83,12 @@ public class CumulativeRecall<U, I> implements CumulativeMetric<U, I>
             int iidx = pref.v2;
 
             int count = 0;
-            Optional<IdxPref> optional = this.prefData.getPreference(uidx, iidx);
-            if (optional.isPresent() && optional.get().v2 >= threshold)
+            if(this.prefData.numUsers(iidx) > 0 && this.prefData.numItems(uidx) > 0)
             {
-                count += 1;
+                Optional<IdxPref> optional = this.prefData.getPreference(uidx, iidx);
+                if (optional.isPresent() && optional.get().v2 >= threshold) {
+                    count += 1;
+                }
             }
 
             return count;

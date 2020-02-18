@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.mf;
 
+import cern.colt.function.DoubleFunction;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
@@ -15,6 +16,7 @@ import cern.colt.matrix.linalg.EigenvalueDecomposition;
 import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.TransposedPreferenceData;
+import es.uam.eps.ir.ranksys.mf.Factorization;
 import es.uam.eps.ir.ranksys.mf.als.ALSFactorizer;
 
 import java.util.function.DoubleUnaryOperator;
@@ -91,7 +93,7 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
      * @param lambdaQ    regularization factor for item matrix
      * @param confidence confidence function
      * @param numIter    number of iterations
-     * @param usesZeroes
+     * @param usesZeroes true if the factorizer is going to receive ratings equal to zero.
      */
     public PZTFactorizer(double lambdaP, double lambdaQ, DoubleUnaryOperator confidence, int numIter, boolean usesZeroes)
     {
@@ -102,6 +104,22 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
         this.usesZeroes = usesZeroes;
     }
 
+    @Override
+    public void factorize(Factorization<U, I> factorization, FastPreferenceData<U, I> data)
+    {
+        if(data.numPreferences() > 0)
+        {
+            super.factorize(factorization, data);
+        }
+        else
+        {
+            DoubleFunction init = (x) -> 0.0;
+
+            factorization.getUserMatrix().assign(init);
+            factorization.getItemMatrix().assign(init);
+        }
+    }
+
     private static <U, I> void set_min(final DenseDoubleMatrix2D p, final DenseDoubleMatrix2D q, DoubleUnaryOperator confidence, double lambda, FastPreferenceData<U, I> data, boolean usesZeroes)
     {
         DoubleMatrix2D gt = getGt(p, q, lambda);
@@ -109,16 +127,12 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
         if (!usesZeroes)
         {
             data.getUidxWithPreferences().parallel().forEach(uidx ->
-            {
-                prepareRR1(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda);
-            });
+                prepareRR1(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
         }
         else
         {
             data.getUidxWithPreferences().parallel().forEach(uidx ->
-            {
-                prepareRR1Zeroes(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda);
-            });
+                prepareRR1Zeroes(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
         }
     }
 

@@ -25,7 +25,6 @@ import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.formats.parsing.Parsers;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -51,7 +50,7 @@ public class TrainingContactStatistics
      *              <li><b>Not reciprocal:</b> True if we want to consider reciprocal links as one single link, false otherwise</li>
      *             </ul>
      */
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args)
     {
         if (args.length < 5)
         {
@@ -80,7 +79,7 @@ public class TrainingContactStatistics
         graph = greader.read(testFile);
 
         graph.getAllNodes().forEach(users::add);
-        int numEdges = new Long(graph.getEdgeCount()).intValue() * (directed ? 1 : 2);
+        int numEdges = Long.valueOf(graph.getEdgeCount()).intValue() * (directed ? 1 : 2);
         int numRecipr = graph.getAllNodes().mapToInt(graph::getMutualNodesCount).sum();
         int numrel = numEdges - ((notReciprocal) ? numRecipr / 2 : 0);
 
@@ -88,12 +87,7 @@ public class TrainingContactStatistics
         Reader reader = new Reader();
         List<Tuple2<Integer, Integer>> train = reader.read(trainingFile, "\t", true);
         graph.getAllNodes().forEach(u ->
-        {
-            graph.getAdjacentNodes(u).forEach(v ->
-            {
-                triplets.add(new Tuple3<>(u, v, 1.0));
-            });
-        });
+            graph.getAdjacentNodes(u).forEach(v -> triplets.add(new Tuple3<>(u, v, 1.0))));
 
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
         FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(users.stream());
@@ -104,12 +98,9 @@ public class TrainingContactStatistics
         System.out.println("Users\tItems\tRatings\tRel.Ratings");
         System.out.println(uIndex.numUsers() + "\t" + iIndex.numItems() + "\t" + numrel + "\t" + numrel);
 
-        int trainingSize = train.size();
-
         // Then, for each split:
         System.out.println("Training");
         System.out.println("Num.Split\tNum.Recs\tRatings\tRel.Ratings");
-
 
         Partition partition = relevantPartition ? new RelevantPartition(prefData, x -> true) : new UniformPartition();
         List<Integer> splitPoints = partition.split(train, numParts);
@@ -120,16 +111,8 @@ public class TrainingContactStatistics
 
             List<Tuple2<Integer, Integer>> partTrain = train.subList(0, val);
 
-            long auxRelCount = partTrain.stream().filter(t ->
-            {
-                return prefData.numItems(t.v1) == 0;
-            }).count();
-
-            long trainRelCount = partTrain.stream().filter(t ->
-            {
-                return prefData.numItems(t.v1) > 0 && prefData.getPreference(t.v1, t.v2).isPresent();
-            }).count();
-
+            long auxRelCount = partTrain.stream().filter(t -> prefData.numItems(t.v1) == 0).count();
+            long trainRelCount = partTrain.stream().filter(t -> prefData.numItems(t.v1) > 0 && prefData.getPreference(t.v1, t.v2).isPresent()).count();
 
             System.out.println((part + 1) + "\t" + val + "\t" + trainRelCount + "\t" + trainRelCount + "\t" + auxRelCount);
         }

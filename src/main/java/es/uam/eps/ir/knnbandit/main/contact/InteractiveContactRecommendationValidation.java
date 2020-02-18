@@ -9,7 +9,6 @@
  */
 package es.uam.eps.ir.knnbandit.main.contact;
 
-import es.uam.eps.ir.knnbandit.main.general.movielens.InteractiveRecommendation;
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
@@ -19,6 +18,8 @@ import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.io.GraphReader;
 import es.uam.eps.ir.knnbandit.graph.io.TextGraphReader;
 import es.uam.eps.ir.knnbandit.io.Reader;
+import es.uam.eps.ir.knnbandit.main.Initializer;
+import es.uam.eps.ir.knnbandit.main.general.movielens.InteractiveRecommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
 import es.uam.eps.ir.knnbandit.partition.Partition;
@@ -33,6 +34,7 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.end.PercentagePositiveRatings
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2od;
@@ -40,6 +42,7 @@ import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -184,6 +187,9 @@ public class InteractiveContactRecommendationValidation
                 return 0;
             }).sum();
 
+
+
+
             int notRel = partTrain.stream().mapToInt(tuple ->
             {
                 int uidx = tuple.v1;
@@ -198,6 +204,13 @@ public class InteractiveContactRecommendationValidation
 
             // Create the validation data, which will be provided as input to recommenders and metrics.
             SimpleFastPreferenceData<Long, Long> validData = SimpleFastPreferenceData.load(validationTriplets.stream(), uIndex, iIndex);
+
+            Initializer<Long, Long> initializer = new Initializer<>(validData, partTrain, true, notReciprocal);
+
+            List<Tuple2<Integer, Integer>> fullTraining = initializer.getFullTraining();
+            List<Tuple2<Integer, Integer>> cleanTraining = initializer.getCleanTraining();
+            List<IntList> availability = initializer.getAvailability();
+
             System.out.println("Training: " + splitPoints.get(part) + " recommendations (" + (part + 1) + "/" + numParts + ")");
 
             System.out.println("Num items:" + users.size());
@@ -238,11 +251,13 @@ public class InteractiveContactRecommendationValidation
             }
             String outputFolder = output + part + File.separator;
 
+            AtomicInteger atom = new AtomicInteger(0);
+            int numRecs = recs.size();
             // Then, execute each algorithm for this split.
             recs.entrySet().parallelStream().forEach(re ->
             {
                 long aaa = System.currentTimeMillis();
-                System.out.println("Algorithm " + re.getKey() + " started");
+                System.out.println("Started algorithm:" + re.getKey());
 
                 // Obtain the recommender.
                 InteractiveRecommender<Long, Long> rec = re.getValue();
@@ -255,9 +270,9 @@ public class InteractiveContactRecommendationValidation
 
                 // Initialize the recommendation loop.
                 RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, validData, rec, localMetrics, endcond, UntieRandomNumber.RNG, notReciprocal);
-                loop.init(partTrain, true);
+                loop.init(fullTraining, cleanTraining, availability, true);
                 long bbb = System.currentTimeMillis();
-                System.out.println("Algorithm " + re.getKey() + " initialized (" + (bbb - aaa) + " ms.)");
+                System.out.println("Initialized algorithm " + re.getKey() + " (" + (bbb - aaa) + " ms.)");
 
                 // Then, execute the loop:
                 List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
@@ -310,14 +325,17 @@ public class InteractiveContactRecommendationValidation
                     }
                     bw.write("\tTime\n");
 
+                    List<Tuple2<Integer, Integer>> updList = new ArrayList<>();
                     // Write the previous values
                     if (resume && !list.isEmpty())
                     {
                         for (Tuple3<Integer, Integer, Long> triplet : list)
                         {
                             StringBuilder builder = new StringBuilder();
-                            // First, we update the loop.
-                            loop.update(new Tuple2<>(triplet.v1, triplet.v2));
+                            // First, we update the loop metrics.
+                            Tuple2<Integer, Integer> tuple = new Tuple2<>(triplet.v1, triplet.v2);
+                            loop.updateMetrics(tuple);
+                            updList.add(tuple);
                             // Then, we obtain the values to print.
                             int iter = loop.getCurrentIteration();
                             builder.append(iter);
@@ -337,6 +355,17 @@ public class InteractiveContactRecommendationValidation
                             builder.append("\n");
                             bw.write(builder.toString());
                         }
+
+                        bbb = System.currentTimeMillis();
+                        System.out.println("Algorithm " + re.getKey() + " finished retrieving data (" + (bbb - aaa) + " ms.)");
+                    }
+
+
+                    if(!loop.hasEnded() && resume && !list.isEmpty())
+                    {
+                        loop.updateRecs(updList);
+                        bbb = System.currentTimeMillis();
+                        System.out.println("Algorithm " + re.getKey() + " finished updating itself with retrieved data (" + (bbb - aaa) + " ms.)");
                     }
 
                     // Then, execute the remaining loop.
@@ -384,7 +413,8 @@ public class InteractiveContactRecommendationValidation
                 double value = localMetrics.get("recall").compute();
 
                 queue.add(new Tuple2od<>(recName, value));
-                System.err.println("Algorithm " + re.getKey() + " finished (" + (bbb - aaa) + " ms.)");
+                int algorithmId = atom.incrementAndGet();
+                System.out.println("Algorithm " + re.getKey() + " finished (" + (bbb - aaa) + " ms., " + algorithmId + "/" + numRecs + ")");
             });
 
             // Once we have finished all the recommendations, we write the algorithm ranking into a file.

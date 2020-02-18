@@ -15,6 +15,7 @@ import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserInde
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.SimpleFastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.SimpleFastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.io.Reader;
+import es.uam.eps.ir.knnbandit.main.Initializer;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
 import es.uam.eps.ir.knnbandit.partition.Partition;
@@ -30,6 +31,7 @@ import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2od;
@@ -37,6 +39,7 @@ import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoublePredicate;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Supplier;
@@ -193,9 +196,15 @@ public class InteractiveRecommendationValidation
             // Now, we obtain the validation data, which will be provided as input for the recommenders and metrics.
             SimpleFastPreferenceData<Long, Long> validData = SimpleFastPreferenceData.load(validationTriplets.stream(), uIndex, iIndex);
 
-            int noRel = partTrain.stream().mapToInt(tuple ->
+            Initializer<Long, Long> initializer = new Initializer<>(validData, partTrain, false, false);
+
+            List<Tuple2<Integer, Integer>> fullTraining = initializer.getFullTraining();
+            List<Tuple2<Integer, Integer>> cleanTraining = initializer.getCleanTraining();
+            List<IntList> availability = initializer.getAvailability();
+
+            int noRel = cleanTraining.stream().mapToInt(tuple ->
             {
-                Optional<IdxPref> opt = validData.getPreference(tuple.v1, tuple.v2);
+                Optional<IdxPref> opt = prefData.getPreference(tuple.v1, tuple.v2);
                 if(opt.isPresent() && relevance.test(opt.get().v2))
                 {
                     return 1;
@@ -237,11 +246,13 @@ public class InteractiveRecommendationValidation
             }
             String outputFolder = output + part + File.separator;
 
+            AtomicInteger atom = new AtomicInteger(0);
+            int numRecs = recs.size();
             // Execute the different recommenders
             recs.entrySet().parallelStream().forEach(re ->
             {
                 long aaa = System.currentTimeMillis();
-                System.out.println("Algorithm " + re.getKey() + " started");
+                System.out.println("Starting algorithm " + re.getKey());
 
                 // Obtain the recommender and the metrics.
                 InteractiveRecommender<Long, Long> rec = re.getValue();
@@ -250,10 +261,10 @@ public class InteractiveRecommendationValidation
 
                 // Configure and initialize the recommendation loop.
                 EndCondition endcond = iterationsStop ? (auxIter == 0.0 ? new NoLimitsEndCondition() : new NumIterEndCondition(numIter)) : new PercentagePositiveRatingsEndCondition(defNumRel-noRel, auxIter, realThreshold);
-                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, endcond, UntieRandomNumber.RNG, false);
-                loop.init(partTrain, false);
+                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, validData, rec, localMetrics, endcond, UntieRandomNumber.RNG, false);
+                loop.init(fullTraining, cleanTraining, availability, false);
                 long bbb = System.currentTimeMillis();
-                System.out.println("Algorithm " + re.getKey() + " initialized (" + (bbb - aaa) + " ms.)");
+                System.out.println("Initialized algorithm " + re.getKey() + " (" + (bbb - aaa) + " ms.)");
 
                 String fileName = outputFolder + re.getKey() + ".txt";
 
@@ -306,14 +317,17 @@ public class InteractiveRecommendationValidation
                     }
                     bw.write("\tTime\n");
 
+                    List<Tuple2<Integer, Integer>> updList = new ArrayList<>();
                     // If there is something previously retrieved, write it.
                     if (resume && !list.isEmpty())
                     {
                         for (Tuple3<Integer, Integer, Long> triplet : list)
                         {
                             StringBuilder builder = new StringBuilder();
-                            loop.update(new Tuple2<>(triplet.v1, triplet.v2));
                             int iter = loop.getCurrentIteration();
+                            Tuple2<Integer, Integer> tuple = new Tuple2<>(triplet.v1, triplet.v2);
+                            loop.updateMetrics(tuple);
+                            updList.add(tuple);
                             builder.append(iter);
                             builder.append("\t");
                             builder.append(triplet.v1);
@@ -330,6 +344,16 @@ public class InteractiveRecommendationValidation
                             builder.append("\n");
                             bw.write(builder.toString());
                         }
+
+                        bbb = System.currentTimeMillis();
+                        System.out.println("Algorithm " + re.getKey() + " finished retrieving data (" + (bbb - aaa) + " ms.)");
+                    }
+
+                    if(!loop.hasEnded() && resume && !list.isEmpty())
+                    {
+                        loop.updateRecs(updList);
+                        bbb = System.currentTimeMillis();
+                        System.out.println("Algorithm " + re.getKey() + " finished updating itself with retrieved data (" + (bbb - aaa) + " ms.)");
                     }
 
                     // Then, until the loop ends...
@@ -377,8 +401,8 @@ public class InteractiveRecommendationValidation
                 double value = localMetrics.get("recall").compute();
 
                 queue.add(new Tuple2od<>(recName, value));
-
-                System.out.println("Algorithm " + re.getKey() + " finished (" + (bbb - aaa) + " ms.)");
+                int algorithmId = atom.incrementAndGet();
+                System.out.println("Algorithm " + re.getKey() + " finished (" + (bbb - aaa) + " ms., " + algorithmId + "/" + numRecs + ")");
             });
 
             // Write the algorithm ranking.

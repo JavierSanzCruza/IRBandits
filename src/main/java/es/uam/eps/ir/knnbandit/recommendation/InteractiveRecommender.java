@@ -38,8 +38,13 @@ import java.util.stream.Stream;
  */
 public abstract class InteractiveRecommender<U, I>
 {
+    /**
+     * User index.
+     */
     protected final FastUpdateableUserIndex<U> uIndex;
-
+    /**
+     * Item index.
+     */
     protected final FastUpdateableItemIndex<I> iIndex;
     /**
      * Preference data.
@@ -81,7 +86,7 @@ public abstract class InteractiveRecommender<U, I>
         this.prefData = prefData;
         this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         this.availability = new ArrayList<>();
-        IntStream.range(0, prefData.numUsers()).forEach(uidx -> availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new))));
+        //IntStream.range(0, prefData.numUsers()).forEach(uidx -> availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new))));
         this.ignoreUnknown = ignoreUnknown;
         this.notReciprocal = false;
         this.rng = new Random(UntieRandomNumber.RNG);
@@ -103,10 +108,10 @@ public abstract class InteractiveRecommender<U, I>
         this.prefData = prefData;
         this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         this.availability = new ArrayList<>();
-        IntStream.range(0, prefData.numUsers()).forEach(uidx ->
+        /*IntStream.range(0, prefData.numUsers()).forEach(uidx ->
         {
             this.availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
-        });
+        });*/
         this.ignoreUnknown = ignoreUnknown;
         this.notReciprocal = notReciprocal;
         this.rng = new Random(UntieRandomNumber.RNG);
@@ -139,42 +144,189 @@ public abstract class InteractiveRecommender<U, I>
     }
 
     /**
+     * Auxiliar initializer: Initializes only the availability and the training data, not other properties of the method.
+     * @param contactRec true if we are using contact recommendation.
+     */
+    private void auxInit(boolean contactRec)
+    {
+        availability.clear();
+
+        this.rng = new Random(UntieRandomNumber.RNG);
+
+        IntStream.range(0, prefData.numUsers()).forEach(uidx ->
+        {
+            if (contactRec)
+            {
+                availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
+            }
+            else
+            {
+                availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
+            }
+        });
+
+        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+    }
+
+    /**
+     * Initializes the recommender.
+     * @param availability the list of items which can be recommended to each user.
+     */
+    public void init(List<IntList> availability)
+    {
+        this.availability.clear();
+        for(IntList items : availability)
+        {
+            this.availability.add(new IntArrayList(items));
+        }
+        this.rng = new Random(UntieRandomNumber.RNG);
+        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+    }
+
+    /**
+     * Auxiliar initializer: Initializes the availability, the random number and the training data (empty).
+     * @param availability the list of items which can be recommended to each user.
+     */
+    private void auxInit(List<IntList> availability)
+    {
+        this.availability.clear();
+        for(IntList items : availability)
+        {
+            this.availability.add(new IntArrayList(items));
+        }
+        this.rng = new Random(UntieRandomNumber.RNG);
+        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+    }
+
+    /**
+     * Initializer: Initializes all elements of the recommender.
+     * @param train the training data.
+     * @param availability the list of items which can be recommended to each user.
+     * @param contactRec true if we are using contact recommendation.
+     */
+    public void init(List<Tuple2<Integer, Integer>> train, List<IntList> availability, boolean contactRec)
+    {
+        // First, we initialize the basic properties (with the availability list already pruned)
+        this.auxInit(availability);
+
+        // For each element:
+        train.forEach(pair ->
+        {
+            // Retrieve user and item ids.
+            int uidx = pair.v1;
+            int iidx = pair.v2;
+
+            // Check whether the element can be retrieved or not.
+            double value = 0.0;
+            boolean known = false;
+            if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+            {
+                Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
+                if(realvalue.isPresent())
+                {
+                    value = realvalue.get().v2();
+                    known = true;
+                }
+            }
+
+            // If it is known, update the rating.
+            if (!this.ignoreUnknown || known)
+            {
+                this.trainData.updateRating(uidx, iidx, value);
+            }
+
+            // If we are talking about contact recommendation, we cannot recommend reciprocals and the link exists...
+            // (or, at least, we know about it...)
+            if (contactRec && this.notReciprocal && known)
+            {
+                value = 0.0;
+                known = false;
+                if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+                {
+                    Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
+                    if(realvalue.isPresent())
+                    {
+                        value = realvalue.get().v2();
+                        known = true;
+                    }
+                }
+
+                if (!this.ignoreUnknown || known)
+                {
+                    this.trainData.updateRating(iidx, uidx, value);
+                }
+            }
+        });
+
+        // Initialize the specific properties of the method.
+        this.initializeMethod();
+    }
+
+
+    /**
      * Initializes the recommender with training data.
      *
      * @param train the training data.
+     * @param contactRec true if we are recommending people.
      */
     public void init(List<Tuple2<Integer, Integer>> train, boolean contactRec)
     {
-        this.init(contactRec);
+        // First, we initialize the basic properties (with the availability list already pruned)
+        this.auxInit(contactRec);
 
         // For each element in the training set, add it to the trainData, and update the availabilities
         train.forEach(pair ->
         {
+            // Retrieve user and item ids.
             int uidx = pair.v1;
             int iidx = pair.v2;
-            Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
 
-            // Update the corresponding value.
-            double value = realvalue.isPresent() ? realvalue.get().v2 : 0.0;
-            if (!this.ignoreUnknown || realvalue.isPresent())
+            double value = 0.0;
+            boolean known = false;
+            if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+            {
+                Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
+                if(realvalue.isPresent())
+                {
+                    value = realvalue.get().v2();
+                    known = true;
+                }
+            }
+
+            if (!this.ignoreUnknown || known)
             {
                 this.trainData.updateRating(uidx, iidx, value);
             }
+
+            // remove the item from the availability list.
             this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
 
             // Update the reciprocal (if we check this).
-            if (this.notReciprocal && value > 1.0) // If the link exists...
+            if (contactRec && this.notReciprocal && known) // If the link exists...
             {
-                realvalue = this.prefData.getPreference(iidx, uidx);
-                value = realvalue.isPresent() ? realvalue.get().v2 : 0.0;
-                if (!this.ignoreUnknown || realvalue.isPresent())
+                known = false;
+                value = 0.0;
+                if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+                {
+                    Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
+                    if(realvalue.isPresent())
+                    {
+                        value = realvalue.get().v2();
+                        known = true;
+                    }
+                }
+
+                if (!this.ignoreUnknown || known)
                 {
                     this.trainData.updateRating(iidx, uidx, value);
                 }
+
+                // remove the reciprocal pair from the availability list.
                 this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
             }
         });
 
+        // Initialize the method.
         this.initializeMethod();
     }
 
@@ -260,53 +412,57 @@ public abstract class InteractiveRecommender<U, I>
      */
     public void update(int uidx, int iidx)
     {
-        if (this.prefData.numUsers(iidx) > 0 && this.prefData.numItems(uidx) > 0)
+        double value = 0.0;
+        boolean isPresent = false;
+
+        // First, we check if the rating exists.
+        if(this.prefData.numUsers(iidx) > 0 && this.prefData.numItems(uidx) > 0)
         {
             Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
-            double value = realvalue.isPresent() ? realvalue.get().v2 : 0.0;
-            if (!this.ignoreUnknown || realvalue.isPresent())
+            if(realvalue.isPresent())
             {
-                this.updateMethod(uidx, iidx, value);
-                this.trainData.updateRating(uidx, iidx, value);
+                value = realvalue.get().v2;
+                isPresent = true;
             }
+        }
 
-            if (this.notReciprocal && value > 1.0) // If the link exists...
+        // If the rating exists, or we do want to consider it:
+        if(!this.ignoreUnknown || isPresent)
+        {
+            this.updateMethod(uidx, iidx, value);
+            this.trainData.updateRating(uidx, iidx, value);
+        }
+
+        // Then, if we are in the contact recommendation case, and the rating exists...
+        if(isPresent && this.notReciprocal)
+        {
+            value = 0.0;
+            isPresent = false;
+            // First, we check whether the element is in the data.
+            if(this.prefData.numItems(iidx) > 0 && this.prefData.numUsers(uidx) > 0)
             {
-                if (this.prefData.numItems(iidx) > 0)
+                Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
+                if(realvalue.isPresent())
                 {
-                    realvalue = this.prefData.getPreference(iidx, uidx);
-                    value = realvalue.isPresent() ? realvalue.get().v2 : 0.0;
-                    if (!this.ignoreUnknown || realvalue.isPresent())
-                    {
-                        this.updateMethod(iidx, uidx, value);
-                        this.trainData.updateRating(iidx, uidx, value);
-                    }
+                    value = realvalue.get().v2;
+                    isPresent = true;
                 }
-                this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
             }
-        }
-        else
-        {
-            if (!this.ignoreUnknown)
+
+            // If the rating exists, or we do want to consider it:
+            if(!this.ignoreUnknown || isPresent)
             {
-                this.updateMethod(uidx, iidx, 0.0);
-                this.trainData.updateRating(uidx, iidx, 0.0);
+                this.updateMethod(iidx, uidx, value);
+                this.trainData.updateRating(iidx, uidx, value);
             }
+
+            // Remove uidx from the availability index of iidx, if it has not appeared earlier.
+            int index = this.availability.get(iidx).indexOf(uidx);
+            if(index > 0) // This pair has not been previously recommended:
+                this.availability.get(iidx).removeInt(index);
         }
 
-        if (uidx == -1)
-        {
-            System.err.println("ERROR: uidx == -1");
-        }
-        else if (iidx == -1)
-        {
-            System.err.println("ERROR: iidx == -1");
-        }
-        else if (this.availability.get(uidx).indexOf(iidx) == -1)
-        {
-            System.err.println("iidx not available in uidx");
-        }
-
+        // Remove iidx from the availability index of uidx.
         this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
     }
 
@@ -327,41 +483,64 @@ public abstract class InteractiveRecommender<U, I>
     public void update(List<Tuple2<Integer, Integer>> train)
     {
         List<Tuple3<Integer, Integer, Double>> tuples = new ArrayList<>();
-        for (Tuple2<Integer, Integer> tuple : train)
+        // For each tuple...
+        for(Tuple2<Integer, Integer> tuple : train)
         {
             int uidx = tuple.v1;
             int iidx = tuple.v2;
-            Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
-            double value = realvalue.isPresent() ? realvalue.get().v2 : 0.0;
-            if (!this.ignoreUnknown || realvalue.isPresent())
+
+            double value = 0.0;
+            boolean isPresent = false;
+
+            // First, we check if the rating exists.
+            if(this.prefData.numUsers(iidx) > 0 && this.prefData.numItems(uidx) > 0)
+            {
+                Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
+                if(realvalue.isPresent())
+                {
+                    value = realvalue.get().v2;
+                    isPresent = true;
+                }
+            }
+
+            // If the rating exists, or we do want to consider it:
+            if(!this.ignoreUnknown || isPresent)
             {
                 tuples.add(new Tuple3<>(uidx, iidx, value));
                 this.trainData.updateRating(uidx, iidx, value);
             }
 
-            if (this.availability.get(uidx).contains(iidx))
+            // Then, if we are in the contact recommendation case, and the rating exists...
+            if(isPresent && this.notReciprocal)
             {
-                this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-            }
-
-            if (this.notReciprocal)
-            {
-                if (this.prefData.numItems(iidx) > 0)
+                value = 0.0;
+                isPresent = false;
+                // First, we check whether the element is in the data.
+                if(this.prefData.numItems(iidx) > 0 && this.prefData.numUsers(uidx) > 0)
                 {
-                    realvalue = this.prefData.getPreference(iidx, uidx);
-                    value = realvalue.isPresent() ? realvalue.get().v2 : 0.0;
-                    if (!this.ignoreUnknown || realvalue.isPresent())
+                    Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
+                    if(realvalue.isPresent())
                     {
-                        tuples.add(new Tuple3<>(iidx, uidx, value));
-                        this.trainData.updateRating(iidx, uidx, value);
+                        value = realvalue.get().v2;
+                        isPresent = true;
                     }
                 }
 
-                if (this.availability.get(iidx).contains(uidx))
+                // If the rating exists, or we do want to consider it:
+                if(!this.ignoreUnknown || isPresent)
                 {
-                    this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
+                    tuples.add(new Tuple3<>(iidx, uidx, value));
+                    this.trainData.updateRating(iidx, uidx, value);
                 }
+
+                // Remove uidx from the availability index of iidx, if it has not appeared earlier.
+                int index = this.availability.get(iidx).indexOf(uidx);
+                if(index > 0) // This pair has not been previously recommended:
+                    this.availability.get(iidx).removeInt(index);
             }
+
+            // Remove iidx from the availability index of uidx.
+            this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
         }
 
         this.updateMethod(tuples);
