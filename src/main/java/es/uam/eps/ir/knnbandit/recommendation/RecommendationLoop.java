@@ -173,7 +173,7 @@ public class RecommendationLoop<U, I>
     {
         if(this.recommender.usesAll())
         {
-            this.recommender.init(fullTrain, contactRec);
+            this.recommender.init(fullTrain, availability, contactRec);
         }
         else
         {
