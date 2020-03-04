@@ -9,7 +9,6 @@
  */
 package es.uam.eps.ir.knnbandit.main.contact;
 
-import es.uam.eps.ir.knnbandit.main.general.movielens.InteractiveRecommendation;
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
@@ -19,6 +18,7 @@ import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.io.GraphReader;
 import es.uam.eps.ir.knnbandit.graph.io.TextGraphReader;
 import es.uam.eps.ir.knnbandit.io.Reader;
+import es.uam.eps.ir.knnbandit.main.general.movielens.InteractiveRecommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
@@ -172,7 +172,7 @@ public class InteractiveContactRecommendationParallel
 
         // Find the number of parts. We might count an addtional part (with no training)
         int auxParts = alsoWithoutTraining ? numParts + 1 : numParts;
-        IntStream.range(0, auxNumParts).parallel().forEach(part ->
+        IntStream.range(0, auxParts).parallel().forEach(part ->
         {
             // Step 1: Prepare the training data.
             String data = (part != (numParts+1)) ? "for the" + (part + 1) + "/" + numParts + " split" : "for the non-training split";

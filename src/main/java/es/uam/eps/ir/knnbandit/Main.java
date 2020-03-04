@@ -62,6 +62,11 @@ public class Main
     private final static String CONTACTPARALLEL = "contactparallel";
 
     /**
+     *
+     */
+    private final static String OUTPUTRANKER = "outputranker";
+    private final static String RANKERCONFIG = "rankerconfig";
+    /**
      * Main method. Executes the main method in the class specified by the first
      * argument with the rest of run time arguments.
      *
@@ -118,6 +123,12 @@ public class Main
                     break;
                 case CONTACTTRAININGSTATS:
                     className = "es.uam.eps.ir.knnbandit.main.contact.TrainingContactStatistics";
+                    break;
+                case OUTPUTRANKER:
+                    className = "es.uam.eps.ir.knnbandit.main.OutputRanker";
+                    break;
+                case RANKERCONFIG:
+                    className = "es.uam.eps.ir.knnbandit.main.ParallelConfigurator";
                     break;
                 default:
                     System.err.println("ERROR: Invalid configuration.");

@@ -251,7 +251,7 @@ public abstract class InteractiveRecommender<U, I>
                     }
                 }
 
-                if (!this.ignoreUnknown || known)
+                if(!this.ignoreUnknown || known)
                 {
                     this.trainData.updateRating(iidx, uidx, value);
                 }
@@ -321,8 +321,11 @@ public abstract class InteractiveRecommender<U, I>
                     this.trainData.updateRating(iidx, uidx, value);
                 }
 
-                // remove the reciprocal pair from the availability list.
-                this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
+                int index = this.availability.get(iidx).indexOf(uidx);
+                if(index > 0) // It might happen that the user uidx has been previously recommended to iidx (but it was not a hit)
+                {
+                    this.availability.get(iidx).removeInt(index);
+                }
             }
         });
 
