@@ -68,7 +68,7 @@ public class InteractiveRecommendation
      */
     public static void main(String[] args) throws IOException, UnconfiguredException
     {
-        if (args.length < 7)
+        if (args.length < 8)
         {
             System.err.println("ERROR: Invalid arguments");
             System.err.println("Usage:");

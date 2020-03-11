@@ -835,7 +835,7 @@ public class AlgorithmSelector<U, I>
                     return new GeneralizedLinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, k, lambdaP, lambdaQ, stdev, numIter, alpha);
                 }
             case PMFBanditIdentifiers.THOMPSON:
-                if (split.size() == 2)
+                if (split.size() == 1)
                 {
                     hasRating = true;
                 }

@@ -14,6 +14,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
 import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -22,6 +23,7 @@ import es.uam.eps.ir.knnbandit.partition.Partition;
 import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
 import es.uam.eps.ir.knnbandit.partition.UniformPartition;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.RecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
@@ -33,6 +35,7 @@ import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
+import org.jooq.lambda.tuple.Tuple4;
 import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
@@ -110,6 +113,8 @@ public class InteractiveRecommendationParallel
 
         boolean alsoWithoutTraining = args[9].equalsIgnoreCase("true");
 
+        KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(args[10]);
+
         // Configure the weight function and relevance functions.
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x :
                 (double x) -> (x >= threshold ? 1.0 : 0.0);
@@ -126,9 +131,9 @@ public class InteractiveRecommendationParallel
        // Then, we read the ratings.
         Set<Long> users = new HashSet<>();
         Set<Long> items = new HashSet<>();
-        List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
+        List<Tuple4<Long, Long, Double, Boolean>> triplets = new ArrayList<>();
         int numrel = 0;
-
+        int numrelknown = 0;
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(input))))
         {
             String line;
@@ -136,9 +141,9 @@ public class InteractiveRecommendationParallel
             {
                 String[] split = line.split("::");
                 Long user = Parsers.lp.parse(split[0]);
-                //String item = split[1];
                 Long item = Parsers.lp.parse(split[1]);
                 double val = Parsers.dp.parse(split[2]);
+                boolean known = split[3].equals("1");
 
                 users.add(user);
                 items.add(item);
@@ -147,24 +152,37 @@ public class InteractiveRecommendationParallel
                 if (relevance.test(rating))
                 {
                     numrel++;
+                    if(known) numrelknown++;
                 }
 
-                triplets.add(new Tuple3<>(user, item, rating));
+                triplets.add(new Tuple4<>(user, item, rating, known));
             }
         }
 
+        // Create the data.
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
         FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
-        SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
+
+        SimpleFastUserKnowledgePreferenceData<Long, Long> knowledgeData = SimpleFastUserKnowledgePreferenceData.load(triplets.stream(), uIndex, iIndex);
+        SimpleFastPreferenceData<Long, Long> prefData = (SimpleFastPreferenceData<Long,Long>) knowledgeData.getPreferenceData();
+        SimpleFastPreferenceData<Long, Long> knownData = (SimpleFastPreferenceData<Long,Long>) knowledgeData.getKnownPreferenceData();
+        SimpleFastPreferenceData<Long, Long> unknownData = (SimpleFastPreferenceData<Long,Long>) knowledgeData.getUnknownPreferenceData();
+
+
 
         System.out.println("Users: " + uIndex.numUsers());
         System.out.println("Items: " + iIndex.numItems());
-        System.out.println("Total number of relevant items:" + numrel);
+        System.out.println("Num. relevant: " + numrel);
+        System.out.println("Num. relevant known: " + numrelknown);
+        System.out.println("Num. relevant unknown: " + (numrel - numrelknown));
         int numRel = numrel;
+        int numRelKnown = numrelknown;
 
         // Initialize the metrics to compute.
         Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
         metrics.put("recall", () -> new CumulativeRecall<>(prefData, numRel, realThreshold));
+        metrics.put("recall-known", () -> new CumulativeRecall<>(knownData, numRelKnown, realThreshold));
+        metrics.put("recall-unknown", () -> new CumulativeRecall<>(unknownData, numRel-numRelKnown, realThreshold));
         metrics.put("gini", () -> new CumulativeGini<>(items.size()));
         List<String> metricNames = new ArrayList<>(metrics.keySet());
 
@@ -173,7 +191,7 @@ public class InteractiveRecommendationParallel
         List<String> algorithmNames = readAlgorithmList(algorithms, numParts);
         List<InteractiveRecommender<Long, Long>> recs = new ArrayList<>();
         AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
-        algorithmSelector.configure(uIndex, iIndex, prefData, realThreshold);
+        algorithmSelector.configure(uIndex, iIndex, prefData, realThreshold, knowledgeData, dataUse);
         for(String algorithm : algorithmNames)
         {
             InteractiveRecommender<Long, Long> rec = algorithmSelector.getAlgorithm(algorithm);

@@ -14,6 +14,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
 import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.main.Initializer;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -22,6 +23,7 @@ import es.uam.eps.ir.knnbandit.partition.Partition;
 import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
 import es.uam.eps.ir.knnbandit.partition.UniformPartition;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.RecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
@@ -34,6 +36,7 @@ import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
+import org.jooq.lambda.tuple.Tuple4;
 import org.ranksys.core.util.tuples.Tuple2od;
 import org.ranksys.formats.parsing.Parsers;
 
@@ -114,6 +117,7 @@ public class InteractiveRecommendationValidation
         boolean relevantPartition = auxNumParts < 0;
         int numParts = Math.abs(auxNumParts);
         String algorithmsFile = args[10];
+        KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(args[11]);
 
         // Configure functions for determining the weight and relevance.
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x :
@@ -131,9 +135,9 @@ public class InteractiveRecommendationValidation
         // Then, we read the ratings.
         Set<Long> users = new HashSet<>();
         Set<Long> items = new HashSet<>();
-        List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
-
-        // Read the ratings
+        List<Tuple4<Long, Long, Double, Boolean>> triplets = new ArrayList<>();
+        int numrel = 0;
+        int numrelknown = 0;
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(input))))
         {
             String line;
@@ -141,26 +145,40 @@ public class InteractiveRecommendationValidation
             {
                 String[] split = line.split("::");
                 Long user = Parsers.lp.parse(split[0]);
-                //String item = split[1];
                 Long item = Parsers.lp.parse(split[1]);
                 double val = Parsers.dp.parse(split[2]);
+                boolean known = split[3].equals("1");
 
                 users.add(user);
                 items.add(item);
 
                 double rating = weightFunction.applyAsDouble(val);
+                if (relevance.test(rating))
+                {
+                    numrel++;
+                    if(known) numrelknown++;
+                }
 
-                triplets.add(new Tuple3<>(user, item, rating));
+                triplets.add(new Tuple4<>(user, item, rating, known));
             }
         }
 
-        // First, obtain the full preference information.
+        // Create the data.
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
         FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
-        SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
+
+        SimpleFastUserKnowledgePreferenceData<Long, Long> knowledgeData = SimpleFastUserKnowledgePreferenceData.load(triplets.stream(), uIndex, iIndex);
+        SimpleFastPreferenceData<Long, Long> prefData = (SimpleFastPreferenceData<Long,Long>) knowledgeData.getPreferenceData();
+        //SimpleFastPreferenceData<Long, Long> knownData = (SimpleFastPreferenceData<Long,Long>) knowledgeData.getKnownPreferenceData();
+        //SimpleFastPreferenceData<Long, Long> unknownData = (SimpleFastPreferenceData<Long,Long>) knowledgeData.getUnknownPreferenceData();
 
         System.out.println("Users: " + uIndex.numUsers());
         System.out.println("Items: " + iIndex.numItems());
+        System.out.println("Num. relevant: " + numrel);
+        System.out.println("Num. relevant known: " + numrelknown);
+        System.out.println("Num. relevant unknown: " + (numrel - numrelknown));
+        int numRel = numrel;
+        int numRelKnown = numrelknown;
         int trainingSize = train.size();
 
         Partition partition = relevantPartition ? new RelevantPartition(prefData, relevance) : new UniformPartition();
@@ -226,7 +244,7 @@ public class InteractiveRecommendationValidation
             // Select the algorithms.
             long a = System.currentTimeMillis();
             AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
-            algorithmSelector.configure(uIndex, iIndex, validData, realThreshold);
+            algorithmSelector.configure(uIndex, iIndex, validData, realThreshold, knowledgeData, dataUse);
             algorithmSelector.addFile(algorithms);
             Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
             long b = System.currentTimeMillis();
