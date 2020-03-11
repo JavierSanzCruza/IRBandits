@@ -10,9 +10,10 @@
 package es.uam.eps.ir.knnbandit.recommendation;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
-import es.uam.eps.ir.knnbandit.data.preference.fast.SimpleFastUpdateablePreferenceData;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -51,17 +52,26 @@ public abstract class InteractiveRecommender<U, I>
      */
     protected final SimpleFastPreferenceData<U, I> prefData;
     /**
+     * Knowledge about whether the user knows about the items or not
+     */
+    protected final SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData;
+    /**
      * A map including which items are recommendable for each user.
      */
     protected final List<IntList> availability;
     /**
      * True if we ignore missing ratings, false if we take them as failures.
      */
-    protected final boolean ignoreUnknown;
+    protected final boolean ignoreNotRated;
     /**
      * True if we want to prevent recommending reciprocal links (only people-to-people recommendation in social networks).
      */
     protected final boolean notReciprocal;
+    /**
+     * In the case of using data with knowledge about whether the user knew about the item before consuming it,
+     * identify which information we have to use to update the recommender.
+     */
+    protected final KnowledgeDataUse dataUse;
     /**
      * Random number generator.
      */
@@ -77,19 +87,44 @@ public abstract class InteractiveRecommender<U, I>
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      preference data.
-     * @param ignoreUnknown False to treat missing ratings as failures, true otherwise.
+     * @param ignoreNotRated true if we have to update the recommender only when the item has test ratings, false otherwise.
      */
-    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown)
+    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated)
     {
         this.uIndex = uIndex;
         this.iIndex = iIndex;
         this.prefData = prefData;
         this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         this.availability = new ArrayList<>();
-        //IntStream.range(0, prefData.numUsers()).forEach(uidx -> availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new))));
-        this.ignoreUnknown = ignoreUnknown;
+        this.ignoreNotRated = ignoreNotRated;
         this.notReciprocal = false;
         this.rng = new Random(UntieRandomNumber.RNG);
+        this.knowledgeData = null;
+        this.dataUse = KnowledgeDataUse.ALL;
+    }
+
+
+    /**
+     * Constructor.
+     *
+     * @param uIndex        User index.
+     * @param iIndex        Item index.
+     * @param prefData      preference data.
+     * @param ignoreNotRated true if we have to update the recommender only when the item has test ratings, false otherwise.
+     * @param dataUse       configuration for selecting which ratings we have to use to update.
+     */
+    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U,I> prefData, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, boolean ignoreNotRated, KnowledgeDataUse dataUse)
+    {
+        this.uIndex = uIndex;
+        this.iIndex = iIndex;
+        this.prefData = prefData;
+        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+        this.availability = new ArrayList<>();
+        this.ignoreNotRated = ignoreNotRated;
+        this.notReciprocal = false;
+        this.rng = new Random(UntieRandomNumber.RNG);
+        this.knowledgeData = knowledgeData;
+        this.dataUse = dataUse;
     }
 
     /**
@@ -98,104 +133,40 @@ public abstract class InteractiveRecommender<U, I>
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      preference data.
-     * @param ignoreUnknown False to treat missing ratings as failures, true otherwise.
+     * @param ignoreNotRated False to treat missing ratings as failures, true otherwise.
      * @param notReciprocal False to treat missing ratings as failures, true otherwise.
      */
-    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal)
+    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, boolean notReciprocal)
     {
         this.uIndex = uIndex;
         this.iIndex = iIndex;
         this.prefData = prefData;
         this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         this.availability = new ArrayList<>();
-        /*IntStream.range(0, prefData.numUsers()).forEach(uidx ->
-        {
-            this.availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
-        });*/
-        this.ignoreUnknown = ignoreUnknown;
+        this.ignoreNotRated = ignoreNotRated;
         this.notReciprocal = notReciprocal;
         this.rng = new Random(UntieRandomNumber.RNG);
+        this.knowledgeData = null;
+        this.dataUse = KnowledgeDataUse.ALL;
     }
 
     /**
-     * Initializes the recommender (resets it to its basics)
+     * Initializer: Initializes the recommender (resets it to its basics)
      */
     public void init(boolean contactRec)
     {
-        availability.clear();
-
-        this.rng = new Random(UntieRandomNumber.RNG);
-
-        IntStream.range(0, prefData.numUsers()).forEach(uidx ->
-        {
-            if (contactRec)
-            {
-                availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
-            }
-            else
-            {
-                availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
-            }
-        });
-
-        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
-
+        this.auxInit(contactRec);
         this.initializeMethod();
     }
 
     /**
-     * Auxiliar initializer: Initializes only the availability and the training data, not other properties of the method.
-     * @param contactRec true if we are using contact recommendation.
-     */
-    private void auxInit(boolean contactRec)
-    {
-        availability.clear();
-
-        this.rng = new Random(UntieRandomNumber.RNG);
-
-        IntStream.range(0, prefData.numUsers()).forEach(uidx ->
-        {
-            if (contactRec)
-            {
-                availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
-            }
-            else
-            {
-                availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
-            }
-        });
-
-        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
-    }
-
-    /**
-     * Initializes the recommender.
+     * Initializer: Initializes the recommender.
      * @param availability the list of items which can be recommended to each user.
      */
     public void init(List<IntList> availability)
     {
-        this.availability.clear();
-        for(IntList items : availability)
-        {
-            this.availability.add(new IntArrayList(items));
-        }
-        this.rng = new Random(UntieRandomNumber.RNG);
-        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
-    }
-
-    /**
-     * Auxiliar initializer: Initializes the availability, the random number and the training data (empty).
-     * @param availability the list of items which can be recommended to each user.
-     */
-    private void auxInit(List<IntList> availability)
-    {
-        this.availability.clear();
-        for(IntList items : availability)
-        {
-            this.availability.add(new IntArrayList(items));
-        }
-        this.rng = new Random(UntieRandomNumber.RNG);
-        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+        this.auxInit(availability);
+        this.initializeMethod();
     }
 
     /**
@@ -216,52 +187,18 @@ public abstract class InteractiveRecommender<U, I>
             int uidx = pair.v1;
             int iidx = pair.v2;
 
-            // Check whether the element can be retrieved or not.
-            double value = 0.0;
-            boolean known = false;
-            if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+            boolean hasUpdated = this.auxUpdateRating(uidx, iidx, false);
+            // If the (uidx,iidx) pair has been updated (success), then, if it is contact recommendation
+            // and the notReciprocal flag is activated, update the rating, by just adding it.
+            if (hasUpdated && contactRec && this.notReciprocal)
             {
-                Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
-                if(realvalue.isPresent())
-                {
-                    value = realvalue.get().v2();
-                    known = true;
-                }
-            }
-
-            // If it is known, update the rating.
-            if (!this.ignoreUnknown || known)
-            {
-                this.trainData.updateRating(uidx, iidx, value);
-            }
-
-            // If we are talking about contact recommendation, we cannot recommend reciprocals and the link exists...
-            // (or, at least, we know about it...)
-            if (contactRec && this.notReciprocal && known)
-            {
-                value = 0.0;
-                known = false;
-                if (prefData.numItems(iidx) > 0 && prefData.numUsers(uidx) > 0)
-                {
-                    Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
-                    if(realvalue.isPresent())
-                    {
-                        value = realvalue.get().v2();
-                        known = true;
-                    }
-                }
-
-                if(!this.ignoreUnknown || known)
-                {
-                    this.trainData.updateRating(iidx, uidx, value);
-                }
+                this.auxUpdateRating(iidx, uidx, false);
             }
         });
 
         // Initialize the specific properties of the method.
         this.initializeMethod();
     }
-
 
     /**
      * Initializes the recommender with training data.
@@ -281,49 +218,15 @@ public abstract class InteractiveRecommender<U, I>
             int uidx = pair.v1;
             int iidx = pair.v2;
 
-            double value = 0.0;
-            boolean known = false;
-            if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
-            {
-                Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
-                if(realvalue.isPresent())
-                {
-                    value = realvalue.get().v2();
-                    known = true;
-                }
-            }
-
-            if (!this.ignoreUnknown || known)
-            {
-                this.trainData.updateRating(uidx, iidx, value);
-            }
-
-            // remove the item from the availability list.
+            // Update the rating, and modify the corresponding availability.
+            boolean hasUpdated = this.auxUpdateRating(uidx, iidx, false);
             this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-
-            // Update the reciprocal (if we check this).
-            if (contactRec && this.notReciprocal && known) // If the link exists...
+            if(hasUpdated && contactRec && this.notReciprocal)
             {
-                known = false;
-                value = 0.0;
-                if (prefData.numItems(iidx) > 0 && prefData.numUsers(uidx) > 0)
-                {
-                    Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
-                    if(realvalue.isPresent())
-                    {
-                        value = realvalue.get().v2();
-                        known = true;
-                    }
-                }
-
-                if (!this.ignoreUnknown || known)
-                {
-                    this.trainData.updateRating(iidx, uidx, value);
-                }
-
                 int index = this.availability.get(iidx).indexOf(uidx);
                 if(index > 0) // It might happen that the user uidx has been previously recommended to iidx (but it was not a hit)
                 {
+                    this.auxUpdateRating(iidx, uidx, false);
                     this.availability.get(iidx).removeInt(index);
                 }
             }
@@ -415,68 +318,19 @@ public abstract class InteractiveRecommender<U, I>
      */
     public void update(int uidx, int iidx)
     {
-        double value = 0.0;
-        boolean isPresent = false;
+        boolean hasUpdated = this.auxUpdateRating(uidx, iidx, true);
+        this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
 
-        // First, we check if the rating exists.
-        if(this.prefData.numUsers(iidx) > 0 && this.prefData.numItems(uidx) > 0)
+        if(hasUpdated && this.notReciprocal)
         {
-            Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
-            if(realvalue.isPresent())
-            {
-                value = realvalue.get().v2;
-                isPresent = true;
-            }
-        }
-
-        // If the rating exists, or we do want to consider it:
-        if(!this.ignoreUnknown || isPresent)
-        {
-            this.updateMethod(uidx, iidx, value);
-            this.trainData.updateRating(uidx, iidx, value);
-        }
-
-        // Then, if we are in the contact recommendation case, and the rating exists...
-        if(isPresent && this.notReciprocal)
-        {
-            value = 0.0;
-            isPresent = false;
-            // First, we check whether the element is in the data.
-            if(this.prefData.numItems(iidx) > 0 && this.prefData.numUsers(uidx) > 0)
-            {
-                Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
-                if(realvalue.isPresent())
-                {
-                    value = realvalue.get().v2;
-                    isPresent = true;
-                }
-            }
-
-            // If the rating exists, or we do want to consider it:
-            if(!this.ignoreUnknown || isPresent)
-            {
-                this.updateMethod(iidx, uidx, value);
-                this.trainData.updateRating(iidx, uidx, value);
-            }
-
-            // Remove uidx from the availability index of iidx, if it has not appeared earlier.
             int index = this.availability.get(iidx).indexOf(uidx);
             if(index > 0) // This pair has not been previously recommended:
+            {
                 this.availability.get(iidx).removeInt(index);
+                this.auxUpdateRating(iidx, uidx, true);
+            }
         }
-
-        // Remove iidx from the availability index of uidx.
-        this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
     }
-
-    /**
-     * Updates the method.
-     *
-     * @param uidx  User identifier.
-     * @param iidx  Item identifier.
-     * @param value The rating uidx provides to iidx.
-     */
-    public abstract void updateMethod(int uidx, int iidx, double value);
 
     /**
      * Updates the method with training data.
@@ -491,64 +345,43 @@ public abstract class InteractiveRecommender<U, I>
         {
             int uidx = tuple.v1;
             int iidx = tuple.v2;
+            boolean hasUpdated = this.auxUpdateRating(uidx, iidx, false);
+            this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
 
-            double value = 0.0;
-            boolean isPresent = false;
-
-            // First, we check if the rating exists.
-            if(this.prefData.numUsers(iidx) > 0 && this.prefData.numItems(uidx) > 0)
+            if(hasUpdated)
             {
-                Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
-                if(realvalue.isPresent())
-                {
-                    value = realvalue.get().v2;
-                    isPresent = true;
-                }
-            }
-
-            // If the rating exists, or we do want to consider it:
-            if(!this.ignoreUnknown || isPresent)
-            {
+                double value = this.trainData.getPreference(uidx, iidx).get().v2();
                 tuples.add(new Tuple3<>(uidx, iidx, value));
-                this.trainData.updateRating(uidx, iidx, value);
-            }
 
-            // Then, if we are in the contact recommendation case, and the rating exists...
-            if(isPresent && this.notReciprocal)
-            {
-                value = 0.0;
-                isPresent = false;
-                // First, we check whether the element is in the data.
-                if(this.prefData.numItems(iidx) > 0 && this.prefData.numUsers(uidx) > 0)
+                if(this.notReciprocal)
                 {
-                    Optional<IdxPref> realvalue = this.prefData.getPreference(iidx, uidx);
-                    if(realvalue.isPresent())
+                    int index = this.availability.get(iidx).indexOf(uidx);
+                    if(index > 0) // This pair has not been previously recommended:
                     {
-                        value = realvalue.get().v2;
-                        isPresent = true;
+                        this.availability.get(iidx).removeInt(index);
+                        hasUpdated = this.auxUpdateRating(iidx, uidx, false);
+                        if(hasUpdated)
+                        {
+                            this.availability.get(iidx).removeInt(index);
+                            value = this.trainData.getPreference(iidx, uidx).get().v2();
+                            tuples.add(new Tuple3<>(iidx, uidx, value));
+                        }
                     }
                 }
-
-                // If the rating exists, or we do want to consider it:
-                if(!this.ignoreUnknown || isPresent)
-                {
-                    tuples.add(new Tuple3<>(iidx, uidx, value));
-                    this.trainData.updateRating(iidx, uidx, value);
-                }
-
-                // Remove uidx from the availability index of iidx, if it has not appeared earlier.
-                int index = this.availability.get(iidx).indexOf(uidx);
-                if(index > 0) // This pair has not been previously recommended:
-                    this.availability.get(iidx).removeInt(index);
             }
-
-            // Remove iidx from the availability index of uidx.
-            this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
         }
 
         this.updateMethod(tuples);
     }
 
+    /**
+     * Updates the method.
+     *
+     * @param uidx  User identifier.
+     * @param iidx  Item identifier.
+     * @param value The rating uidx provides to iidx.
+     */
+    public abstract void updateMethod(int uidx, int iidx, double value);
 
     /**
      * Updates the method.
@@ -567,6 +400,108 @@ public abstract class InteractiveRecommender<U, I>
      */
     public boolean usesAll()
     {
-        return !this.ignoreUnknown;
+        return !this.ignoreNotRated;
+    }
+
+    /**
+     * Auxiliar initializer: Initializes only the availability and the training data, not other properties of the method.
+     * @param contactRec true if we are using contact recommendation.
+     */
+    private void auxInit(boolean contactRec)
+    {
+        // Initialize the availability lists and the random number generator.
+        this.availability.clear();
+        this.rng = new Random(UntieRandomNumber.RNG);
+
+        // Fill the availability lists.
+        IntStream.range(0, prefData.numUsers()).forEach(uidx ->
+        {
+            if (contactRec)
+            {
+                availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
+            }
+            else
+            {
+                availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
+            }
+        });
+
+        // Load the training data (empty data).
+        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+    }
+
+    /**
+     * Auxiliar initializer: Initializes the availability, the random number and the training data (empty).
+     * @param availability the list of items which can be recommended to each user.
+     */
+    private void auxInit(List<IntList> availability)
+    {
+        this.availability.clear();
+        for(IntList items : availability)
+        {
+            this.availability.add(new IntArrayList(items));
+        }
+        this.rng = new Random(UntieRandomNumber.RNG);
+        this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+    }
+
+
+
+    /**
+     * Auxiliar function for updating ratings
+     * @param uidx the identifier of the user.
+     * @param iidx the identifier of the item.
+     * @param updateMethod true if the method has to be updated false otherwise.
+     * @return true if the rating exists and it has been added to training.
+     */
+    private boolean auxUpdateRating(int uidx, int iidx, boolean updateMethod)
+    {
+        double value = 0.0;
+        boolean hasRating = false;
+        boolean isKnown = false;
+
+        // If the user and the item exist in the preference data.
+        if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0)
+        {
+            // Obtain then the possible preference for uidx to iidx.
+            Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
+            if(realvalue.isPresent())
+            {
+                value = realvalue.get().v2();
+                hasRating = true;
+            }
+
+            // For datasets with information about whether the user knew about the methods.
+            if(hasRating && dataUse != KnowledgeDataUse.ALL)
+            {
+                realvalue = this.knowledgeData.getKnownPreference(uidx, iidx);
+                if(realvalue.isPresent())
+                {
+                    isKnown = true;
+                }
+            }
+        }
+
+        boolean update = (!this.ignoreNotRated || hasRating);
+        switch(dataUse)
+        {
+            case ONLYKNOWN:
+                update = update && isKnown;
+                break;
+            case ONLYUNKNOWN:
+                update = update && !isKnown;
+                break;
+        }
+
+        // If we have updated the recommender...
+        if (update)
+        {
+            // If we have to update the method, do it.
+            if(updateMethod) this.updateMethod(uidx, iidx, value);
+            // Update the rating in the training.
+            this.trainData.updateRating(uidx, iidx, value);
+        }
+
+        return update;
     }
 }

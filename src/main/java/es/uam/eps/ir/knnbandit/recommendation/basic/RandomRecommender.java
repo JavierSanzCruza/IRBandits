@@ -10,8 +10,8 @@
 package es.uam.eps.ir.knnbandit.recommendation.basic;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -41,11 +41,11 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
      * @param uIndex        user index.
      * @param iIndex        item index.
      * @param prefData      preference data.
-     * @param ignoreUnknown true if we want to ignore missing ratings at updating, false if we want to treat them as failures.
+     * @param hasRating true if we want to ignore missing ratings at updating, false if we want to treat them as failures.
      */
-    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown)
+    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown);
+        super(uIndex, iIndex, prefData, hasRating);
     }
 
     /**

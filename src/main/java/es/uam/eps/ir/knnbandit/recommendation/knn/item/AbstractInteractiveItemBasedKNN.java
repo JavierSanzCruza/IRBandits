@@ -9,9 +9,9 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.item;
 
-import es.uam.eps.ir.knnbandit.data.preference.fast.TransposedUpdateablePreferenceData;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.TransposedUpdateablePreferenceData;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
@@ -67,15 +67,15 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param ignoreZeros   True if we ignore zero ratings when updating.
      * @param userK         Number of items rated by the user to pick.
      * @param itemK         Number of users rated by the item to pick.
      * @param sim           Updateable similarity
      */
-    public AbstractInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
+    public AbstractInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown);
+        super(uIndex, iIndex, prefData, hasRating);
         this.sim = sim;
         this.userK = userK;
         this.itemK = (itemK > 0) ? itemK : prefData.numItems();
@@ -99,16 +99,16 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param ignoreZeros   True if we ignore zero ratings when updating.
      * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise.
      * @param userK         Number of items rated by the user to pick.
      * @param itemK         Number of users rated by the item to pick.
      * @param sim           Updateable similarity
      */
-    public AbstractInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean ignoreZeros, boolean notReciprocal, int userK, int itemK, UpdateableSimilarity sim)
+    public AbstractInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, boolean notReciprocal, int userK, int itemK, UpdateableSimilarity sim)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
         this.sim = sim;
         this.userK = userK;
         this.itemK = (itemK > 0) ? itemK : prefData.numItems();

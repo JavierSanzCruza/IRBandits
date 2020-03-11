@@ -9,9 +9,11 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.basic;
 
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -40,11 +42,11 @@ public abstract class AbstractBasicInteractiveRecommender<U, I> extends Interact
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if (user, item) pairs without training must be ignored.
+     * @param hasRating True if (user, item) pairs without training must be ignored.
      */
-    public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown)
+    public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown);
+        super(uIndex, iIndex, prefData, hasRating);
         this.values = new double[prefData.numItems()];
         IntStream.range(0, prefData.numItems()).forEach(iidx -> values[iidx] = 0);
     }
@@ -55,12 +57,28 @@ public abstract class AbstractBasicInteractiveRecommender<U, I> extends Interact
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if (user, item) pairs without training must be ignored.
+     * @param hasRating True if (user, item) pairs without training must be ignored.
      * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise.
      */
-    public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal)
+    public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
+        this.values = new double[prefData.numItems()];
+        IntStream.range(0, prefData.numItems()).forEach(iidx -> values[iidx] = 0);
+    }
+
+    /**
+     *
+     * @param uIndex
+     * @param iIndex
+     * @param prefData
+     * @param knowledgeData
+     * @param hasRating
+     * @param dataUse
+     */
+    public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U,I> prefData, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, boolean hasRating, KnowledgeDataUse dataUse)
+    {
+        super(uIndex, iIndex, prefData, knowledgeData, hasRating, dataUse);
         this.values = new double[prefData.numItems()];
         IntStream.range(0, prefData.numItems()).forEach(iidx -> values[iidx] = 0);
     }

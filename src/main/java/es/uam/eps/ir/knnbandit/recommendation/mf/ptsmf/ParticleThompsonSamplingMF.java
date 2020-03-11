@@ -1,7 +1,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf;
 
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.mf.Particle;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.particles.PTSMFParticleFactory;
@@ -44,13 +44,13 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
      * @param uIndex user index.
      * @param iIndex item index.
      * @param prefData preference data.
-     * @param ignoreUnknown true if the algorithm must not be updated when the rating is unknown, false otherwise.
+     * @param hasRating true if the algorithm must not be updated when the rating is unknown, false otherwise.
      * @param numParticles the number of particles.
      * @param factory the particle factory.
      */
-    public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, int numParticles, PTSMFParticleFactory<U, I> factory)
+    public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int numParticles, PTSMFParticleFactory<U, I> factory)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown);
+        super(uIndex, iIndex, prefData, hasRating);
         this.factory = factory;
         this.particleList = new ArrayList<>();
         this.ptsrng = new Random();
@@ -62,14 +62,14 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
      * @param uIndex user index.
      * @param iIndex item index.
      * @param prefData preference data.
-     * @param ignoreUnknown true if the algorithm must not be updated when the rating is unknown, false otherwise.
+     * @param hasRating true if the algorithm must not be updated when the rating is unknown, false otherwise.
      * @param notReciprocal true if reciprocal relations are not recommended, false otherwise.
      * @param numParticles the number of particles.
      * @param factory the particle factory.
      */
-    public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal, int numParticles, PTSMFParticleFactory<U, I> factory)
+    public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int numParticles, PTSMFParticleFactory<U, I> factory)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
         this.factory = factory;
         this.particleList = new ArrayList<>();
         this.ptsrng = new Random();

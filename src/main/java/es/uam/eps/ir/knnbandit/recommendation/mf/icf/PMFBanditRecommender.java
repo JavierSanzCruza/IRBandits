@@ -6,8 +6,8 @@ import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 
@@ -78,16 +78,16 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param k             Number of latent factors to use
      * @param stdevP        Prior standard deviation for the user factors.
      * @param stdevQ        Prior standard deviation for the item factors.
      * @param stdev         Prior standard deviation for the ratings.
      * @param numIter       Number of training iterations.
      */
-    public PMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, int k, double stdevP, double stdevQ, double stdev, int numIter)
+    public PMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown);
+        super(uIndex, iIndex, prefData, hasRating);
 
         this.stdev = stdev;
         this.lambdaP = stdevP / stdev;
@@ -107,7 +107,7 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param k             Number of latent factors to use
      * @param stdevP        Prior standard deviation for the user factors.
      * @param stdevQ        Prior standard deviation for the item factors.
@@ -115,9 +115,9 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
      * @param notReciprocal Not reciprocal
      * @param numIter       Number of training iterations.
      */
-    public PMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal, int k, double stdevP, double stdevQ, double stdev, int numIter)
+    public PMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int k, double stdevP, double stdevQ, double stdev, int numIter)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
 
         this.stdev = stdev * stdev;
         this.lambdaP = stdevP * stdevP / this.stdev;

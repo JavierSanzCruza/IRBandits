@@ -48,7 +48,21 @@ public class ParallelConfigurator
 
                     String[] split = line.split("\t");
 
-                    bw.write(split[0].split("\\.")[0]+"\n");
+                    if(split[0].endsWith(".txt"))
+                    {
+                        String[] auxSplit = split[0].split("\\.");
+                        int length = auxSplit.length;
+                        String text = "";
+                        for(int j = 0; j < length - 1; ++j)
+                        {
+                            text += auxSplit[i];
+                        }
+                        bw.write(text + "\n");
+                    }
+                    else
+                    {
+                        bw.write(split[0]+"\n");
+                    }
                 }
             }
         }

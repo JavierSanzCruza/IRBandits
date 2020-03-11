@@ -9,6 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation;
 
+import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.FastUserKnowledgePointWisePreferenceData;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
@@ -65,6 +66,9 @@ public class RecommendationLoop<U, I>
      */
     private final IntList userList = new IntArrayList();
     private final FastPointWisePreferenceData<U, I> prefData;
+
+    private final FastUserKnowledgePointWisePreferenceData<U,I> knowledgePrefData;
+    private final KnowledgeDataUse dataUse;
     /**
      * Random number generator.
      */
@@ -103,6 +107,9 @@ public class RecommendationLoop<U, I>
         rng = new Random(rngSeed);
         this.iteration = 0;
         this.notReciprocal = notReciprocal;
+
+        this.knowledgePrefData = null;
+        this.dataUse = KnowledgeDataUse.ALL;
     }
 
     /**
@@ -130,8 +137,29 @@ public class RecommendationLoop<U, I>
         this.endCondition = endCondition;
         this.iteration = 0;
         this.notReciprocal = notReciprocal;
+
+        this.knowledgePrefData = null;
+        this.dataUse = KnowledgeDataUse.ALL;
     }
 
+    public RecommendationLoop(FastUserIndex<U> userIndex, FastItemIndex<I> itemIndex, FastPointWisePreferenceData<U,I> prefData, FastUserKnowledgePointWisePreferenceData<U,I> knowledgeData, InteractiveRecommender<U,I> recommender, Map<String, CumulativeMetric<U,I>> metrics, EndCondition endCondition, int rngSeed, KnowledgeDataUse dataUse)
+    {
+        this.userIndex = userIndex;
+        this.itemIndex = itemIndex;
+        this.prefData = prefData;
+
+        this.recommender = recommender;
+        this.metrics = metrics;
+        this.numUsers = userIndex.numUsers();
+        this.rngSeed = rngSeed;
+        rng = new Random(rngSeed);
+        this.endCondition = endCondition;
+        this.iteration = 0;
+        this.notReciprocal = false;
+
+        this.knowledgePrefData = knowledgeData;
+        this.dataUse = dataUse;
+    }
 
     /**
      * Initializes everything without training data.

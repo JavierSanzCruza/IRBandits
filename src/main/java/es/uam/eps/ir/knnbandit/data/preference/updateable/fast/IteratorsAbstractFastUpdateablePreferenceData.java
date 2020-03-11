@@ -7,10 +7,10 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.data.preference.fast;
+package es.uam.eps.ir.knnbandit.data.preference.updateable.fast;
 
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.ranksys.core.preference.IdPref;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import it.unimi.dsi.fastutil.doubles.DoubleIterator;

@@ -7,7 +7,7 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.data.preference;
+package es.uam.eps.ir.knnbandit.data.preference.updateable;
 
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;

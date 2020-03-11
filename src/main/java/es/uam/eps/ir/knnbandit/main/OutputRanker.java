@@ -101,8 +101,24 @@ public class OutputRanker
                 while(!queue.isEmpty())
                 {
                     Tuple2od<String> element = queue.poll();
+                    if(element.v1.endsWith(".txt"))
+                    {
+                        String[] auxSplit = element.v1.split("\\.");
+                        int length = auxSplit.length;
+                        String text = "";
+                        for(int i = 0; i < length - 1; ++i)
+                        {
+                            text += auxSplit[i];
+                        }
+                        bw.write("\n" + text + "\t" + element.v2);
+                    }
+                    else
+                    {
+                        bw.write("\n" + element.v1 + "\t" + element.v2);
+                    }
 
-                    bw.write("\n" + element.v1.split("\\.")[0] + "\t" + element.v2);
+
+
                 }
             }
 

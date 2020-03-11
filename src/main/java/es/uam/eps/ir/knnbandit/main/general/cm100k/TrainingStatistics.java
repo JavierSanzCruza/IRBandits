@@ -7,7 +7,7 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.main.general.foursquare;
+package es.uam.eps.ir.knnbandit.main.general.cm100k;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
@@ -78,9 +78,9 @@ public class TrainingStatistics
         List<Tuple2<Integer, Integer>> train = reader.read(trainingFile, "\t", true);
 
         Set<Long> users = new HashSet<>();
-        Set<String> items = new HashSet<>();
+        Set<Long> items = new HashSet<>();
 
-        List<Tuple3<Long, String, Double>> triplets = new ArrayList<>();
+        List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
 
         int numrel = 0;
         int numrat = 0;
@@ -93,7 +93,7 @@ public class TrainingStatistics
             {
                 String[] split = line.split("::");
                 Long user = Parsers.lp.parse(split[0]);
-                String item = split[1];
+                Long item = Parsers.lp.parse(split[1]);
                 double val = Parsers.dp.parse(split[2]);
 
                 users.add(user);
@@ -112,8 +112,8 @@ public class TrainingStatistics
         }
 
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
-        FastUpdateableItemIndex<String> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
-        SimpleFastPreferenceData<Long, String> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
+        FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
+        SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
 
         // Print the general data:
         System.out.println("General information: ");

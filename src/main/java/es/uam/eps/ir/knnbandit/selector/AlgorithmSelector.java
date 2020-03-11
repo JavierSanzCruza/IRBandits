@@ -9,9 +9,11 @@
  */
 package es.uam.eps.ir.knnbandit.selector;
 
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.ItemBanditRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunctions;
@@ -83,6 +85,14 @@ public class AlgorithmSelector<U, I>
      */
     private SimpleFastPreferenceData<U, I> prefData;
     /**
+     * Information about previous knowledge of the user
+     */
+    private SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData;
+    /**
+     *
+     */
+    private KnowledgeDataUse dataUse;
+    /**
      * True if contact recommendation algorithms must be configured, false otherwise.
      */
     private boolean contactRec;
@@ -133,6 +143,8 @@ public class AlgorithmSelector<U, I>
         this.notReciprocal = false;
         this.contactRec = false;
         this.threshold = threshold;
+        this.dataUse = KnowledgeDataUse.ALL;
+        this.knowledgeData = null;
         this.configured = true;
     }
 
@@ -153,6 +165,29 @@ public class AlgorithmSelector<U, I>
         this.notReciprocal = notReciprocal;
         this.contactRec = true;
         this.threshold = threshold;
+        this.dataUse = KnowledgeDataUse.ALL;
+        this.knowledgeData = null;
+        this.configured = true;
+    }
+
+    /**
+     * Configures the experiment for traditional item-to-people recommendation, from a full cold start perspective.
+     *
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param prefData  Preference data.
+     * @param threshold Relevance threshold
+     */
+    public void configure(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, double threshold, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, KnowledgeDataUse dataUse)
+    {
+        this.uIndex = uIndex;
+        this.iIndex = iIndex;
+        this.prefData = prefData;
+        this.notReciprocal = false;
+        this.contactRec = false;
+        this.threshold = threshold;
+        this.dataUse = dataUse;
+        this.knowledgeData = knowledgeData;
         this.configured = true;
     }
 
@@ -176,7 +211,7 @@ public class AlgorithmSelector<U, I>
         {
             String[] split = algorithm.split("-");
             List<String> fullAlgorithm = new ArrayList<>(Arrays.asList(split));
-            boolean ignoreUnknown;
+            boolean hasRating;
             switch (fullAlgorithm.get(0))
             {
                 case AlgorithmIdentifiers.RANDOM: // Random recommendation.
@@ -196,20 +231,24 @@ public class AlgorithmSelector<U, I>
                     cursor++;
                     if (fullAlgorithm.size() == cursor)
                     {
-                        ignoreUnknown = false;
+                        hasRating = false;
                     }
                     else
                     {
-                        ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                     }
 
                     if (this.contactRec)
                     {
-                        return new AvgRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+                        return new AvgRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal);
+                    }
+                    else if(this.dataUse != KnowledgeDataUse.ALL && knowledgeData != null)
+                    {
+                        return new AvgRecommender<>(uIndex, iIndex, prefData, knowledgeData, hasRating, dataUse);
                     }
                     else
                     {
-                        return new AvgRecommender<>(uIndex, iIndex, prefData, ignoreUnknown);
+                        return new AvgRecommender<>(uIndex, iIndex, prefData, hasRating);
                     }
                 }
                 case AlgorithmIdentifiers.POP: // Popularity recommendation.
@@ -218,6 +257,10 @@ public class AlgorithmSelector<U, I>
                     if (this.contactRec)
                     {
                         return new PopularityRecommender<>(uIndex, iIndex, prefData, true, notReciprocal, threshold);
+                    }
+                    else if(this.dataUse != KnowledgeDataUse.ALL && knowledgeData != null)
+                    {
+                        return new PopularityRecommender<>(uIndex, iIndex, prefData, knowledgeData, true, dataUse, threshold);
                     }
                     else
                     {
@@ -236,21 +279,21 @@ public class AlgorithmSelector<U, I>
 
                     if (fullAlgorithm.size() == cursor)
                     {
-                        ignoreUnknown = false;
+                        hasRating = false;
                     }
                     else
                     {
-                        ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                         cursor++;
                     }
 
                     if (contactRec)
                     {
-                        return new ItemBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, itemBandit, valFunc);
+                        return new ItemBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, itemBandit, valFunc);
                     }
                     else
                     {
-                        return new ItemBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, itemBandit, valFunc);
+                        return new ItemBanditRecommender<>(uIndex, iIndex, prefData, hasRating, itemBandit, valFunc);
                     }
                 }
                 case AlgorithmIdentifiers.USERBASEDKNN: // User-based kNN.
@@ -263,29 +306,29 @@ public class AlgorithmSelector<U, I>
                     boolean ignoreZeroes;
                     if (fullAlgorithm.size() == cursor)
                     {
-                        ignoreUnknown = true;
+                        hasRating = true;
                         ignoreZeroes = true;
                     }
                     else if (fullAlgorithm.size() == (cursor + 1))
                     {
-                        ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                         ignoreZeroes = true;
                         cursor++;
                     }
                     else
                     {
-                        ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                         ignoreZeroes = fullAlgorithm.get(cursor + 1).equalsIgnoreCase("ignore");
                         cursor += 2;
                     }
 
                     if (this.contactRec)
                     {
-                        return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeroes, notReciprocal, k, sim);
+                        return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, notReciprocal, k, sim);
                     }
                     else
                     {
-                        return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeroes, k, sim);
+                        return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, k, sim);
                     }
                 }
                 case AlgorithmIdentifiers.ITEMBASEDKNN: // User-based kNN.
@@ -299,29 +342,29 @@ public class AlgorithmSelector<U, I>
                     boolean ignoreZeroes;
                     if (fullAlgorithm.size() == cursor)
                     {
-                        ignoreUnknown = true;
+                        hasRating = true;
                         ignoreZeroes = true;
                     }
                     else if (fullAlgorithm.size() == (cursor + 1))
                     {
-                        ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                         ignoreZeroes = true;
                         cursor++;
                     }
                     else
                     {
-                        ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                         ignoreZeroes = fullAlgorithm.get(cursor + 1).equalsIgnoreCase("ignore");
                         cursor += 2;
                     }
 
                     if (this.contactRec)
                     {
-                        return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeroes, notReciprocal, userK, itemK, sim);
+                        return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, notReciprocal, userK, itemK, sim);
                     }
                     else
                     {
-                        return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeroes, userK, itemK, sim);
+                        return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, userK, itemK, sim);
                     }
                 }
                 case AlgorithmIdentifiers.BANDITKNN:
@@ -344,29 +387,29 @@ public class AlgorithmSelector<U, I>
                             boolean ignoreZeroes;
                             if (fullAlgorithm.size() == cursor)
                             {
-                                ignoreUnknown = true;
+                                hasRating = true;
                                 ignoreZeroes = true;
                             }
                             else if (fullAlgorithm.size() == (cursor + 1))
                             {
-                                ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                                hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                                 ignoreZeroes = true;
                                 cursor++;
                             }
                             else
                             {
-                                ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                                hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                                 ignoreZeroes = fullAlgorithm.get(cursor + 1).equalsIgnoreCase("ignore");
                                 cursor += 2;
                             }
 
                             if (this.contactRec)
                             {
-                                return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeroes, notReciprocal, k, sim);
+                                return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, notReciprocal, k, sim);
                             }
                             else
                             {
-                                return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeroes, k, sim);
+                                return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, k, sim);
                             }
                         }
                         case KNNBanditIdentifiers.ITEM:
@@ -384,29 +427,29 @@ public class AlgorithmSelector<U, I>
                             boolean ignoreZeroes;
                             if (fullAlgorithm.size() == cursor)
                             {
-                                ignoreUnknown = true;
+                                hasRating = true;
                                 ignoreZeroes = true;
                             }
                             else if (fullAlgorithm.size() == (cursor + 1))
                             {
-                                ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                                hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                                 ignoreZeroes = true;
                                 cursor++;
                             }
                             else
                             {
-                                ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                                hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                                 ignoreZeroes = fullAlgorithm.get(cursor + 1).equalsIgnoreCase("ignore");
                                 cursor += 2;
                             }
 
                             if (this.contactRec)
                             {
-                                return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeroes, notReciprocal, userK, itemK, sim);
+                                return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, notReciprocal, userK, itemK, sim);
                             }
                             else
                             {
-                                return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeroes, userK, itemK, sim);
+                                return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, userK, itemK, sim);
                             }
                         }
                         default:
@@ -428,21 +471,21 @@ public class AlgorithmSelector<U, I>
 
                     if (fullAlgorithm.size() == cursor)
                     {
-                        ignoreUnknown = true;
+                        hasRating = true;
                     }
                     else
                     {
-                        ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                         cursor++;
                     }
 
                     if (this.contactRec)
                     {
-                        return new InteractiveMF<>(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, k, factorizer);
+                        return new InteractiveMF<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, factorizer);
                     }
                     else
                     {
-                        return new InteractiveMF<>(uIndex, iIndex, prefData, ignoreUnknown, k, factorizer);
+                        return new InteractiveMF<>(uIndex, iIndex, prefData, hasRating, k, factorizer);
                     }
                 }
                 case AlgorithmIdentifiers.PMFBANDIT:
@@ -470,22 +513,22 @@ public class AlgorithmSelector<U, I>
 
                     if (fullAlgorithm.size() == cursor)
                     {
-                        ignoreUnknown = true;
+                        hasRating = true;
                     }
                     else
                     {
-                        ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                         cursor++;
                     }
 
 
                     if (this.contactRec)
                     {
-                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, numP, factory);
+                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, hasRating, notReciprocal, numP, factory);
                     }
                     else
                     {
-                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, ignoreUnknown, numP, factory);
+                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, hasRating, numP, factory);
                     }
                 }
                 case AlgorithmIdentifiers.BAYESIANPTS:
@@ -502,22 +545,22 @@ public class AlgorithmSelector<U, I>
 
                     if (fullAlgorithm.size() == cursor)
                     {
-                        ignoreUnknown = true;
+                        hasRating = true;
                     }
                     else
                     {
-                        ignoreUnknown = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                         cursor++;
                     }
 
 
                     if (this.contactRec)
                     {
-                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, numP, factory);
+                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, hasRating, notReciprocal, numP, factory);
                     }
                     else
                     {
-                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, ignoreUnknown, numP, factory);
+                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, hasRating, numP, factory);
                     }
                 }
                 default:
@@ -728,7 +771,7 @@ public class AlgorithmSelector<U, I>
     {
         cursor++;
 
-        boolean ignoreUnknown;
+        boolean hasRating;
         switch (split.get(0))
         {
             case PMFBanditIdentifiers.EGREEDY:
@@ -736,78 +779,78 @@ public class AlgorithmSelector<U, I>
                 cursor++;
                 if (split.size() == 2)
                 {
-                    ignoreUnknown = true;
+                    hasRating = true;
                 }
                 else
                 {
-                    ignoreUnknown = split.get(2).equalsIgnoreCase("ignore");
+                    hasRating = split.get(2).equalsIgnoreCase("ignore");
                     cursor++;
                 }
                 if (this.contactRec)
                 {
-                    return new EpsilonGreedyPMFBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
+                    return new EpsilonGreedyPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
                 }
                 else
                 {
-                    return new EpsilonGreedyPMFBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
+                    return new EpsilonGreedyPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
                 }
             case PMFBanditIdentifiers.UCB:
                 double alpha = Parsers.dp.parse(split.get(1));
                 cursor++;
                 if (split.size() == 2)
                 {
-                    ignoreUnknown = true;
+                    hasRating = true;
                 }
                 else
                 {
-                    ignoreUnknown = split.get(2).equalsIgnoreCase("ignore");
+                    hasRating = split.get(2).equalsIgnoreCase("ignore");
                     cursor++;
                 }
                 if (this.contactRec)
                 {
-                    return new LinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter, alpha);
+                    return new LinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter, alpha);
                 }
                 else
                 {
-                    return new LinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, k, lambdaP, lambdaQ, stdev, numIter, alpha);
+                    return new LinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, k, lambdaP, lambdaQ, stdev, numIter, alpha);
                 }
             case PMFBanditIdentifiers.GENERALIZEDUCB:
                 alpha = Parsers.dp.parse(split.get(1));
                 cursor++;
                 if (split.size() == 2)
                 {
-                    ignoreUnknown = true;
+                    hasRating = true;
                 }
                 else
                 {
-                    ignoreUnknown = split.get(2).equalsIgnoreCase("ignore");
+                    hasRating = split.get(2).equalsIgnoreCase("ignore");
                     cursor++;
                 }
                 if (this.contactRec)
                 {
-                    return new GeneralizedLinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter, alpha);
+                    return new GeneralizedLinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter, alpha);
                 }
                 else
                 {
-                    return new GeneralizedLinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, k, lambdaP, lambdaQ, stdev, numIter, alpha);
+                    return new GeneralizedLinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, k, lambdaP, lambdaQ, stdev, numIter, alpha);
                 }
             case PMFBanditIdentifiers.THOMPSON:
                 if (split.size() == 2)
                 {
-                    ignoreUnknown = true;
+                    hasRating = true;
                 }
                 else
                 {
-                    ignoreUnknown = split.get(2).equalsIgnoreCase("ignore");
+                    hasRating = split.get(2).equalsIgnoreCase("ignore");
                     cursor++;
                 }
                 if (this.contactRec)
                 {
-                    return new ThompsonSamplingPMFBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter);
+                    return new ThompsonSamplingPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter);
                 }
                 else
                 {
-                    return new ThompsonSamplingPMFBanditRecommender<>(uIndex, iIndex, prefData, ignoreUnknown, k, lambdaP, lambdaQ, stdev, numIter);
+                    return new ThompsonSamplingPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, k, lambdaP, lambdaQ, stdev, numIter);
                 }
             default:
                 return null;

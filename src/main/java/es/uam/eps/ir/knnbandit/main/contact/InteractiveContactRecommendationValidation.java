@@ -10,10 +10,10 @@
 package es.uam.eps.ir.knnbandit.main.contact;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.SimpleFastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.SimpleFastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.io.GraphReader;
 import es.uam.eps.ir.knnbandit.graph.io.TextGraphReader;

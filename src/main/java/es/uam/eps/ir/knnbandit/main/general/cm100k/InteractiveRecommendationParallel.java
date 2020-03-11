@@ -7,7 +7,7 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.main.general.movielens;
+package es.uam.eps.ir.knnbandit.main.general.cm100k;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;

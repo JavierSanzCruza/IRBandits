@@ -9,8 +9,10 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.basic;
 
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
+import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple3;
 
@@ -39,11 +41,11 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if (user, item) pairs without training must be ignored.
+     * @param hasRatings True if (user, item) pairs without training must be ignored.
      */
-    public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown)
+    public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRatings)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown);
+        super(uIndex, iIndex, prefData, hasRatings);
         this.numTimes = new double[prefData.numItems()];
         IntStream.range(0, prefData.numItems()).forEach(iidx -> this.numTimes[iidx] = 0);
     }
@@ -54,12 +56,19 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if (user, item) pairs without training must be ignored.
+     * @param hasRatings True if (user, item) pairs without training must be ignored.
      * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise
      */
-    public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal)
+    public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRatings, boolean notReciprocal)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, prefData, hasRatings, notReciprocal);
+        this.numTimes = new double[prefData.numItems()];
+        IntStream.range(0, prefData.numItems()).forEach(iidx -> this.numTimes[iidx] = 0);
+    }
+
+    public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U,I> prefData, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, boolean hasRatings, KnowledgeDataUse dataUse)
+    {
+        super(uIndex, iIndex, prefData, knowledgeData, hasRatings, dataUse);
         this.numTimes = new double[prefData.numItems()];
         IntStream.range(0, prefData.numItems()).forEach(iidx -> this.numTimes[iidx] = 0);
     }

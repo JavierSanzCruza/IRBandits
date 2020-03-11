@@ -7,13 +7,13 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.data.preference;
+package es.uam.eps.ir.knnbandit.data.preference.updateable.fast;
 
-import es.uam.eps.ir.ranksys.core.preference.PreferenceData;
 
+import org.ranksys.fast.preference.FastPointWisePreferenceData;
 
 /**
- * Interface for updateable preference data.
+ * Fast updateable version of a pointwise preference data.
  *
  * @param <U> User type.
  * @param <I> Item type.
@@ -21,7 +21,7 @@ import es.uam.eps.ir.ranksys.core.preference.PreferenceData;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public interface UpdateablePreferenceData<U, I> extends PreferenceData<U, I>, Updateable<U, I>
+public interface FastUpdateablePointWisePreferenceData<U, I> extends FastPointWisePreferenceData<U, I>, FastUpdateablePreferenceData<U, I>
 {
 
 }

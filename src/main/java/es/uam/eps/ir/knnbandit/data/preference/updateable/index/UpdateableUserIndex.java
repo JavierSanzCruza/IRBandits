@@ -7,39 +7,39 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.data.preference.index;
+package es.uam.eps.ir.knnbandit.data.preference.updateable.index;
 
-import es.uam.eps.ir.ranksys.core.index.FeatureIndex;
+import es.uam.eps.ir.ranksys.core.index.UserIndex;
 
 import java.util.stream.Stream;
 
 /**
- * Updateable index for a set of features.
+ * Updateable index for a set of users.
  *
- * @param <F> Feature type.
+ * @param <U> User type.
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
  */
-public interface UpdateableFeatureIndex<F> extends FeatureIndex<F>
+public interface UpdateableUserIndex<U> extends UserIndex<U>
 {
     /**
-     * Adds a new feature.
+     * Adds a user to the index.
      *
-     * @param f The new feature.
+     * @param u The user.
      *
-     * @return the index of the new feature.
+     * @return the identifier of the new user.
      */
-    int addFeature(F f);
+    int addUser(U u);
 
     /**
-     * Adds a set of features to the index.
+     * Adds a set of users to the index.
      *
-     * @param features A stream containing the features.
+     * @param users A stream containing the users to add.
      */
-    default void addFeatures(Stream<F> features)
+    default void addUsers(Stream<U> users)
     {
-        features.forEach(f -> this.addFeature(f));
+        users.forEach(u -> this.addUser(u));
     }
 }

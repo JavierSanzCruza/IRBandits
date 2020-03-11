@@ -1,7 +1,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.mf.ictr;
 
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.mf.Particle;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ictr.particles.ICTRParticle;
@@ -55,14 +55,14 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param K             Number of latent factors to use.
      * @param numParticles  Number of particles to use.
      * @param factory       A factory for the particles.
      */
-    public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, int K, int numParticles, ICTRParticleFactory<U, I> factory)
+    public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int K, int numParticles, ICTRParticleFactory<U, I> factory)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown);
+        super(uIndex, iIndex, prefData, hasRating);
         this.K = K;
         this.numParticles = numParticles;
         this.particleWeight = new DoubleArrayList();
@@ -77,15 +77,15 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param notReciprocal True if reciprocal users can be recommended, false otherwise.
      * @param K             Number of latent factors to use.
      * @param numParticles  Number of particles to use.
      * @param factory       A factory for the particles.
      */
-    public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal, int K, int numParticles, ICTRParticleFactory factory)
+    public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int K, int numParticles, ICTRParticleFactory factory)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
         this.K = K;
         this.numParticles = numParticles;
         this.particleWeight = new DoubleArrayList();

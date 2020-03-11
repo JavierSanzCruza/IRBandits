@@ -7,7 +7,7 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.main.general.movielens;
+package es.uam.eps.ir.knnbandit.main.general.cm100k;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -42,7 +42,6 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.IntStream;
 
 /**
  * Class for executing contact recommender systems in simulated interactive loops (with training)
@@ -50,7 +49,7 @@ import java.util.stream.IntStream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class InteractiveRecommendationParallel
+public class InteractiveRecommendationWithTraining
 {
     /**
      * @param args Execution arguments
@@ -69,7 +68,7 @@ public class InteractiveRecommendationParallel
      */
     public static void main(String[] args) throws IOException, UnconfiguredException
     {
-        if (args.length < 10)
+        if (args.length < 9)
         {
             System.err.println("ERROR: Invalid arguments");
             System.err.println("Usage:");
@@ -77,12 +76,11 @@ public class InteractiveRecommendationParallel
             System.err.println("Input: Full preference data");
             System.err.println("Output: Folder in which to store the output");
             System.err.println("Num. Iter: Number of iterations for the validation. 0 if we want to run out of recommendable items");
-            System.err.println("Resume: True if we want to resume previous executions, false to overwrite them");
             System.err.println("Threshold: Relevance threshold");
+            System.err.println("Resume: True if we want to resume previous executions, false to overwrite them");
             System.err.println("Use ratings:True if we want to take the true rating value, false if we want to binarize them");
             System.err.println("Training data:File containing the training data (a previous execution of a recommender over the cold start problem)");
             System.err.println("Num. partitions: Number of training partitions we are going to use. Ex: if this argument is equal to 5, we will execute the loop 5 times: one with 20% of the training, one with 40%, etc. ");
-            System.err.println("Also without training: true if we also want to execute a version without training");
             return;
         }
 
@@ -91,26 +89,21 @@ public class InteractiveRecommendationParallel
         String input = args[1];
         String output = args[2];
 
-        // Defining the stop condition
+        // Configure the end condition.
         Double auxIter = Parsers.dp.parse(args[3]);
         boolean iterationsStop = auxIter == 0.0 || auxIter >= 1.0;
         int numIter = (iterationsStop && auxIter > 1.0) ? auxIter.intValue() : Integer.MAX_VALUE;
-
         boolean resume = args[4].equalsIgnoreCase("true");
 
-        // General recommendation specific arguments
+        // General recommendation parameters
         double threshold = Parsers.dp.parse(args[5]);
         boolean useRatings = args[6].equalsIgnoreCase("true");
-
-        // Training data.
         String trainingData = args[7];
         int auxNumParts = Parsers.ip.parse(args[8]);
         boolean relevantPartition = auxNumParts < 0;
         int numParts = Math.abs(auxNumParts);
 
-        boolean alsoWithoutTraining = args[9].equalsIgnoreCase("true");
-
-        // Configure the weight function and relevance functions.
+        // Find the weight function and the relevance function.
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x :
                 (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
@@ -120,10 +113,10 @@ public class InteractiveRecommendationParallel
         Reader reader = new Reader();
         List<Tuple2<Integer, Integer>> train = reader.read(trainingData, "\t", true);
 
-        // Configure the random number generator for ties.
+        // Configure the random number generator
         UntieRandomNumber.configure(resume, output);
 
-       // Then, we read the ratings.
+        // Then, we read the ratings.
         Set<Long> users = new HashSet<>();
         Set<Long> items = new HashSet<>();
         List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
@@ -136,7 +129,6 @@ public class InteractiveRecommendationParallel
             {
                 String[] split = line.split("::");
                 Long user = Parsers.lp.parse(split[0]);
-                //String item = split[1];
                 Long item = Parsers.lp.parse(split[1]);
                 double val = Parsers.dp.parse(split[2]);
 
@@ -153,13 +145,14 @@ public class InteractiveRecommendationParallel
             }
         }
 
+        // Create the whole ratings data
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
         FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
         SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
 
         System.out.println("Users: " + uIndex.numUsers());
         System.out.println("Items: " + iIndex.numItems());
-        System.out.println("Total number of relevant items:" + numrel);
+        System.out.println("Total number of relevant: " + numrel);
         int numRel = numrel;
 
         // Initialize the metrics to compute.
@@ -168,67 +161,38 @@ public class InteractiveRecommendationParallel
         metrics.put("gini", () -> new CumulativeGini<>(items.size()));
         List<String> metricNames = new ArrayList<>(metrics.keySet());
 
-        // Select the algorithms
+        // Select the algorithms.
         long a = System.currentTimeMillis();
-        List<String> algorithmNames = readAlgorithmList(algorithms, numParts);
-        List<InteractiveRecommender<Long, Long>> recs = new ArrayList<>();
         AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
         algorithmSelector.configure(uIndex, iIndex, prefData, realThreshold);
-        for(String algorithm : algorithmNames)
-        {
-            InteractiveRecommender<Long, Long> rec = algorithmSelector.getAlgorithm(algorithm);
-            recs.add(rec);
-        }
+        algorithmSelector.addFile(algorithms);
+        Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
         long b = System.currentTimeMillis();
-        System.out.println("Recommenders prepared (" + (b - a) + " ms.)");
+
+        System.out.println("Recommenders ready (" + (b - a) + " ms.)");
 
         int trainingSize = train.size();
-
         Partition partition = relevantPartition ? new RelevantPartition(prefData, relevance) : new UniformPartition();
         List<Integer> splitPoints = partition.split(train, numParts);
 
-        int auxParts = alsoWithoutTraining ? numParts + 1 : numParts;
-        IntStream.range(0, auxParts).parallel().forEach(part ->
+        for (int part = 0; part < numParts; ++part)
         {
-            List<Tuple2<Integer,Integer>> partTrain;
+            System.out.println("Training: " + splitPoints.get(part) + " recommendations (" + (part + 1) + "/" + numParts + ")");
+            List<Tuple2<Integer, Integer>> partTrain = train.subList(0, splitPoints.get(part));
 
-            String data = (part != numParts+1) ? "for the " + (part + 1) + "/" + numParts + " split" : "for the non-training split";
-            long aaa = System.nanoTime();
-            long bbb;
-
-            if(part == (numParts + 1))
+            int noRel = partTrain.stream().mapToInt(tuple ->
             {
-                partTrain = new ArrayList<>();
-                System.out.println("Prepared data for the non-training data version");
-            }
-            else
-            {
-                // Step 1: Prepare the training data.
-                int val = splitPoints.get(part);
-
-
-                partTrain = train.subList(0, val);
-                bbb = System.nanoTime();
-
-                System.out.println("Prepared training data " + (part + 1) + "/" + numParts + ": " + val + " recommendations (" + (bbb - aaa) / 1000000.0 + " ms.)");
-            }
-
-            // Count the number of relevant items:
-            int norel = partTrain.stream().mapToInt(t ->
-            {
-                Optional<IdxPref> opt = prefData.getPreference(t.v1, t.v2);
-                if(opt.isPresent() && relevance.test(opt.get().v2))
-                {
-                    return 1;
-                }
-                return 0;
+               Optional<IdxPref> opt = prefData.getPreference(tuple.v1, tuple.v2);
+               if(opt.isPresent() && relevance.test(opt.get().v2))
+               {
+                   return 1;
+               }
+               return 0;
             }).sum();
 
-            System.out.println("Number of relevant items " + data + ": " + (numRel - norel));
+            System.out.println("Relevant pairs for " + (part + 1) + "/" + numParts + ": " + (numRel - noRel));
 
-            // If it does not exist, create the directory in which to store the recommendation.
-            String outputFolder = output + part + File.separator;
-            File folder = new File(outputFolder);
+            File folder = new File(output + part + File.separator);
             if (!folder.exists())
             {
                 if (!folder.mkdirs())
@@ -238,93 +202,114 @@ public class InteractiveRecommendationParallel
                 }
             }
 
-            // Obtain the algorithm to apply:
-            String algorithmName = algorithmNames.get(part);
-            InteractiveRecommender<Long, Long> rec = recs.get(part);
-            // And the metrics
-            Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
-            metricNames.forEach(name -> localMetrics.put(name, metrics.get(name).get()));
+            String outputFolder = output + part + File.separator;
 
-            // Configure and initialize the recommendation loop:
-            System.out.println("Starting algorithm " + algorithmName + " " + data);
-            EndCondition endcond = iterationsStop ? (auxIter == 0.0 ? new NoLimitsEndCondition() : new NumIterEndCondition(numIter)) : new PercentagePositiveRatingsEndCondition(numRel, auxIter, realThreshold);
+            recs.entrySet().parallelStream().forEach(re ->
+            {
+                long aaa = System.currentTimeMillis();
+                System.out.println("Algorithm " + re.getKey() + " started");
 
-            RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, endcond, UntieRandomNumber.RNG, false);
-            if(partTrain.isEmpty())
-            {
-                loop.init(false);
-            }
-            else
-            {
+                InteractiveRecommender<Long, Long> rec = re.getValue();
+                Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
+                metricNames.forEach(name -> localMetrics.put(name, metrics.get(name).get()));
+
+                // Configure and initialize the recommendation loop
+                EndCondition endcond = iterationsStop ? (auxIter == 0.0 ? new NoLimitsEndCondition() : new NumIterEndCondition(numIter)) : new PercentagePositiveRatingsEndCondition(numRel-noRel, auxIter, realThreshold);
+                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, prefData, rec, localMetrics, endcond, UntieRandomNumber.RNG, false);
                 loop.init(partTrain, false);
-            }
-            bbb = System.nanoTime();
-            System.out.println("Algorithm " + algorithmName + " " + data + " has been initialized (" + (bbb-aaa)/1000000.0 + " ms.)");
 
-            List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
-            String fileName = outputFolder + algorithmName + ".txt";
+                long bbb = System.currentTimeMillis();
+                System.out.println("Algorithm " + re.getKey() + " initialized (" + (bbb - aaa) + " ms.)");
 
-            // If there are previous executions, obtain them
-            if (resume)
-            {
-                File f = new File(fileName);
-                if (f.exists()) // if the file exists, then resume:
+                List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
+                String fileName = outputFolder + re.getKey() + ".txt";
+
+                if (resume)
                 {
-                    try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName))))
+                    File f = new File(fileName);
+                    if (f.exists()) // if the file exists, then resume:
                     {
-                        String line = br.readLine();
-                        int len;
-                        if (line != null)
+                        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName))))
                         {
-                            String[] split = line.split("\t");
-                            len = split.length;
-
-                            while ((line = br.readLine()) != null)
+                            String line = br.readLine();
+                            int len;
+                            if (line != null)
                             {
-                                split = line.split("\t");
-                                if (split.length < len)
-                                {
-                                    break;
-                                }
+                                String[] split = line.split("\t");
+                                len = split.length;
 
-                                int uidx = Parsers.ip.parse(split[1]);
-                                int iidx = Parsers.ip.parse(split[2]);
-                                long time = Parsers.lp.parse(split[len - 1]);
-                                list.add(new Tuple3<>(uidx, iidx, time));
+                                while ((line = br.readLine()) != null)
+                                {
+                                    split = line.split("\t");
+                                    if (split.length < len)
+                                    {
+                                        break;
+                                    }
+
+                                    int uidx = Parsers.ip.parse(split[1]);
+                                    int iidx = Parsers.ip.parse(split[2]);
+                                    long time = Parsers.lp.parse(split[len - 1]);
+                                    list.add(new Tuple3<>(uidx, iidx, time));
+                                }
                             }
                         }
+                        catch (IOException ex)
+                        {
+                            Logger.getLogger(InteractiveRecommendation.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                     }
-                    catch (IOException ex)
+                }
+
+                try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFolder + re.getKey() + ".txt"))))
+                {
+                    bw.write("Num.Iter\tUser\tItem");
+                    for (String metric : metricNames)
                     {
-                        Logger.getLogger(InteractiveRecommendation.class.getName()).log(Level.SEVERE, null, ex);
+                        bw.write("\t" + metric);
                     }
-                }
-            }
+                    bw.write("\tTime\n");
 
-            // Execute and write into the file.
-            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFolder + algorithmName + ".txt"))))
-            {
-                // Write the header
-                bw.write("Num.Iter\tUser\tItem");
-                for (String metric : metricNames)
-                {
-                    bw.write("\t" + metric);
-                }
-                bw.write("\tTime\n");
+                    if (resume && !list.isEmpty())
+                    {
+                        for (Tuple3<Integer, Integer, Long> triplet : list)
+                        {
+                            StringBuilder builder = new StringBuilder();
+                            loop.update(new Tuple2<>(triplet.v1, triplet.v2));
+                            int iter = loop.getCurrentIteration();
+                            builder.append(iter);
+                            builder.append("\t");
+                            builder.append(triplet.v1);
+                            builder.append("\t");
+                            builder.append(triplet.v2);
+                            Map<String, Double> metricVals = loop.getMetrics();
+                            for (String name : metricNames)
+                            {
+                                builder.append("\t");
+                                builder.append(metricVals.get(name));
+                            }
+                            builder.append("\t");
+                            builder.append(triplet.v3);
+                            builder.append("\n");
+                            bw.write(builder.toString());
+                        }
+                    }
 
-                // If we have retrieved any previous iteration, update the loop.
-                if (resume && !list.isEmpty())
-                {
-                    for (Tuple3<Integer, Integer, Long> triplet : list)
+                    while (!loop.hasEnded())
                     {
                         StringBuilder builder = new StringBuilder();
-                        loop.update(new Tuple2<>(triplet.v1, triplet.v2));
+                        long aa = System.currentTimeMillis();
+                        Tuple2<Integer, Integer> tuple = loop.nextIteration();
+                        long bb = System.currentTimeMillis();
+                        if (tuple == null)
+                        {
+                            break; // The loop has finished
+                        }
                         int iter = loop.getCurrentIteration();
                         builder.append(iter);
                         builder.append("\t");
-                        builder.append(triplet.v1);
+                        builder.append(tuple.v1);
                         builder.append("\t");
-                        builder.append(triplet.v2);
+                        builder.append(tuple.v2);
                         Map<String, Double> metricVals = loop.getMetrics();
                         for (String name : metricNames)
                         {
@@ -332,72 +317,19 @@ public class InteractiveRecommendationParallel
                             builder.append(metricVals.get(name));
                         }
                         builder.append("\t");
-                        builder.append(triplet.v3);
+                        builder.append((bb - aa));
                         builder.append("\n");
                         bw.write(builder.toString());
                     }
-
-                    bbb = System.nanoTime();
-                    System.out.println("Algorithm " + algorithmName + " " + data + " has finished recovering from previous executions (" + (bbb-aaa)/1000000.0 + " ms.)");
                 }
-
-                // Apply it until the end.
-                while (!loop.hasEnded())
+                catch (IOException e)
                 {
-                    StringBuilder builder = new StringBuilder();
-                    long aa = System.currentTimeMillis();
-                    Tuple2<Integer, Integer> tuple = loop.nextIteration();
-                    long bb = System.currentTimeMillis();
-                    if (tuple == null)
-                    {
-                        break; // The loop has finished
-                    }
-                    int iter = loop.getCurrentIteration();
-                    builder.append(iter);
-                    builder.append("\t");
-                    builder.append(tuple.v1);
-                    builder.append("\t");
-                    builder.append(tuple.v2);
-                    Map<String, Double> metricVals = loop.getMetrics();
-                    for (String name : metricNames)
-                    {
-                        builder.append("\t");
-                        builder.append(metricVals.get(name));
-                    }
-                    builder.append("\t");
-                    builder.append((bb - aa));
-                    builder.append("\n");
-                    bw.write(builder.toString());
+                    e.printStackTrace();
                 }
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-            bbb = System.nanoTime();
-            System.out.println("Algorithm " + algorithmName + " " + data + " has finished (" + (bbb-aaa)/1000000.0 + " ms.)");
-        });
-    }
 
-    /**
-     * Reads a list of algorithms.
-     * @param file the file containing the algorithms.
-     * @param num number of algorithms to read.
-     * @return the list containing the algorithms.
-     * @throws IOException if something fails while reading the file.
-     */
-    private static List<String> readAlgorithmList(String file, int num) throws IOException
-    {
-        List<String> list = new ArrayList<>();
-        try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file))))
-        {
-            for(int i = 0; i < num; ++i)
-            {
-                String line = br.readLine();
-                list.add(line);
-            }
+                bbb = System.currentTimeMillis();
+                System.out.println("Algorithm " + re.getKey() + " finished (" + (bbb - aaa) + " ms.)");
+            });
         }
-
-        return list;
     }
 }

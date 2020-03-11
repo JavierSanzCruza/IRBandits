@@ -11,8 +11,8 @@ package es.uam.eps.ir.knnbandit.recommendation.mf;
 
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import es.uam.eps.ir.ranksys.mf.Factorization;
@@ -64,13 +64,13 @@ public class InteractiveMF<U, I> extends InteractiveRecommender<U, I>
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param k             Number of latent factors to use.
      * @param factorizer    Factorizer for obtaining the factorized matrices.
      */
-    public InteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, int k, Factorizer<U, I> factorizer)
+    public InteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, Factorizer<U, I> factorizer)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown);
+        super(uIndex, iIndex, prefData, hasRating);
         this.factorizer = factorizer;
         this.k = (k > 0) ? k : prefData.numUsers();
         Enumeration<String> loggers = LogManager.getLogManager().getLoggerNames();
@@ -87,13 +87,13 @@ public class InteractiveMF<U, I> extends InteractiveRecommender<U, I>
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param k             Number of latent factors to use.
      * @param factorizer    Factorizer for obtaining the factorized matrices.
      */
-    public InteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal, int k, Factorizer<U, I> factorizer)
+    public InteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int k, Factorizer<U, I> factorizer)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
         this.factorizer = factorizer;
         this.k = (k > 0) ? k : prefData.numUsers();
         Enumeration<String> loggers = LogManager.getLogManager().getLoggerNames();

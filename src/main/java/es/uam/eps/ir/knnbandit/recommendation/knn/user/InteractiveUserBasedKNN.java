@@ -9,8 +9,8 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.user;
 
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 
@@ -31,14 +31,14 @@ public class InteractiveUserBasedKNN<U, I> extends AbstractInteractiveUserBasedK
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param ignoreZeros   True if we ignore zero ratings when updating.
      * @param k             Number of neighbors to use.
      * @param sim           Updateable similarity
      */
-    public InteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean ignoreZeros, int k, UpdateableSimilarity sim)
+    public InteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeros, k, sim);
+        super(uIndex, iIndex, prefData, hasRating, ignoreZeros, k, sim);
     }
 
     /**
@@ -47,13 +47,13 @@ public class InteractiveUserBasedKNN<U, I> extends AbstractInteractiveUserBasedK
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param k             Number of neighbors to use.
      * @param sim           Updateable similarity
      */
-    public InteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean ignoreZeros, boolean notReciprocal, int k, UpdateableSimilarity sim)
+    public InteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, boolean notReciprocal, int k, UpdateableSimilarity sim)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, ignoreZeros, notReciprocal, k, sim);
+        super(uIndex, iIndex, prefData, hasRating, ignoreZeros, notReciprocal, k, sim);
     }
 
     @Override

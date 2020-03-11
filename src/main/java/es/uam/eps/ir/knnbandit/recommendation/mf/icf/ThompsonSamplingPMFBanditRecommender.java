@@ -5,8 +5,8 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.EigenvalueDecomposition;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -52,16 +52,16 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param k             Number of latent factors to use
      * @param stdevP        Prior standard deviation for the user factors.
      * @param stdevQ        Prior standard deviation for the item factors.
      * @param stdev         Prior standard deviation for the ratings.
      * @param numIter       Number of training iterations.
      */
-    public ThompsonSamplingPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, int k, double stdevP, double stdevQ, double stdev, int numIter)
+    public ThompsonSamplingPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, k, stdevP, stdevQ, stdev, numIter);
+        super(uIndex, iIndex, prefData, hasRating, k, stdevP, stdevQ, stdev, numIter);
     }
 
     /**
@@ -70,7 +70,7 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param ignoreUnknown True if we must ignore unknown items when updating.
+     * @param hasRating True if we must ignore unknown items when updating.
      * @param k             Number of latent factors to use
      * @param stdevP        Prior standard deviation for the user factors.
      * @param stdevQ        Prior standard deviation for the item factors.
@@ -78,9 +78,9 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
      * @param notReciprocal Not reciprocal
      * @param numIter       Number of training iterations.
      */
-    public ThompsonSamplingPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal, int k, double stdevP, double stdevQ, double stdev, int numIter)
+    public ThompsonSamplingPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int k, double stdevP, double stdevQ, double stdev, int numIter)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal, k, stdevP, stdevQ, stdev, numIter);
+        super(uIndex, iIndex, prefData, hasRating, notReciprocal, k, stdevP, stdevQ, stdev, numIter);
     }
 
     /**

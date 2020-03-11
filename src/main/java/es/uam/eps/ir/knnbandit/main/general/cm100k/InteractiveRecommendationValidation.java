@@ -7,7 +7,7 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.main.general.foursquare;
+package es.uam.eps.ir.knnbandit.main.general.cm100k;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -16,7 +16,6 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastU
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.main.Initializer;
-import es.uam.eps.ir.knnbandit.main.general.movielens.InteractiveRecommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
 import es.uam.eps.ir.knnbandit.partition.Partition;
@@ -114,7 +113,6 @@ public class InteractiveRecommendationValidation
         int auxNumParts = Parsers.ip.parse(args[8]);
         boolean relevantPartition = auxNumParts < 0;
         int numParts = Math.abs(auxNumParts);
-
         String algorithmsFile = args[10];
 
         // Configure functions for determining the weight and relevance.
@@ -132,8 +130,8 @@ public class InteractiveRecommendationValidation
 
         // Then, we read the ratings.
         Set<Long> users = new HashSet<>();
-        Set<String> items = new HashSet<>();
-        List<Tuple3<Long, String, Double>> triplets = new ArrayList<>();
+        Set<Long> items = new HashSet<>();
+        List<Tuple3<Long, Long, Double>> triplets = new ArrayList<>();
 
         // Read the ratings
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(input))))
@@ -143,7 +141,8 @@ public class InteractiveRecommendationValidation
             {
                 String[] split = line.split("::");
                 Long user = Parsers.lp.parse(split[0]);
-                String item = split[1];
+                //String item = split[1];
+                Long item = Parsers.lp.parse(split[1]);
                 double val = Parsers.dp.parse(split[2]);
 
                 users.add(user);
@@ -157,8 +156,8 @@ public class InteractiveRecommendationValidation
 
         // First, obtain the full preference information.
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
-        FastUpdateableItemIndex<String> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
-        SimpleFastPreferenceData<Long, String> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
+        FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(items.stream());
+        SimpleFastPreferenceData<Long, Long> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
 
         System.out.println("Users: " + uIndex.numUsers());
         System.out.println("Items: " + iIndex.numItems());
@@ -166,7 +165,6 @@ public class InteractiveRecommendationValidation
 
         Partition partition = relevantPartition ? new RelevantPartition(prefData, relevance) : new UniformPartition();
         List<Integer> splitPoints = partition.split(train, numParts);
-
         // For each split...
         for (int part = 0; part < numParts; ++part)
         {
@@ -178,7 +176,7 @@ public class InteractiveRecommendationValidation
             List<Tuple2<Integer, Integer>> partTrain = partValid.subList(0, realVal);
 
             // We build the preference data.
-            List<Tuple3<Long, String, Double>> validationTriplets = new ArrayList<>();
+            List<Tuple3<Long, Long, Double>> validationTriplets = new ArrayList<>();
             int defNumRel = partValid.stream().mapToInt(tuple ->
             {
                 int uidx = tuple.v1;
@@ -196,9 +194,9 @@ public class InteractiveRecommendationValidation
             }).sum();
 
             // Now, we obtain the validation data, which will be provided as input for the recommenders and metrics.
-            SimpleFastPreferenceData<Long, String> validData = SimpleFastPreferenceData.load(validationTriplets.stream(), uIndex, iIndex);
+            SimpleFastPreferenceData<Long, Long> validData = SimpleFastPreferenceData.load(validationTriplets.stream(), uIndex, iIndex);
 
-            Initializer<Long, String> initializer = new Initializer<>(validData, partTrain, false, false);
+            Initializer<Long, Long> initializer = new Initializer<>(validData, partTrain, false, false);
 
             List<Tuple2<Integer, Integer>> fullTraining = initializer.getFullTraining();
             List<Tuple2<Integer, Integer>> cleanTraining = initializer.getCleanTraining();
@@ -221,16 +219,16 @@ public class InteractiveRecommendationValidation
             System.out.println("Training recommendations: " + realVal + " (" + (part + 1) + "/" + numParts + ")");
 
             // Initialize the metrics to compute.
-            Map<String, Supplier<CumulativeMetric<Long, String>>> metrics = new HashMap<>();
-            metrics.put("recall", () -> new CumulativeRecall<>(validData, defNumRel, 0.5));
+            Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
+            metrics.put("recall", () -> new CumulativeRecall<>(validData, defNumRel, realThreshold));
             List<String> metricNames = new ArrayList<>(metrics.keySet());
 
             // Select the algorithms.
             long a = System.currentTimeMillis();
-            AlgorithmSelector<Long, String> algorithmSelector = new AlgorithmSelector<>();
-            algorithmSelector.configure(uIndex, iIndex, validData, useRatings ? threshold : 0.5);
+            AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
+            algorithmSelector.configure(uIndex, iIndex, validData, realThreshold);
             algorithmSelector.addFile(algorithms);
-            Map<String, InteractiveRecommender<Long, String>> recs = algorithmSelector.getRecs();
+            Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
             long b = System.currentTimeMillis();
             // Initialize the algorithm queue.
             PriorityQueue<Tuple2od<String>> queue = new PriorityQueue<>(recs.size(), (x, y) -> (int) Math.signum(y.v2() - x.v2()));
@@ -257,13 +255,13 @@ public class InteractiveRecommendationValidation
                 System.out.println("Starting algorithm " + re.getKey());
 
                 // Obtain the recommender and the metrics.
-                InteractiveRecommender<Long, String> rec = re.getValue();
-                Map<String, CumulativeMetric<Long, String>> localMetrics = new HashMap<>();
+                InteractiveRecommender<Long, Long> rec = re.getValue();
+                Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
                 metricNames.forEach(name -> localMetrics.put(name, metrics.get(name).get()));
 
                 // Configure and initialize the recommendation loop.
                 EndCondition endcond = iterationsStop ? (auxIter == 0.0 ? new NoLimitsEndCondition() : new NumIterEndCondition(numIter)) : new PercentagePositiveRatingsEndCondition(defNumRel-noRel, auxIter, realThreshold);
-                RecommendationLoop<Long, String> loop = new RecommendationLoop<>(uIndex, iIndex, validData, rec, localMetrics, endcond, UntieRandomNumber.RNG, false);
+                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(uIndex, iIndex, validData, rec, localMetrics, endcond, UntieRandomNumber.RNG, false);
                 loop.init(fullTraining, cleanTraining, availability, false);
                 long bbb = System.currentTimeMillis();
                 System.out.println("Initialized algorithm " + re.getKey() + " (" + (bbb - aaa) + " ms.)");
@@ -326,11 +324,10 @@ public class InteractiveRecommendationValidation
                         for (Tuple3<Integer, Integer, Long> triplet : list)
                         {
                             StringBuilder builder = new StringBuilder();
+                            int iter = loop.getCurrentIteration();
                             Tuple2<Integer, Integer> tuple = new Tuple2<>(triplet.v1, triplet.v2);
-
                             loop.updateMetrics(tuple);
                             updList.add(tuple);
-                            int iter = loop.getCurrentIteration();
                             builder.append(iter);
                             builder.append("\t");
                             builder.append(triplet.v1);
@@ -350,7 +347,6 @@ public class InteractiveRecommendationValidation
 
                         bbb = System.currentTimeMillis();
                         System.out.println("Algorithm " + re.getKey() + " finished retrieving data (" + (bbb - aaa) + " ms.)");
-
                     }
 
                     if(!loop.hasEnded() && resume && !list.isEmpty())
