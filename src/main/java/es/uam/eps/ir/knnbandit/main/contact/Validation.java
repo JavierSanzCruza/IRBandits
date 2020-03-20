@@ -243,7 +243,7 @@ public class Validation
             while(!ranking.isEmpty())
             {
                 Tuple2<String, Double> alg = ranking.poll();
-                bw.write("\n" + alg.v1 + "\t" + alg.v2 + "\n");
+                bw.write("\n" + alg.v1 + "\t" + alg.v2);
             }
         }
     }

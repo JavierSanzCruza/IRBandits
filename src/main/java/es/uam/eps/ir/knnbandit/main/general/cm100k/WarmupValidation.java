@@ -316,7 +316,7 @@ public class WarmupValidation
                 {
                     Tuple2od<String> alg = ranking.poll();
                     assert alg != null;
-                    bw.write("\n" + alg.v1 + "\t" + alg.v2 + "\n");
+                    bw.write("\n" + alg.v1 + "\t" + alg.v2);
                 }
             }
         }
