@@ -10,6 +10,7 @@
 package es.uam.eps.ir.knnbandit.recommendation;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
+import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
@@ -73,6 +74,10 @@ public abstract class InteractiveRecommender<U, I>
      */
     protected final KnowledgeDataUse dataUse;
     /**
+     * Random number seed generator.
+     */
+    protected final UntieRandomNumberReader rngSeedGen;
+    /**
      * Random number generator.
      */
     protected Random rng;
@@ -98,9 +103,9 @@ public abstract class InteractiveRecommender<U, I>
         this.availability = new ArrayList<>();
         this.ignoreNotRated = ignoreNotRated;
         this.notReciprocal = false;
-        this.rng = new Random(UntieRandomNumber.RNG);
         this.knowledgeData = null;
         this.dataUse = KnowledgeDataUse.ALL;
+        this.rngSeedGen = new UntieRandomNumberReader();
     }
 
 
@@ -122,9 +127,9 @@ public abstract class InteractiveRecommender<U, I>
         this.availability = new ArrayList<>();
         this.ignoreNotRated = ignoreNotRated;
         this.notReciprocal = false;
-        this.rng = new Random(UntieRandomNumber.RNG);
         this.knowledgeData = knowledgeData;
         this.dataUse = dataUse;
+        this.rngSeedGen = new UntieRandomNumberReader();
     }
 
     /**
@@ -145,9 +150,9 @@ public abstract class InteractiveRecommender<U, I>
         this.availability = new ArrayList<>();
         this.ignoreNotRated = ignoreNotRated;
         this.notReciprocal = notReciprocal;
-        this.rng = new Random(UntieRandomNumber.RNG);
         this.knowledgeData = null;
         this.dataUse = KnowledgeDataUse.ALL;
+        this.rngSeedGen = new UntieRandomNumberReader();
     }
 
     /**
@@ -219,9 +224,9 @@ public abstract class InteractiveRecommender<U, I>
             int iidx = pair.v2;
 
             // Update the rating, and modify the corresponding availability.
-            boolean hasUpdated = this.auxUpdateRating(uidx, iidx, false);
+            boolean didExist = this.auxUpdateRating(uidx, iidx, false);
             this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-            if(hasUpdated && contactRec && this.notReciprocal)
+            if(didExist && contactRec && this.notReciprocal)
             {
                 int index = this.availability.get(iidx).indexOf(uidx);
                 if(index > 0) // It might happen that the user uidx has been previously recommended to iidx (but it was not a hit)
@@ -411,7 +416,7 @@ public abstract class InteractiveRecommender<U, I>
     {
         // Initialize the availability lists and the random number generator.
         this.availability.clear();
-        this.rng = new Random(UntieRandomNumber.RNG);
+        this.rng = new Random(rngSeedGen.nextSeed());
 
         // Fill the availability lists.
         IntStream.range(0, prefData.numUsers()).forEach(uidx ->
@@ -441,7 +446,7 @@ public abstract class InteractiveRecommender<U, I>
         {
             this.availability.add(new IntArrayList(items));
         }
-        this.rng = new Random(UntieRandomNumber.RNG);
+        this.rng = new Random(rngSeedGen.nextSeed());
         this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
     }
 
@@ -502,6 +507,6 @@ public abstract class InteractiveRecommender<U, I>
             this.trainData.updateRating(uidx, iidx, value);
         }
 
-        return update;
+        return hasRating;
     }
 }

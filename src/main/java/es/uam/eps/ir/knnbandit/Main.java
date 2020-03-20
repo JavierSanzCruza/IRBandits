@@ -9,6 +9,8 @@
  */
 package es.uam.eps.ir.knnbandit;
 
+import org.jooq.lambda.tuple.Tuple2;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
@@ -20,52 +22,17 @@ import java.util.Arrays;
  */
 public class Main
 {
-    /**
-     * Name for general recommendation.
-     */
-    private final static String GENERAL = "generalrec";
-    /**
-     * Name for contact recommendation.
-     */
-    private final static String CONTACT = "contactrec";
-    /**
-     * Name for general recommendation with training.
-     */
-    private final static String GENERALTRAIN = "generalrectrain";
-    /**
-     * Name for contact recommendation with training.
-     */
-    private final static String CONTACTTRAIN = "contactrectrain";
-    /**
-     * Name for contact recommendation validation
-     */
-    private final static String CONTACTVALID = "contactrecvalid";
-    /**
-     * Name for general recommendation validation.
-     */
-    private final static String GENERALVALID = "generalrecvalid";
-    /**
-     * Name for metric summarization
-     */
+    private final static String RECOMMENDATION = "rec";
+    private final static String VALIDATION = "valid";
+    private final static String WARMUPRECOMMENDATION = "warmup-rec";
+    private final static String WARMUPRECOMMENDATIONPARALLEL = "warmup-rec-parallel";
+    private final static String WARMUPVALIDATION = "warmup-valid";
+    private final static String TRAININGSTATS = "train-stats";
+
     private final static String SUMMARIZE = "summarize";
-    /**
-     * Name for finding training statistics for general recommendation.
-     */
-    private final static String TRAININGSTATS = "generaltrainstats";
-    /**
-     * Name for finding training statistics for contact recommendation.
-     */
-    private final static String CONTACTTRAININGSTATS = "contacttrainstats";
-
-    private final static String GENERALPARALLEL = "generalparallel";
-
-    private final static String CONTACTPARALLEL = "contactparallel";
-
-    /**
-     *
-     */
     private final static String OUTPUTRANKER = "outputranker";
     private final static String RANKERCONFIG = "rankerconfig";
+
     /**
      * Main method. Executes the main method in the class specified by the first
      * argument with the rest of run time arguments.
@@ -81,48 +48,39 @@ public class Main
             int from = 1;
             switch (main)
             {
-                case GENERAL:
-                    String dataset = args[1];
-                    from = 2;
-                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".InteractiveRecommendation";
+                case RECOMMENDATION:
+                    Tuple2<Integer, String> alg = Main.getAlgorithm(args, "Recommendation");
+                    className = alg.v2;
+                    from = alg.v1;
                     break;
-                case CONTACT:
-                    className = "es.uam.eps.ir.knnbandit.main.contact.InteractiveContactRecommendation";
+                case VALIDATION:
+                    alg = Main.getAlgorithm(args, "Validation");
+                    className = alg.v2;
+                    from = alg.v1;
                     break;
-                case GENERALTRAIN:
-                    dataset = args[1];
-                    from = 2;
-                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".InteractiveRecommendationWithTraining";
+                case WARMUPRECOMMENDATION:
+                    alg = Main.getAlgorithm(args, "WarmupRecommendation");
+                    className = alg.v2;
+                    from = alg.v1;
                     break;
-                case CONTACTTRAIN:
-                    className = "es.uam.eps.ir.knnbandit.main.contact.InteractiveContactRecommendationWithTraining";
+                case WARMUPVALIDATION:
+                    alg = Main.getAlgorithm(args, "WarmupValidation");
+                    className = alg.v2;
+                    from = alg.v1;
                     break;
-                case GENERALVALID:
-                    dataset = args[1];
-                    from = 2;
-                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".InteractiveRecommendationValidation";
-                    break;
-                case CONTACTVALID:
-                    className = "es.uam.eps.ir.knnbandit.main.contact.InteractiveContactRecommendationValidation";
-                    break;
-                case GENERALPARALLEL:
-                    dataset = args[1];
-                    from = 2;
-                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".InteractiveRecommendationParallel";
-                    break;
-                case CONTACTPARALLEL:
-                    className = "es.uam.eps.ir.knnbandit.main.contact.InteractiveContactRecommendationParallel";
-                    break;
-                case SUMMARIZE:
-                    className = "es.uam.eps.ir.knnbandit.main.OutputResumer";
+                case WARMUPRECOMMENDATIONPARALLEL:
+                    alg = Main.getAlgorithm(args, "WarmupRecommendationParallel");
+                    className = alg.v2;
+                    from = alg.v1;
                     break;
                 case TRAININGSTATS:
-                    dataset = args[1];
-                    from = 2;
-                    className = "es.uam.eps.ir.knnbandit.main.general." + dataset + ".TrainingStatistics";
+                    alg = Main.getAlgorithm(args, "TrainingStatistics");
+                    className = alg.v2;
+                    from = alg.v1;
                     break;
-                case CONTACTTRAININGSTATS:
-                    className = "es.uam.eps.ir.knnbandit.main.contact.TrainingContactStatistics";
+
+                case SUMMARIZE:
+                    className = "es.uam.eps.ir.knnbandit.main.OutputResumer";
                     break;
                 case OUTPUTRANKER:
                     className = "es.uam.eps.ir.knnbandit.main.OutputRanker";
@@ -145,5 +103,30 @@ public class Main
             System.err.println("The run time arguments were not correct");
             ex.printStackTrace();
         }
+    }
+
+    /**
+     * For the different classes that depend on dataset selection, choose the most appropriate one.
+     * @param args the list of arguments received by the Main program.
+     * @param programName the name of the program we want to find the route to.
+     * @return the point of the arguments where the real arguments begin and the class name.
+     */
+    private static Tuple2<Integer, String> getAlgorithm(String[] args, String programName)
+    {
+        String command = "es.uam.eps.ir.knnbandit.main";
+        String type = args[1];
+        Tuple2<Integer, String> tuple = null;
+        if(type.equalsIgnoreCase("contact"))
+        {
+            command += ".contact." + programName;
+            tuple = new Tuple2<>(2, command);
+        }
+        else if(type.equalsIgnoreCase("general"))// general
+        {
+            String dataset = args[2].toLowerCase();
+            command += ".general." + dataset + "." + programName;
+            tuple = new Tuple2<>(3, command);
+        }
+        return tuple;
     }
 }

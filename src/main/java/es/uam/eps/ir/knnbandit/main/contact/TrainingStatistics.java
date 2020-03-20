@@ -36,7 +36,7 @@ import java.util.Set;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class TrainingContactStatistics
+public class TrainingStatistics
 {
     /**
      * Program for providing training statistics for contact recommendation.

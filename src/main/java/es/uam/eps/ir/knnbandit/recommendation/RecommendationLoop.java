@@ -348,4 +348,13 @@ public class RecommendationLoop<U, I>
         this.metrics.forEach((name, metric) -> values.put(name, metric.compute()));
         return values;
     }
+
+    /**
+     * Obtains the names of the metrics.
+     * @return the names of the metrics.
+     */
+    public Set<String> getMetricsNames()
+    {
+        return metrics.keySet();
+    }
 }

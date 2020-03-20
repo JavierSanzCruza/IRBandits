@@ -12,6 +12,8 @@ package es.uam.eps.ir.knnbandit;
 import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -22,11 +24,8 @@ import java.util.Random;
  */
 public class UntieRandomNumber
 {
-    /**
-     * The configured seed.
-     */
+    public static List<Integer> rngSeeds;
     public static int RNG = 0;
-
     /**
      * Configures the random number seed.
      * @param resume true if we want to use a previous seed.
@@ -34,31 +33,50 @@ public class UntieRandomNumber
      */
     public static void configure(boolean resume, String route) throws IOException
     {
-        if (resume)
+        UntieRandomNumber.configure(resume, route, 1);
+    }
+
+
+    /**
+     * Configures a list of random number seeds.
+     * @param resume true if we want to use a previous seed.
+     * @param route the route from which to read the previous seed / to write the new seed.
+     */
+    public static void configure(boolean resume, String route, int k) throws IOException
+    {
+        rngSeeds = new ArrayList<>();
+        if(resume)
         {
-            File f = new File(route + "rngseed");
-            if (f.exists())
+            File f = new File(route + "rngseedlist");
+            if(f.exists())
             {
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f))))
+                try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f))))
                 {
-                    UntieRandomNumber.RNG = Parsers.ip.parse(br.readLine());
+                    String line;
+                    while((line = br.readLine()) != null)
+                    {
+                        if(!line.equals(""))
+                            rngSeeds.add(Integer.parseInt(line));
+                    }
                 }
             }
-            else
-            {
-                Random rng = new Random();
-                UntieRandomNumber.RNG = rng.nextInt();
-            }
-        }
-        else
-        {
-            Random rng = new Random();
-            UntieRandomNumber.RNG = rng.nextInt();
         }
 
-        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(route + "rngseed"))))
+        int remaining = k - rngSeeds.size();
+        Random rng = new Random();
+        for(int i = 0; i < remaining; ++i)
         {
-            bw.write("" + UntieRandomNumber.RNG);
+            rngSeeds.add(rng.nextInt());
+        }
+
+        UntieRandomNumber.RNG = rngSeeds.get(0);
+
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(route + "rngseedlist"))))
+        {
+            for(int seed : rngSeeds)
+            {
+                bw.write(""+ seed +"\n");
+            }
         }
     }
 
