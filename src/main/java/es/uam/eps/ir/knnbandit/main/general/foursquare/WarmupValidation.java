@@ -138,7 +138,7 @@ public class WarmupValidation
         UntieRandomNumber.configure(resume, output, k);
 
         // Read the whole ratings:
-        Dataset<Long, Long> dataset = Dataset.load(input, Parsers.lp, Parsers.lp, "::", weightFunction, relevance);
+        Dataset<Long, String> dataset = Dataset.load(input, Parsers.lp, Parsers.sp, "::", weightFunction, relevance);
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 
@@ -176,20 +176,20 @@ public class WarmupValidation
             }
 
             int currentPart = part;
-            System.out.println("Started part " + part + " /" + numParts);
+            System.out.println("Started part " + (part+1) + " /" + numParts);
 
             // We take the full train set as the preference data
             List<Tuple2<Integer, Integer>> partValid = train.subList(0, splitPoints.get(part));
             int realVal = partition.split(partValid, percTrain);
 
             // And only a fraction of the ratings as training.
-            List<Tuple2<Integer, Integer>> partTrain = train.subList(0, splitPoints.get(part));
+            List<Tuple2<Integer, Integer>> partTrain = train.subList(0, realVal);
 
             // Build the validation triplets and compute the number of relevant ratings.
-            Dataset<Long, Long> validDataset = Dataset.load(dataset, partValid);
+            Dataset<Long, String> validDataset = Dataset.load(dataset, partValid);
             int notRel = validDataset.getNumRel(partTrain);
 
-            Initializer<Long, Long> initializer = new Initializer<>(validDataset.getPrefData(), partTrain, false, false);
+            Initializer<Long, String> initializer = new Initializer<>(validDataset.getPrefData(), partTrain, false, false);
             List<Tuple2<Integer, Integer>> fullTraining = initializer.getFullTraining();
             List<Tuple2<Integer, Integer>> cleanTraining = initializer.getCleanTraining();
             List<IntList> availability = initializer.getAvailability();
@@ -202,17 +202,17 @@ public class WarmupValidation
 
             long a = System.currentTimeMillis();
             // Initialize the metrics to compute.
-            Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
+            Map<String, Supplier<CumulativeMetric<Long, String>>> metrics = new HashMap<>();
             metrics.put("recall", () -> new CumulativeRecall<>(validDataset.getPrefData(), validDataset.getNumRel(), 0.5));
             List<String> metricNames = new ArrayList<>(metrics.keySet());
             long b = System.currentTimeMillis();
             System.out.println("Metrics prepared (" + (b - a) + " ms.");
 
             // Select the algorithms
-            AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
+            AlgorithmSelector<Long, String> algorithmSelector = new AlgorithmSelector<>();
             algorithmSelector.configure(validDataset.getUserIndex(), validDataset.getItemIndex(), validDataset.getPrefData(), realThreshold);
             algorithmSelector.addFile(algorithms);
-            Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
+            Map<String, InteractiveRecommender<Long, String>> recs = algorithmSelector.getRecs();
 
             // Initialize the algorithm queue.
 
@@ -225,11 +225,11 @@ public class WarmupValidation
             recs.entrySet().parallelStream().forEach((entry) ->
             {
                 String name = entry.getKey();
-                InteractiveRecommender<Long, Long> rec = entry.getValue();
+                InteractiveRecommender<Long, String> rec = entry.getValue();
 
                 UntieRandomNumberReader rngSeedGen = new UntieRandomNumberReader();
                 // And the metrics
-                Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
+                Map<String, CumulativeMetric<Long, String>> localMetrics = new HashMap<>();
                 metricNames.forEach(metricName -> localMetrics.put(metricName, metrics.get(metricName).get()));
 
                 // Configure and initialize the recommendation loop:
@@ -247,7 +247,7 @@ public class WarmupValidation
                     int rngSeed = rngSeedGen.nextSeed();
 
                     // Create the recommendation loop:
-                    RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(validDataset.getUserIndex(), validDataset.getItemIndex(), validDataset.getPrefData(), rec, localMetrics, endcond, rngSeed, false);
+                    RecommendationLoop<Long, String> loop = new RecommendationLoop<>(validDataset.getUserIndex(), validDataset.getItemIndex(), validDataset.getPrefData(), rec, localMetrics, endcond, rngSeed, false);
                     loop.init(fullTraining, cleanTraining, availability, false);
 
                     long bbb = System.nanoTime();

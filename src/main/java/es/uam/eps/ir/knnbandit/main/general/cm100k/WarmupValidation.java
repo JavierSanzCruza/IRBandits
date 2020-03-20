@@ -187,7 +187,7 @@ public class WarmupValidation
             int realVal = partition.split(partValid, percTrain);
 
             // And only a fraction of the ratings as training.
-            List<Tuple2<Integer, Integer>> partTrain = train.subList(0, splitPoints.get(part));
+            List<Tuple2<Integer, Integer>> partTrain = train.subList(0, realVal);
 
             // Build the validation triplets and compute the number of relevant ratings.
             DatasetWithKnowledge<Long, Long> validDataset = DatasetWithKnowledge.load(dataset, partValid);

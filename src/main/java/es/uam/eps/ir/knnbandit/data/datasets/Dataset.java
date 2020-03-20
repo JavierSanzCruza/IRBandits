@@ -48,6 +48,7 @@ public class Dataset<U,I>
         this.iIndex = iIndex;
         this.prefData = prefData;
         this.numRel = numRel;
+        this.relevance = relevance;
     }
 
     /**
@@ -91,10 +92,13 @@ public class Dataset<U,I>
     {
         return list.stream().mapToInt(t ->
         {
-            Optional<IdxPref> opt = prefData.getPreference(t.v1, t.v2);
-            if(opt.isPresent() && relevance.test(opt.get().v2))
+            if(prefData.numItems(t.v1) > 0 && prefData.numUsers(t.v2) > 0)
             {
-                return 1;
+                Optional<IdxPref> opt = prefData.getPreference(t.v1, t.v2);
+                if (opt.isPresent() && relevance.test(opt.get().v2))
+                {
+                    return 1;
+                }
             }
             return 0;
         }).sum();
