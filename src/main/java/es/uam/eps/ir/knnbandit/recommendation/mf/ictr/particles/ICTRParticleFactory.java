@@ -17,7 +17,6 @@ public class ICTRParticleFactory<U, I>
      * @param uIndex user index.
      * @param iIndex item index.
      * @param K      the number of latent factors for users/items.
-     *
      * @return the created particle if everything went OK, null otherwise.
      */
     public ICTRParticle<U, I> create(FastUserIndex<U> uIndex, FastItemIndex<I> iIndex, int K)

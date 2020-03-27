@@ -18,7 +18,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */

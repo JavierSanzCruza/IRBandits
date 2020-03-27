@@ -27,7 +27,6 @@ import java.util.stream.Stream;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -43,8 +42,8 @@ public abstract class AbstractFastUpdateablePreferenceData<U, I> extends Abstrac
     public AbstractFastUpdateablePreferenceData(FastUpdateableUserIndex<U> users, FastUpdateableItemIndex<I> items)
     {
         this(users, items,
-                (Function<IdxPref, IdPref<I>> & Serializable) p -> new IdPref<>(items.iidx2item(p)),
-                (Function<IdxPref, IdPref<U>> & Serializable) p -> new IdPref<>(users.uidx2user(p)));
+             (Function<IdxPref, IdPref<I>> & Serializable) p -> new IdPref<>(items.iidx2item(p)),
+             (Function<IdxPref, IdPref<U>> & Serializable) p -> new IdPref<>(users.uidx2user(p)));
     }
 
     /**
@@ -76,14 +75,14 @@ public abstract class AbstractFastUpdateablePreferenceData<U, I> extends Abstrac
     public void update(Stream<Tuple3<U, I, Double>> tuples)
     {
         tuples.forEach(t ->
-        {
-            if (this.containsUser(t.v1) && this.containsItem(t.v2))
-            {
-                int uidx = this.user2uidx(t.v1);
-                int iidx = this.item2iidx(t.v2);
-                this.updateRating(uidx, iidx, t.v3);
-            }
-        });
+                       {
+                           if (this.containsUser(t.v1) && this.containsItem(t.v2))
+                           {
+                               int uidx = this.user2uidx(t.v1);
+                               int iidx = this.item2iidx(t.v2);
+                               this.updateRating(uidx, iidx, t.v3);
+                           }
+                       });
     }
 
     @Override
@@ -101,18 +100,18 @@ public abstract class AbstractFastUpdateablePreferenceData<U, I> extends Abstrac
     public void updateDelete(Stream<Tuple2<U, I>> tuples)
     {
         tuples.forEach(t ->
-        {
-            if (this.containsUser(t.v1) && this.containsItem(t.v2))
-            {
-                int uidx = this.user2uidx(t.v1());
-                int iidx = this.item2iidx(t.v2());
+                       {
+                           if (this.containsUser(t.v1) && this.containsItem(t.v2))
+                           {
+                               int uidx = this.user2uidx(t.v1());
+                               int iidx = this.item2iidx(t.v2());
 
-                if (uidx >= 0 && iidx >= 0)
-                {
-                    this.updateDelete(uidx, iidx);
-                }
-            }
-        });
+                               if (uidx >= 0 && iidx >= 0)
+                               {
+                                   this.updateDelete(uidx, iidx);
+                               }
+                           }
+                       });
     }
 
     @Override

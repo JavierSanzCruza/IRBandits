@@ -31,7 +31,6 @@ import static java.util.Comparator.comparingInt;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Saúl Vargas (saul.vargas@uam.es)
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
@@ -64,8 +63,8 @@ public class SimpleFastUpdateablePreferenceData<U, I> extends StreamsAbstractFas
                                                  FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex)
     {
         this(numPreferences, uidxList, iidxList, uIndex, iIndex,
-                (Function<IdxPref, IdPref<I>> & Serializable) p -> new IdPref<>(iIndex.iidx2item(p)),
-                (Function<IdxPref, IdPref<U>> & Serializable) p -> new IdPref<>(uIndex.uidx2user(p)));
+             (Function<IdxPref, IdPref<I>> & Serializable) p -> new IdPref<>(iIndex.iidx2item(p)),
+             (Function<IdxPref, IdPref<U>> & Serializable) p -> new IdPref<>(uIndex.uidx2user(p)));
     }
 
     /**
@@ -103,17 +102,16 @@ public class SimpleFastUpdateablePreferenceData<U, I> extends StreamsAbstractFas
      * @param tuples Stream of user-item-value triples.
      * @param uIndex User index.
      * @param iIndex Item index.
-     *
      * @return an instance of SimpleFastPreferenceData containing the data from the input stream.
      */
     public static <U, I> SimpleFastUpdateablePreferenceData<U, I> load(Stream<Tuple3<U, I, Double>> tuples, FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex)
     {
         return load(tuples.map(t -> t.concat((Void) null)),
-                (uidx, iidx, v, o) -> new IdxPref(iidx, v),
-                (uidx, iidx, v, o) -> new IdxPref(uidx, v),
-                uIndex, iIndex,
-                (Function<IdxPref, IdPref<I>> & Serializable) p -> new IdPref<>(iIndex.iidx2item(p)),
-                (Function<IdxPref, IdPref<U>> & Serializable) p -> new IdPref<>(uIndex.uidx2user(p)));
+                    (uidx, iidx, v, o) -> new IdxPref(iidx, v),
+                    (uidx, iidx, v, o) -> new IdxPref(uidx, v),
+                    uIndex, iIndex,
+                    (Function<IdxPref, IdPref<I>> & Serializable) p -> new IdPref<>(iIndex.iidx2item(p)),
+                    (Function<IdxPref, IdPref<U>> & Serializable) p -> new IdPref<>(uIndex.uidx2user(p)));
     }
 
     /**
@@ -129,7 +127,6 @@ public class SimpleFastUpdateablePreferenceData<U, I> extends StreamsAbstractFas
      * @param iIndex      Item index.
      * @param uIdPrefFun  User IdxPref to IdPref converter.
      * @param iIdPrefFun  Item IdxPref to IdPref converter.
-     *
      * @return an instance of SimpleFastPreferenceData containing the data from the input stream.
      */
     public static <U, I, O> SimpleFastUpdateablePreferenceData<U, I> load(Stream<Tuple4<U, I, Double, O>> tuples,
@@ -154,28 +151,28 @@ public class SimpleFastUpdateablePreferenceData<U, I> extends StreamsAbstractFas
         }
 
         tuples.forEach(t ->
-        {
-            int uidx = uIndex.user2uidx(t.v1);
-            int iidx = iIndex.item2iidx(t.v2);
+                       {
+                           int uidx = uIndex.user2uidx(t.v1);
+                           int iidx = iIndex.item2iidx(t.v2);
 
-            numPreferences.incrementAndGet();
+                           numPreferences.incrementAndGet();
 
-            List<IdxPref> uList = uidxList.get(uidx);
-            if (uList == null)
-            {
-                uList = new ArrayList<>();
-                uidxList.set(uidx, uList);
-            }
-            uList.add(uIdxPrefFun.apply(uidx, iidx, t.v3, t.v4));
+                           List<IdxPref> uList = uidxList.get(uidx);
+                           if (uList == null)
+                           {
+                               uList = new ArrayList<>();
+                               uidxList.set(uidx, uList);
+                           }
+                           uList.add(uIdxPrefFun.apply(uidx, iidx, t.v3, t.v4));
 
-            List<IdxPref> iList = iidxList.get(iidx);
-            if (iList == null)
-            {
-                iList = new ArrayList<>();
-                iidxList.set(iidx, iList);
-            }
-            iList.add(iIdxPrefFun.apply(uidx, iidx, t.v3, t.v4));
-        });
+                           List<IdxPref> iList = iidxList.get(iidx);
+                           if (iList == null)
+                           {
+                               iList = new ArrayList<>();
+                               iidxList.set(iidx, iList);
+                           }
+                           iList.add(iIdxPrefFun.apply(uidx, iidx, t.v3, t.v4));
+                       });
 
         return new SimpleFastUpdateablePreferenceData<>(numPreferences.intValue(), uidxList, iidxList, uIndex, iIndex, uIdPrefFun, iIdPrefFun);
     }
@@ -288,14 +285,7 @@ public class SimpleFastUpdateablePreferenceData<U, I> extends StreamsAbstractFas
         {
             Optional<? extends IdxPref> pref = getPreference(user2uidx(u), item2iidx(i));
 
-            if (!pref.isPresent())
-            {
-                return Optional.empty();
-            }
-            else
-            {
-                return Optional.of(uPrefFun.apply(pref.get()));
-            }
+            return pref.map(uPrefFun::apply);
         }
         else
         {
@@ -371,7 +361,6 @@ public class SimpleFastUpdateablePreferenceData<U, I> extends StreamsAbstractFas
      * @param idx   The identifier of the preference to add.
      * @param value The rating value.
      * @param list  The list in which we want to update the preference.
-     *
      * @return true if the rating was added, false if it was just updated.
      */
     private boolean updatePreference(int idx, double value, List<IdxPref> list)
@@ -422,7 +411,6 @@ public class SimpleFastUpdateablePreferenceData<U, I> extends StreamsAbstractFas
      *
      * @param idx  Identifier of the element to delete.
      * @param list List from where the element has to be removed.
-     *
      * @return true if the element was removed, false otherwise.
      */
     private boolean updateDelete(int idx, List<IdxPref> list)

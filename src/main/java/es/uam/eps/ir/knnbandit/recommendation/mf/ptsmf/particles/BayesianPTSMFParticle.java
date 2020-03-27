@@ -85,7 +85,6 @@ public class BayesianPTSMFParticle<U, I> extends PTSMFParticle<U, I>
      * This implementation was adapted from https://github.com/gesiscss/promoss.
      *
      * @param shape the shape of the distribution.
-     *
      * @return the sampled value.
      */
     private double gammaSample(double shape)

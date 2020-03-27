@@ -15,7 +15,6 @@ package es.uam.eps.ir.knnbandit.graph;
  *
  * @param <I> The type of the identifier.
  * @param <W> The type of the weight.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */

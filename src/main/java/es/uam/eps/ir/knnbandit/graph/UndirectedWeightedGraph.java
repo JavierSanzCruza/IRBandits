@@ -17,7 +17,6 @@ import java.util.stream.Stream;
  * Interface for undirected weighted graphs.
  *
  * @param <V> Type of vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */

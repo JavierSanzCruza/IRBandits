@@ -32,16 +32,16 @@ public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRec
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
-     * @param k             Number of latent factors to use
-     * @param stdevP        Prior standard deviation for the user factors.
-     * @param stdevQ        Prior standard deviation for the item factors.
-     * @param stdev         Prior standard deviation for the ratings.
-     * @param numIter       Number of training iterations.
-     * @param alpha         Parameter for indicating the importance of the UCB term.
+     * @param k         Number of latent factors to use
+     * @param stdevP    Prior standard deviation for the user factors.
+     * @param stdevQ    Prior standard deviation for the item factors.
+     * @param stdev     Prior standard deviation for the ratings.
+     * @param numIter   Number of training iterations.
+     * @param alpha     Parameter for indicating the importance of the UCB term.
      */
     public GeneralizedLinearUCBPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
     {
@@ -60,7 +60,7 @@ public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRec
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
+     * @param hasRating     True if we must ignore unknown items when updating.
      * @param k             Number of latent factors to use
      * @param stdevP        Prior standard deviation for the user factors.
      * @param stdevQ        Prior standard deviation for the item factors.
@@ -85,10 +85,7 @@ public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRec
     {
         super.initializeMethod();
         this.counters.clear();
-        uIndex.getAllUidx().forEach(uidx ->
-        {
-            counters.add(this.trainData.numItems(uidx) + 1);
-        });
+        uIndex.getAllUidx().forEach(uidx -> counters.add(this.trainData.numItems(uidx) + 1));
     }
 
     @Override

@@ -15,6 +15,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
+import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -35,7 +36,6 @@ import java.util.stream.Stream;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
  */
 public abstract class InteractiveRecommender<U, I>
@@ -55,7 +55,7 @@ public abstract class InteractiveRecommender<U, I>
     /**
      * Knowledge about whether the user knows about the items or not
      */
-    protected final SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData;
+    protected final SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData;
     /**
      * A map including which items are recommendable for each user.
      */
@@ -89,9 +89,9 @@ public abstract class InteractiveRecommender<U, I>
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      preference data.
+     * @param uIndex         User index.
+     * @param iIndex         Item index.
+     * @param prefData       preference data.
      * @param ignoreNotRated true if we have to update the recommender only when the item has test ratings, false otherwise.
      */
     public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated)
@@ -112,13 +112,13 @@ public abstract class InteractiveRecommender<U, I>
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      preference data.
+     * @param uIndex         User index.
+     * @param iIndex         Item index.
+     * @param prefData       preference data.
      * @param ignoreNotRated true if we have to update the recommender only when the item has test ratings, false otherwise.
-     * @param dataUse       configuration for selecting which ratings we have to use to update.
+     * @param dataUse        configuration for selecting which ratings we have to use to update.
      */
-    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U,I> prefData, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, boolean ignoreNotRated, KnowledgeDataUse dataUse)
+    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean ignoreNotRated, KnowledgeDataUse dataUse)
     {
         this.uIndex = uIndex;
         this.iIndex = iIndex;
@@ -135,11 +135,11 @@ public abstract class InteractiveRecommender<U, I>
     /**
      * Constructor for people-to-people recommendation.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      preference data.
+     * @param uIndex         User index.
+     * @param iIndex         Item index.
+     * @param prefData       preference data.
      * @param ignoreNotRated False to treat missing ratings as failures, true otherwise.
-     * @param notReciprocal False to treat missing ratings as failures, true otherwise.
+     * @param notReciprocal  False to treat missing ratings as failures, true otherwise.
      */
     public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, boolean notReciprocal)
     {
@@ -166,6 +166,7 @@ public abstract class InteractiveRecommender<U, I>
 
     /**
      * Initializer: Initializes the recommender.
+     *
      * @param availability the list of items which can be recommended to each user.
      */
     public void init(List<IntList> availability)
@@ -176,30 +177,33 @@ public abstract class InteractiveRecommender<U, I>
 
     /**
      * Initializer: Initializes all elements of the recommender.
-     * @param train the training data.
-     * @param availability the list of items which can be recommended to each user.
+     *
+     * @param warmup     the warm-up data.
      * @param contactRec true if we are using contact recommendation.
      */
-    public void init(List<Tuple2<Integer, Integer>> train, List<IntList> availability, boolean contactRec)
+    public void init(Warmup warmup, boolean contactRec)
     {
+        List<IntList> availability = warmup.getAvailability();
         // First, we initialize the basic properties (with the availability list already pruned)
         this.auxInit(availability);
 
+        List<Tuple2<Integer, Integer>> train = this.usesAll() ? warmup.getFullTraining() : warmup.getCleanTraining();
+
         // For each element:
         train.forEach(pair ->
-        {
-            // Retrieve user and item ids.
-            int uidx = pair.v1;
-            int iidx = pair.v2;
+                      {
+                          // Retrieve user and item ids.
+                          int uidx = pair.v1;
+                          int iidx = pair.v2;
 
-            boolean hasUpdated = this.auxUpdateRating(uidx, iidx, false);
-            // If the (uidx,iidx) pair has been updated (success), then, if it is contact recommendation
-            // and the notReciprocal flag is activated, update the rating, by just adding it.
-            if (hasUpdated && contactRec && this.notReciprocal)
-            {
-                this.auxUpdateRating(iidx, uidx, false);
-            }
-        });
+                          boolean hasUpdated = this.auxUpdateRating(uidx, iidx, false);
+                          // If the (uidx,iidx) pair has been updated (success), then, if it is contact recommendation
+                          // and the notReciprocal flag is activated, update the rating, by just adding it.
+                          if (hasUpdated && contactRec && this.notReciprocal)
+                          {
+                              this.auxUpdateRating(iidx, uidx, false);
+                          }
+                      });
 
         // Initialize the specific properties of the method.
         this.initializeMethod();
@@ -208,7 +212,7 @@ public abstract class InteractiveRecommender<U, I>
     /**
      * Initializes the recommender with training data.
      *
-     * @param train the training data.
+     * @param train      the training data.
      * @param contactRec true if we are recommending people.
      */
     public void init(List<Tuple2<Integer, Integer>> train, boolean contactRec)
@@ -218,24 +222,24 @@ public abstract class InteractiveRecommender<U, I>
 
         // For each element in the training set, add it to the trainData, and update the availabilities
         train.forEach(pair ->
-        {
-            // Retrieve user and item ids.
-            int uidx = pair.v1;
-            int iidx = pair.v2;
+                      {
+                          // Retrieve user and item ids.
+                          int uidx = pair.v1;
+                          int iidx = pair.v2;
 
-            // Update the rating, and modify the corresponding availability.
-            boolean didExist = this.auxUpdateRating(uidx, iidx, false);
-            this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-            if(didExist && contactRec && this.notReciprocal)
-            {
-                int index = this.availability.get(iidx).indexOf(uidx);
-                if(index > 0) // It might happen that the user uidx has been previously recommended to iidx (but it was not a hit)
-                {
-                    this.auxUpdateRating(iidx, uidx, false);
-                    this.availability.get(iidx).removeInt(index);
-                }
-            }
-        });
+                          // Update the rating, and modify the corresponding availability.
+                          boolean didExist = this.auxUpdateRating(uidx, iidx, false);
+                          this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
+                          if (didExist && contactRec && this.notReciprocal)
+                          {
+                              int index = this.availability.get(iidx).indexOf(uidx);
+                              if (index > 0) // It might happen that the user uidx has been previously recommended to iidx (but it was not a hit)
+                              {
+                                  this.auxUpdateRating(iidx, uidx, false);
+                                  this.availability.get(iidx).removeInt(index);
+                              }
+                          }
+                      });
 
         // Initialize the method.
         this.initializeMethod();
@@ -310,7 +314,6 @@ public abstract class InteractiveRecommender<U, I>
      * Given a user, returns the next value.
      *
      * @param uidx User identifier
-     *
      * @return the identifier of the recommended item if everything went ok, -1 otherwise (i.e. when a user cannot be recommended).
      */
     public abstract int next(int uidx);
@@ -326,10 +329,10 @@ public abstract class InteractiveRecommender<U, I>
         boolean hasUpdated = this.auxUpdateRating(uidx, iidx, true);
         this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
 
-        if(hasUpdated && this.notReciprocal)
+        if (hasUpdated && this.notReciprocal)
         {
             int index = this.availability.get(iidx).indexOf(uidx);
-            if(index > 0) // This pair has not been previously recommended:
+            if (index > 0) // This pair has not been previously recommended:
             {
                 this.availability.get(iidx).removeInt(index);
                 this.auxUpdateRating(iidx, uidx, true);
@@ -346,26 +349,26 @@ public abstract class InteractiveRecommender<U, I>
     {
         List<Tuple3<Integer, Integer, Double>> tuples = new ArrayList<>();
         // For each tuple...
-        for(Tuple2<Integer, Integer> tuple : train)
+        for (Tuple2<Integer, Integer> tuple : train)
         {
             int uidx = tuple.v1;
             int iidx = tuple.v2;
             boolean hasUpdated = this.auxUpdateRating(uidx, iidx, false);
             this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
 
-            if(hasUpdated)
+            if (hasUpdated)
             {
                 double value = this.trainData.getPreference(uidx, iidx).get().v2();
                 tuples.add(new Tuple3<>(uidx, iidx, value));
 
-                if(this.notReciprocal)
+                if (this.notReciprocal)
                 {
                     int index = this.availability.get(iidx).indexOf(uidx);
-                    if(index > 0) // This pair has not been previously recommended:
+                    if (index > 0) // This pair has not been previously recommended:
                     {
                         this.availability.get(iidx).removeInt(index);
                         hasUpdated = this.auxUpdateRating(iidx, uidx, false);
-                        if(hasUpdated)
+                        if (hasUpdated)
                         {
                             this.availability.get(iidx).removeInt(index);
                             value = this.trainData.getPreference(iidx, uidx).get().v2();
@@ -410,6 +413,7 @@ public abstract class InteractiveRecommender<U, I>
 
     /**
      * Auxiliar initializer: Initializes only the availability and the training data, not other properties of the method.
+     *
      * @param contactRec true if we are using contact recommendation.
      */
     private void auxInit(boolean contactRec)
@@ -420,16 +424,16 @@ public abstract class InteractiveRecommender<U, I>
 
         // Fill the availability lists.
         IntStream.range(0, prefData.numUsers()).forEach(uidx ->
-        {
-            if (contactRec)
-            {
-                availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
-            }
-            else
-            {
-                availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
-            }
-        });
+                                                        {
+                                                            if (contactRec)
+                                                            {
+                                                                availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
+                                                            }
+                                                            else
+                                                            {
+                                                                availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
+                                                            }
+                                                        });
 
         // Load the training data (empty data).
         this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
@@ -437,12 +441,13 @@ public abstract class InteractiveRecommender<U, I>
 
     /**
      * Auxiliar initializer: Initializes the availability, the random number and the training data (empty).
+     *
      * @param availability the list of items which can be recommended to each user.
      */
     private void auxInit(List<IntList> availability)
     {
         this.availability.clear();
-        for(IntList items : availability)
+        for (IntList items : availability)
         {
             this.availability.add(new IntArrayList(items));
         }
@@ -451,11 +456,11 @@ public abstract class InteractiveRecommender<U, I>
     }
 
 
-
     /**
      * Auxiliar function for updating ratings
-     * @param uidx the identifier of the user.
-     * @param iidx the identifier of the item.
+     *
+     * @param uidx         the identifier of the user.
+     * @param iidx         the identifier of the item.
      * @param updateMethod true if the method has to be updated false otherwise.
      * @return true if the rating exists and it has been added to training.
      */
@@ -470,17 +475,17 @@ public abstract class InteractiveRecommender<U, I>
         {
             // Obtain then the possible preference for uidx to iidx.
             Optional<IdxPref> realvalue = this.prefData.getPreference(uidx, iidx);
-            if(realvalue.isPresent())
+            if (realvalue.isPresent())
             {
                 value = realvalue.get().v2();
                 hasRating = true;
             }
 
             // For datasets with information about whether the user knew about the methods.
-            if(hasRating && dataUse != KnowledgeDataUse.ALL)
+            if (hasRating && dataUse != KnowledgeDataUse.ALL)
             {
                 realvalue = this.knowledgeData.getKnownPreference(uidx, iidx);
-                if(realvalue.isPresent())
+                if (realvalue.isPresent())
                 {
                     isKnown = true;
                 }
@@ -488,7 +493,7 @@ public abstract class InteractiveRecommender<U, I>
         }
 
         boolean update = (!this.ignoreNotRated || hasRating);
-        switch(dataUse)
+        switch (dataUse)
         {
             case ONLYKNOWN:
                 update = update && isKnown;
@@ -502,7 +507,10 @@ public abstract class InteractiveRecommender<U, I>
         if (update)
         {
             // If we have to update the method, do it.
-            if(updateMethod) this.updateMethod(uidx, iidx, value);
+            if (updateMethod)
+            {
+                this.updateMethod(uidx, iidx, value);
+            }
             // Update the rating in the training.
             this.trainData.updateRating(uidx, iidx, value);
         }

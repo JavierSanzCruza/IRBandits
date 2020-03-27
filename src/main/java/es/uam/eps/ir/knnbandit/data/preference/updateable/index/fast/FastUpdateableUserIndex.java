@@ -18,7 +18,6 @@ import java.util.stream.Stream;
  * Fast and updateable version of UserIndex, where users are internally represented with numerical indices from 0 (inclusive) to the number of indexed users (exclusive).
  *
  * @param <U> User type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -28,6 +27,6 @@ public interface FastUpdateableUserIndex<U> extends UpdateableUserIndex<U>, Fast
     @Override
     default Stream<U> getAllUsers()
     {
-        return getAllUidx().mapToObj(uidx -> uidx2user(uidx));
+        return getAllUidx().mapToObj(this::uidx2user);
     }
 }

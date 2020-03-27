@@ -21,7 +21,6 @@ import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -74,17 +73,7 @@ public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
     protected void initializeMethod()
     {
         this.itemBandit.reset();
-
-        this.trainData.getAllUidx().forEach(uidx ->
-        {
-            this.trainData.getUidxPreferences(uidx).forEach(pref ->
-            {
-                int iidx = pref.v1;
-                double value = pref.v2;
-
-                this.itemBandit.update(iidx, value);
-            });
-        });
+        this.trainData.getAllUidx().forEach(uidx -> this.trainData.getUidxPreferences(uidx).forEach(pref -> this.itemBandit.update(pref.v1, pref.v2)));
     }
 
     @Override

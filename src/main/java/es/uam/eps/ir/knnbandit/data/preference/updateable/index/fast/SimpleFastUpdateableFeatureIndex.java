@@ -17,7 +17,6 @@ import java.util.stream.Stream;
  * Simple implementation of FastUpdateableFeatureIndex backed by a bi-map IdxIndex.
  *
  * @param <F> Feature type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -29,7 +28,6 @@ public class SimpleFastUpdateableFeatureIndex<F> extends SimpleFastFeatureIndex<
      *
      * @param <F>      Feature type.
      * @param features Stream of feature objects.
-     *
      * @return a fast feature index.
      */
     public static <F> SimpleFastUpdateableFeatureIndex<F> load(Stream<F> features)

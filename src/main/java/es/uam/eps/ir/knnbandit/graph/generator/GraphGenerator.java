@@ -15,7 +15,6 @@ import es.uam.eps.ir.knnbandit.graph.Graph;
  * Generates different graphs.
  *
  * @param <V> Type of the vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -32,7 +31,6 @@ public interface GraphGenerator<V>
      * Generates a graph.
      *
      * @return the generated graph.
-     *
      * @throws GeneratorNotConfiguredException The generator is not configured.
      * @throws GeneratorBadConfiguredException The generator parameters are incorretct.
      */

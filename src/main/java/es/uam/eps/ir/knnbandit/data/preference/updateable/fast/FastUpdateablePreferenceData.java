@@ -19,7 +19,6 @@ import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */

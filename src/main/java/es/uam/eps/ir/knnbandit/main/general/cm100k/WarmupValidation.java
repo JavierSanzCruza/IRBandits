@@ -15,7 +15,7 @@ import es.uam.eps.ir.knnbandit.data.datasets.DatasetWithKnowledge;
 import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.io.Writer;
 import es.uam.eps.ir.knnbandit.main.AuxiliarMethods;
-import es.uam.eps.ir.knnbandit.main.Initializer;
+import es.uam.eps.ir.knnbandit.warmup.FullWarmup;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
 import es.uam.eps.ir.knnbandit.partition.Partition;
@@ -30,6 +30,9 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.PercentagePositiveRatingsEndCondition;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
+import es.uam.eps.ir.knnbandit.warmup.OnlyRatingsWarmup;
+import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import es.uam.eps.ir.knnbandit.warmup.WarmupType;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
@@ -73,7 +76,7 @@ public class WarmupValidation
      */
     public static void main(String[] args) throws IOException, UnconfiguredException
     {
-        if (args.length < 9)
+        if (args.length < 11)
         {
             System.err.println("ERROR:iInvalid arguments");
             System.err.println("Usage:");
@@ -116,15 +119,22 @@ public class WarmupValidation
         boolean relevantPartition = auxNumParts < 0;
         int numParts = Math.abs(auxNumParts);
 
-        double percTrain = Parsers.dp.parse(args[10]);
+        WarmupType warmupType = WarmupType.fromString(args[10]);
+        if(warmupType == null)
+        {
+            System.err.println("ERROR: Invalid warm-up type");
+            return;
+        }
+
+        double percTrain = Parsers.dp.parse(args[11]);
         int auxK = 1;
 
-        // If indicated as so, retrieve the number of repetitions.
-        for(int i = 11; i < args.length; ++i)
+        for (int i = 12; i < args.length; ++i)
         {
-            if(args[i].equals("-k"))
+            if ("-k".equals(args[i]))
             {
-                auxK = Parsers.ip.parse(args[++i]);
+                ++i;
+                auxK = Parsers.ip.parse(args[i]);
             }
         }
 
@@ -166,7 +176,7 @@ public class WarmupValidation
         Partition partition = relevantPartition ? new RelevantPartition(dataset.getPrefData(), x -> true) : new UniformPartition();
         List<Integer> splitPoints = partition.split(train, numParts);
 
-        for(int part = 0; part < numParts; ++part)
+        for (int part = 0; part < numParts; ++part)
         {
             String currentOutputFolder = outputFolder + part + File.separator;
             File f = new File(currentOutputFolder);
@@ -193,10 +203,17 @@ public class WarmupValidation
             DatasetWithKnowledge<Long, Long> validDataset = DatasetWithKnowledge.load(dataset, partValid);
             int notRel = validDataset.getNumRel(partTrain);
 
-            Initializer<Long, Long> initializer = new Initializer<>(validDataset.getPrefData(), partTrain, false, false);
-            List<Tuple2<Integer, Integer>> fullTraining = initializer.getFullTraining();
-            List<Tuple2<Integer, Integer>> cleanTraining = initializer.getCleanTraining();
-            List<IntList> availability = initializer.getAvailability();
+            Warmup warmup;
+            switch (warmupType)
+            {
+                case FULL:
+                    warmup = new FullWarmup(validDataset.getPrefData(), partTrain, false, false);
+                    break;
+                case ONLYRATINGS:
+                default:
+                    warmup = new OnlyRatingsWarmup(validDataset.getPrefData(), partTrain, false, false);
+
+            }
 
             System.out.println("Training: " + splitPoints.get(part) + " recommendations (" + (part + 1) + "/" + numParts + ")");
             System.out.println(validDataset.toString());
@@ -252,31 +269,38 @@ public class WarmupValidation
 
                     // Create the recommendation loop:
                     RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(validDataset.getUserIndex(), validDataset.getItemIndex(), validDataset.getPrefData(), rec, localMetrics, endcond, rngSeed, false);
-                    loop.init(fullTraining, cleanTraining, availability, false);
+                    loop.init(warmup, false);
 
                     long bbb = System.nanoTime();
-                    System.out.println("Algorithm " + name + " for part " + (currentPart+1) + " /" + numParts + " has been initialized (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                    System.out.println("Algorithm " + name + " for part " + (currentPart + 1) + " /" + numParts + " has been initialized (" + (bbb - aaa) / 1000000.0 + " ms.)");
 
                     Map<String, List<Double>> metricValues = new HashMap<>();
                     metricNames.forEach(metricName -> metricValues.put(metricName, new ArrayList<>()));
 
-                    try {
+                    try
+                    {
                         List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
                         String fileName = outputFolder + name + "_" + i + ".txt";
-                        if (resume) {
+                        if (resume)
+                        {
                             list = AuxiliarMethods.retrievePreviousIterations(fileName);
                         }
 
                         Writer writer = new Writer(currentOutputFolder + name + "_" + i + ".txt", metricNames);
-                        if (resume && !list.isEmpty()) {
+                        writer.writeHeader();
+
+                        if (resume && !list.isEmpty())
+                        {
                             metricValues.putAll(AuxiliarMethods.updateWithPrevious(loop, list, writer, interval));
                         }
 
                         int currentIter = AuxiliarMethods.executeRemaining(loop, writer, interval, metricValues);
                         maxIter = maxIter + (currentIter - maxIter) / (i + 1.0);
                         writer.close();
-                    } catch (IOException ioe) {
-                        System.err.println("ERROR: Some error occurred when executing algorithm " + name + " (" + i + ") for part " + (currentPart+1) + " /" + numParts);
+                    }
+                    catch (IOException ioe)
+                    {
+                        System.err.println("ERROR: Some error occurred when executing algorithm " + name + " (" + i + ") for part " + (currentPart + 1) + " /" + numParts);
                     }
 
                     for (String metric : metricNames)
@@ -295,24 +319,33 @@ public class WarmupValidation
                         }
                     }
 
-                    System.out.println("Algorithm " + name + " (" + i + ") for part " + (currentPart+1) + " /" + numParts + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                    System.out.println("Algorithm " + name + " (" + i + ") for part " + (currentPart + 1) + " /" + numParts + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
                 }
 
-                if(iterationsStop) auxiliarValues.put(name, averagedLastIteration.get("recall"));
-                else auxiliarValues.put(name, maxIter);
+                if (iterationsStop)
+                {
+                    auxiliarValues.put(name, averagedLastIteration.get("recall"));
+                }
+                else
+                {
+                    auxiliarValues.put(name, maxIter);
+                }
 
                 long bbb = System.nanoTime();
-                System.out.println("Algorithm " + name + " for part " + (currentPart+1) + " /" + numParts + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                System.out.println("Algorithm " + name + " for part " + (currentPart + 1) + " /" + numParts + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
             });
 
             PriorityQueue<Tuple2od<String>> ranking = new PriorityQueue<>(recs.size(), (x, y) -> (int) Math.signum(y.v2() - x.v2()));
             auxiliarValues.forEach((algorithm, value) -> ranking.add(new Tuple2od<>(algorithm, value)));
 
+            File aux = new File(algorithms);
+            String rankingname = aux.getName();
+
             // Write the algorithm ranking
-            try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentOutputFolder + "ranking.txt"))))
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentOutputFolder + rankingname + "-ranking.txt"))))
             {
                 bw.write("Algorithm\t" + (iterationsStop ? "recall@" + numIter : "numIters@" + auxIter));
-                while(!ranking.isEmpty())
+                while (!ranking.isEmpty())
                 {
                     Tuple2od<String> alg = ranking.poll();
                     assert alg != null;

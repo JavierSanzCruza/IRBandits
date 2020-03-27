@@ -22,7 +22,6 @@ import no.uib.cipr.matrix.sparse.LinkedSparseMatrix;
  * Fast implementation of an undirected unweighted graph.
  *
  * @param <V> Type of the vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -64,14 +63,14 @@ public class FastUndirectedUnweightedGraph<V> extends FastGraph<V> implements Un
     {
         Matrix matrix = new LinkedSparseMatrix(Long.valueOf(this.getVertexCount()).intValue(), Long.valueOf(this.getVertexCount()).intValue());
         this.vertices.getAllObjects().forEach(u ->
-        {
-            int uIdx = this.vertices.object2idx(u);
-            this.getNeighbourNodes(u).forEach(v ->
-            {
-                int vIdx = this.vertices.object2idx(v);
-                matrix.set(uIdx, vIdx, 1.0);
-            });
-        });
+                                              {
+                                                  int uIdx = this.vertices.object2idx(u);
+                                                  this.getNeighbourNodes(u).forEach(v ->
+                                                                                    {
+                                                                                        int vIdx = this.vertices.object2idx(v);
+                                                                                        matrix.set(uIdx, vIdx, 1.0);
+                                                                                    });
+                                              });
 
         return matrix;
     }

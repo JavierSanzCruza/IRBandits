@@ -17,7 +17,6 @@ import java.util.stream.Stream;
  * Updateable index for a set of features.
  *
  * @param <F> Feature type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -28,7 +27,6 @@ public interface UpdateableFeatureIndex<F> extends FeatureIndex<F>
      * Adds a new feature.
      *
      * @param f The new feature.
-     *
      * @return the index of the new feature.
      */
     int addFeature(F f);
@@ -40,6 +38,6 @@ public interface UpdateableFeatureIndex<F> extends FeatureIndex<F>
      */
     default void addFeatures(Stream<F> features)
     {
-        features.forEach(f -> this.addFeature(f));
+        features.forEach(this::addFeature);
     }
 }

@@ -15,11 +15,10 @@ import java.io.Serializable;
  * Class for expressing weights.
  *
  * @param <W> Type of the weights.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class IdxValue<W> implements Comparable<IdxValue>, Serializable, Cloneable
+public class IdxValue<W> implements Comparable<IdxValue<W>>, Serializable, Cloneable
 {
     /**
      * Identifier.

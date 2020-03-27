@@ -24,10 +24,11 @@ import java.util.function.DoubleUnaryOperator;
 
 /**
  * A dataset.
+ *
  * @param <U> type of the users.
  * @param <I> type of the items.
  */
-public class Dataset<U,I>
+public class Dataset<U, I>
 {
     protected final FastUpdateableUserIndex<U> uIndex;
     protected final FastUpdateableItemIndex<I> iIndex;
@@ -37,12 +38,13 @@ public class Dataset<U,I>
 
     /**
      * Constructor.
-     * @param uIndex User index.
-     * @param iIndex Item index.
+     *
+     * @param uIndex   User index.
+     * @param iIndex   Item index.
      * @param prefData Preference data.
-     * @param numRel Number of relevant (user, item) pairs.
+     * @param numRel   Number of relevant (user, item) pairs.
      */
-    protected Dataset(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U,I> prefData, int numRel, DoublePredicate relevance)
+    protected Dataset(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, int numRel, DoublePredicate relevance)
     {
         this.uIndex = uIndex;
         this.iIndex = iIndex;
@@ -53,55 +55,64 @@ public class Dataset<U,I>
 
     /**
      * Obtains the user index of the dataset.
+     *
      * @return the user index of the dataset.
      */
-    public FastUpdateableUserIndex<U> getUserIndex() {
+    public FastUpdateableUserIndex<U> getUserIndex()
+    {
         return uIndex;
     }
 
     /**
      * Obtains the item index of the dataset.
+     *
      * @return the item index of the dataset.
      */
-    public FastUpdateableItemIndex<I> getItemIndex() {
+    public FastUpdateableItemIndex<I> getItemIndex()
+    {
         return iIndex;
     }
 
     /**
      * Obtains the preference data.
+     *
      * @return the preference data of the dataset.
      */
-    public SimpleFastPreferenceData<U, I> getPrefData() {
+    public SimpleFastPreferenceData<U, I> getPrefData()
+    {
         return prefData;
     }
 
     /**
      * Get the number of relevant (user, item) pairs.
+     *
      * @return the number of relevant (user, item) pairs.
      */
-    public int getNumRel() {
+    public int getNumRel()
+    {
         return numRel;
     }
 
     /**
      * Given a list of (uidx, iidx) pairs, finds how many relevant pairs there are.
+     *
      * @param list the list of (uidx, iidx)
      * @return the count of how many relevant (uidx, iidx) pairs appear in the list.
      */
     public int getNumRel(List<Tuple2<Integer, Integer>> list)
     {
         return list.stream().mapToInt(t ->
-        {
-            if(prefData.numItems(t.v1) > 0 && prefData.numUsers(t.v2) > 0)
-            {
-                Optional<IdxPref> opt = prefData.getPreference(t.v1, t.v2);
-                if (opt.isPresent() && relevance.test(opt.get().v2))
-                {
-                    return 1;
-                }
-            }
-            return 0;
-        }).sum();
+                                      {
+                                          if (prefData.numItems(t.v1) > 0 && prefData.numUsers(t.v2) > 0)
+                                          {
+                                              Optional<IdxPref> opt = prefData.getPreference(t.v1, t.v2);
+                                              if (opt.isPresent() && relevance.test(opt.get().v2))
+                                              {
+                                                  return 1;
+                                              }
+                                          }
+                                          return 0;
+                                      }).sum();
     }
 
     public int numUsers()
@@ -127,21 +138,21 @@ public class Dataset<U,I>
     }
 
 
-
     /**
      * Loads a dataset.
-     * @param filename the name of the file where the dataset is.
-     * @param uParser parser for the users.
-     * @param iParser parser for the items.
-     * @param separator separator for the different fields in the file.
+     *
+     * @param filename       the name of the file where the dataset is.
+     * @param uParser        parser for the users.
+     * @param iParser        parser for the items.
+     * @param separator      separator for the different fields in the file.
      * @param weightFunction function for determining the rating value.
-     * @param relevance function that determines if a (user, item) pair is relevant or not.
-     * @param <U> type of the users.
-     * @param <I> type of the items.
+     * @param relevance      function that determines if a (user, item) pair is relevant or not.
+     * @param <U>            type of the users.
+     * @param <I>            type of the items.
      * @return the dataset.
      * @throws IOException if something fails while reading the dataset file.
      */
-    public static <U,I> Dataset<U,I> load(String filename, Parser<U> uParser, Parser<I> iParser, String separator, DoubleUnaryOperator weightFunction, DoublePredicate relevance) throws IOException
+    public static <U, I> Dataset<U, I> load(String filename, Parser<U> uParser, Parser<I> iParser, String separator, DoubleUnaryOperator weightFunction, DoublePredicate relevance) throws IOException
     {
         List<Tuple3<U, I, Double>> triplets = new ArrayList<>();
         Set<U> users = new HashSet<>();
@@ -179,17 +190,17 @@ public class Dataset<U,I>
         return new Dataset<>(uIndex, iIndex, prefData, numrel, relevance);
     }
 
-    public static <U,I> Dataset<U,I> load(Dataset<U,I> dataset, List<Tuple2<Integer, Integer>> list)
+    public static <U, I> Dataset<U, I> load(Dataset<U, I> dataset, List<Tuple2<Integer, Integer>> list)
     {
         List<Tuple3<U, I, Double>> triplets = new ArrayList<>();
         FastUpdateableUserIndex<U> userIndex = dataset.getUserIndex();
         FastUpdateableItemIndex<I> itemIndex = dataset.getItemIndex();
 
-        SimpleFastPreferenceData<U,I> datasetPrefData = dataset.getPrefData();
+        SimpleFastPreferenceData<U, I> datasetPrefData = dataset.getPrefData();
 
         int numrel = 0;
 
-        for(Tuple2<Integer, Integer> tuple : list)
+        for (Tuple2<Integer, Integer> tuple : list)
         {
             int uidx = tuple.v1;
             int iidx = tuple.v2;
@@ -205,7 +216,7 @@ public class Dataset<U,I>
                     Tuple3<U, I, Double> t = new Tuple3<>(u, i, value);
                     triplets.add(t);
 
-                    if(dataset.relevance.test(value))
+                    if (dataset.relevance.test(value))
                     {
                         numrel++;
                     }

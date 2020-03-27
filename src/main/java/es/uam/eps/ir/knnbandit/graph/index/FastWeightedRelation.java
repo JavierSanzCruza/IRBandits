@@ -19,7 +19,6 @@ import java.util.stream.Stream;
  * Fast implementation of a weighted relation.
  *
  * @param <W> type of the weights.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -263,9 +262,8 @@ public abstract class FastWeightedRelation<W> implements Relation<W>
      * @param weight    The weight value.
      * @param firstList True if the element has to be found on the list of first elements,
      *                  false if it has to be found on the list of second elements.
-     *
      * @return the index of the element if it exists, - (insertpoint - 1) if it does not,
-     *         where insertpoint is the corresponding point where the element should be added.
+     * where insertpoint is the corresponding point where the element should be added.
      */
     private Integer binarySearch(int firstIdx, int secondIdx, W weight, boolean firstList)
     {
@@ -287,19 +285,13 @@ public abstract class FastWeightedRelation<W> implements Relation<W>
     @Override
     public IntStream firstsWithSeconds()
     {
-        return IntStream.range(0, this.numFirst()).filter(i ->
-        {
-            return !this.secondIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numFirst()).filter(i -> !this.secondIdxList.get(i).isEmpty());
     }
 
     @Override
     public IntStream secondsWithFirsts()
     {
-        return IntStream.range(0, this.numSecond()).filter(i ->
-        {
-            return !this.firstIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numSecond()).filter(i -> !this.firstIdxList.get(i).isEmpty());
     }
 
     @Override
@@ -325,18 +317,12 @@ public abstract class FastWeightedRelation<W> implements Relation<W>
     @Override
     public IntStream getIsolatedFirsts()
     {
-        return IntStream.range(0, this.numFirst()).filter(i ->
-        {
-            return this.secondIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numFirst()).filter(i -> this.secondIdxList.get(i).isEmpty());
     }
 
     @Override
     public IntStream getIsolatedSeconds()
     {
-        return IntStream.range(0, this.numSecond()).filter(i ->
-        {
-            return this.firstIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numSecond()).filter(i -> this.firstIdxList.get(i).isEmpty());
     }
 }

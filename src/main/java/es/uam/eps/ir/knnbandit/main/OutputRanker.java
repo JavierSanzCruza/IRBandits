@@ -9,6 +9,7 @@ public class OutputRanker
 {
     /**
      * Obtains the rankings for different variants of algorithms
+     *
      * @param args Execution arguments
      *             <ul>
      *              <li><b>Input directory:</b> Directory containing the recommendation files</li>
@@ -33,7 +34,7 @@ public class OutputRanker
         }
 
         String inputDirectory = args[0];
-        int timePoint = Integer.valueOf(args[1]);
+        int timePoint = Integer.parseInt(args[1]);
         String algorithmList = args[2];
         boolean header = args[3].equalsIgnoreCase("true");
         String outputDir = args[4];
@@ -44,7 +45,7 @@ public class OutputRanker
         // Check whether the input directory is a directory or not.
         int numRecs;
         File directory = new File(inputDirectory);
-        if(directory.isDirectory())
+        if (directory.isDirectory())
         {
             numRecs = directory.list().length;
         }
@@ -55,7 +56,7 @@ public class OutputRanker
         }
 
         // For each algorithm, obtain the rankings.
-        for(String algorithm : algorithms)
+        for (String algorithm : algorithms)
         {
             System.out.println("Started " + algorithm);
             long a = System.currentTimeMillis();
@@ -64,49 +65,49 @@ public class OutputRanker
 
             // Obtain the result files for the algorithm
             File[] files = directory.listFiles((dir, name) -> name.startsWith(algorithm));
-            for(File file : files)
+            for (File file : files)
             {
                 // Obtain the recall result.
-                try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file))))
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file))))
                 {
                     // iter, user, item, recall
                     String line;
-                    if(header)
+                    if (header)
                     {
                         line = br.readLine();
                     }
 
-                    double value = 0.0;
+                    double value;
                     int i = 0;
                     do
                     {
                         line = br.readLine();
                         i++;
                     }
-                    while(i < timePoint);
+                    while (i < timePoint);
 
                     String[] split = line.split("\t");
-                    value = Double.valueOf(split[3]);
+                    value = Double.parseDouble(split[3]);
                     queue.add(new Tuple2od<>(file.getName(), value));
                 }
             }
 
             long b = System.currentTimeMillis();
-            System.out.println("Ranked " + algorithm + "(" + (b-a) + " ms.)");
+            System.out.println("Ranked " + algorithm + "(" + (b - a) + " ms.)");
 
             // Write the ranking.
-            try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDir + "algorithm-" + algorithm + ".txt"))))
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDir + "algorithm-" + algorithm + ".txt"))))
             {
                 bw.write("Algorithm\trecall@" + timePoint);
-                while(!queue.isEmpty())
+                while (!queue.isEmpty())
                 {
                     Tuple2od<String> element = queue.poll();
-                    if(element.v1.endsWith(".txt"))
+                    if (element.v1.endsWith(".txt"))
                     {
                         String[] auxSplit = element.v1.split("\\.");
                         int length = auxSplit.length;
                         String text = "";
-                        for(int i = 0; i < length - 1; ++i)
+                        for (int i = 0; i < length - 1; ++i)
                         {
                             text += auxSplit[i];
                         }
@@ -118,12 +119,11 @@ public class OutputRanker
                     }
 
 
-
                 }
             }
 
             b = System.currentTimeMillis();
-            System.out.println("Finished " + algorithm + "(" + (b-a) + " ms.)");
+            System.out.println("Finished " + algorithm + "(" + (b - a) + " ms.)");
         }
     }
 }

@@ -11,17 +11,19 @@ public interface Partition
 {
     /**
      * Given a list of tuples, divides it in a given number of parts.
+     *
      * @param trainingData the training data.
-     * @param numParts the number of parts.
+     * @param numParts     the number of parts.
      * @return a list containing the split points.
      */
-    public List<Integer> split(List<Tuple2<Integer,Integer>> trainingData, int numParts);
+    List<Integer> split(List<Tuple2<Integer, Integer>> trainingData, int numParts);
 
     /**
      * Given a list of tuples, divides it in two parts given a percentage.
+     *
      * @param trainingData the training data.
-     * @param percentage the percentage of training.
+     * @param percentage   the percentage of training.
      * @return the split point.
      */
-    public int split(List<Tuple2<Integer, Integer>> trainingData, double percentage);
+    int split(List<Tuple2<Integer, Integer>> trainingData, double percentage);
 }

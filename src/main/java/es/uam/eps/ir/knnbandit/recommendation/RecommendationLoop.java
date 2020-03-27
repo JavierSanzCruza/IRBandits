@@ -12,6 +12,7 @@ package es.uam.eps.ir.knnbandit.recommendation;
 import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.FastUserKnowledgePointWisePreferenceData;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
+import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
 import es.uam.eps.ir.ranksys.fast.index.FastUserIndex;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
@@ -27,7 +28,6 @@ import java.util.*;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -67,7 +67,7 @@ public class RecommendationLoop<U, I>
     private final IntList userList = new IntArrayList();
     private final FastPointWisePreferenceData<U, I> prefData;
 
-    private final FastUserKnowledgePointWisePreferenceData<U,I> knowledgePrefData;
+    private final FastUserKnowledgePointWisePreferenceData<U, I> knowledgePrefData;
     private final KnowledgeDataUse dataUse;
     /**
      * Random number generator.
@@ -142,7 +142,7 @@ public class RecommendationLoop<U, I>
         this.dataUse = KnowledgeDataUse.ALL;
     }
 
-    public RecommendationLoop(FastUserIndex<U> userIndex, FastItemIndex<I> itemIndex, FastPointWisePreferenceData<U,I> prefData, FastUserKnowledgePointWisePreferenceData<U,I> knowledgeData, InteractiveRecommender<U,I> recommender, Map<String, CumulativeMetric<U,I>> metrics, EndCondition endCondition, int rngSeed, KnowledgeDataUse dataUse)
+    public RecommendationLoop(FastUserIndex<U> userIndex, FastItemIndex<I> itemIndex, FastPointWisePreferenceData<U, I> prefData, FastUserKnowledgePointWisePreferenceData<U, I> knowledgeData, InteractiveRecommender<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, int rngSeed, KnowledgeDataUse dataUse)
     {
         this.userIndex = userIndex;
         this.itemIndex = itemIndex;
@@ -193,29 +193,26 @@ public class RecommendationLoop<U, I>
     /**
      * Given some training data, initializes the recommendation loop.
      *
-     * @param fullTrain the training data (including ratings not available in the preference data).
-     * @param cleanTrain the training data (excluding ratings not available in the preference data).
+     * @param warmup     the warm-up data.
      * @param contactRec true if contact recommendation, false otherwise.
      */
-    public void init(List<Tuple2<Integer, Integer>> fullTrain, List<Tuple2<Integer,Integer>> cleanTrain, List<IntList> availability, boolean contactRec)
+    public void init(Warmup warmup, boolean contactRec)
     {
-        if(this.recommender.usesAll())
+        if (this.recommender.usesAll())
         {
-            this.recommender.init(fullTrain, availability, contactRec);
+            this.recommender.init(warmup, contactRec);
         }
         else
         {
-            this.recommender.init(cleanTrain, availability, contactRec);
+            this.recommender.init(warmup, contactRec);
         }
 
-        this.metrics.forEach((name, metric) -> metric.initialize(fullTrain, notReciprocal));
+        this.metrics.forEach((name, metric) -> metric.initialize(warmup.getFullTraining(), notReciprocal));
         this.userList.clear();
         this.prefData.getUidxWithPreferences().forEach(userList::add);
         this.numUsers = this.userList.size();
         this.endCondition.init();
     }
-
-
 
 
     /**
@@ -351,6 +348,7 @@ public class RecommendationLoop<U, I>
 
     /**
      * Obtains the names of the metrics.
+     *
      * @return the names of the metrics.
      */
     public Set<String> getMetricsNames()

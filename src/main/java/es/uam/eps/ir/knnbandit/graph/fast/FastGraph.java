@@ -25,7 +25,6 @@ import java.util.stream.Stream;
  * Fast implementation of a graph.
  *
  * @param <V> Type of the vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -95,7 +94,7 @@ public abstract class FastGraph<V> implements Graph<V>, Serializable
     {
         if (this.containsVertex(node))
         {
-            return this.edges.getIncidentNodes(this.vertices.object2idx(node)).map(n -> this.vertices.idx2object(n));
+            return this.edges.getIncidentNodes(this.vertices.object2idx(node)).map(this.vertices::idx2object);
         }
         return Stream.empty();
     }
@@ -105,7 +104,7 @@ public abstract class FastGraph<V> implements Graph<V>, Serializable
     {
         if (this.containsVertex(node))
         {
-            return this.edges.getAdjacentNodes(this.vertices.object2idx(node)).map(n -> this.vertices.idx2object(n));
+            return this.edges.getAdjacentNodes(this.vertices.object2idx(node)).map(this.vertices::idx2object);
         }
         return Stream.empty();
     }
@@ -115,7 +114,7 @@ public abstract class FastGraph<V> implements Graph<V>, Serializable
     {
         if (this.containsVertex(node))
         {
-            return this.edges.getNeighbourNodes(this.vertices.object2idx(node)).map(n -> this.vertices.idx2object(n));
+            return this.edges.getNeighbourNodes(this.vertices.object2idx(node)).map(this.vertices::idx2object);
         }
         return Stream.empty();
     }
@@ -125,7 +124,7 @@ public abstract class FastGraph<V> implements Graph<V>, Serializable
     {
         if (this.containsVertex(node))
         {
-            return this.edges.getMutualNodes(this.vertices.object2idx(node)).map(n -> this.vertices.idx2object(n));
+            return this.edges.getMutualNodes(this.vertices.object2idx(node)).map(this.vertices::idx2object);
         }
         return Stream.empty();
     }
@@ -451,7 +450,6 @@ public abstract class FastGraph<V> implements Graph<V>, Serializable
      * @param nodeB  Identifier of the second node.
      * @param weight Weight of the link.
      * @param type   Type of the link.
-     *
      * @return true if everything went ok, false otherwise.
      */
     public boolean addEdge(int nodeA, int nodeB, double weight, int type)
@@ -465,7 +463,6 @@ public abstract class FastGraph<V> implements Graph<V>, Serializable
      * @param nodeA  Identifier of the first node.
      * @param nodeB  Identifier of the second node.
      * @param weight Weight of the link.
-     *
      * @return true if everything went ok, false otherwise.
      */
     public boolean updateEdgeWeight(int nodeA, int nodeB, double weight)
@@ -476,7 +473,7 @@ public abstract class FastGraph<V> implements Graph<V>, Serializable
     @Override
     public Stream<V> getIsolatedNodes()
     {
-        return this.edges.getIsolatedNodes().mapToObj(i -> this.idx2object(i));
+        return this.edges.getIsolatedNodes().mapToObj(this::idx2object);
     }
 
     @Override
@@ -485,13 +482,13 @@ public abstract class FastGraph<V> implements Graph<V>, Serializable
         switch (direction)
         {
             case IN:
-                return this.edges.getNodesWithIncidentEdges().mapToObj(i -> this.idx2object(i));
+                return this.edges.getNodesWithIncidentEdges().mapToObj(this::idx2object);
             case OUT:
-                return this.edges.getNodesWithAdjacentEdges().mapToObj(i -> this.idx2object(i));
+                return this.edges.getNodesWithAdjacentEdges().mapToObj(this::idx2object);
             case UND:
-                return this.edges.getNodesWithEdges().mapToObj(i -> this.idx2object(i));
+                return this.edges.getNodesWithEdges().mapToObj(this::idx2object);
             case MUTUAL:
-                return this.edges.getNodesWithMutualEdges().mapToObj(i -> this.idx2object(i));
+                return this.edges.getNodesWithMutualEdges().mapToObj(this::idx2object);
             default:
                 break;
         }

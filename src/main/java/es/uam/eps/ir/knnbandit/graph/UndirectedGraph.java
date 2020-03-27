@@ -17,7 +17,6 @@ import java.util.stream.Stream;
  * Interface for undirected graphs.
  *
  * @param <V> Type of vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -27,7 +26,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * Given a node, finds all the nodes u such that the edge (u to node) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream of the incident nodes.
      */
     @Override
@@ -40,7 +38,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * Given a node, finds all the nodes u such that the edge (node to u) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing the adjacent nodes.
      */
     @Override
@@ -54,7 +51,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes which share reciprocal links.
      */
     @Override
@@ -68,7 +64,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      *
      * @param node      The node.
      * @param direction The direction of the links.
-     *
      * @return A stream containing the corresponding neighbourhood.
      */
     @Override
@@ -81,7 +76,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * Calculates the number of incident neighbours of a node.
      *
      * @param node The node.
-     *
      * @return the number of incident neighbours of the node if it is contained in the graph, -1 if not.
      */
     @Override
@@ -94,7 +88,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * Calculates the number of adjacent neighbours of a node.
      *
      * @param node The node.
-     *
      * @return the degree of the node if it is contained in the graph, -1 if not.
      */
     @Override
@@ -108,7 +101,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * incident reciprocal link towards the node.
      *
      * @param node The node.
-     *
      * @return the number of reciprocal links starting from the node.
      */
     @Override
@@ -122,7 +114,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      *
      * @param node      The node.
      * @param direction The direction of the links.
-     *
      * @return A stream containing the corresponding neighbourhood.
      */
     @Override
@@ -136,9 +127,8 @@ public interface UndirectedGraph<V> extends Graph<V>
      * links exist in the graph.
      *
      * @param node The node.
-     *
      * @return the number nodes for which both (u to node) and (node to u) exist in
-     *         the graph if node is in the graph, -1 otherwise.
+     * the graph if node is in the graph, -1 otherwise.
      */
     @Override
     default int getMutualNodesCount(V node)
@@ -150,7 +140,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * Given a node, finds all the nodes u such that the edge (u to node) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream of the incident nodes.
      */
     @Override
@@ -163,7 +152,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * Given a node, finds all the nodes u such that the edge (node to u) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing the adjacent nodes.
      */
     @Override
@@ -183,7 +171,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      *
      * @param node      The node.
      * @param direction The direction of the links.
-     *
      * @return A stream containing the corresponding neighbourhood.
      */
     @Override
@@ -220,7 +207,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * Given a node, finds the types of the edges towards the nodes u such that the edge (node to u) and the edge (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood and types.
      */
     @Override
@@ -233,7 +219,6 @@ public interface UndirectedGraph<V> extends Graph<V>
      * Given a node, finds the types of the edges from the nodes u such that the edge (node to u) and the edge (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood and types.
      */
     @Override

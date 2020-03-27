@@ -24,7 +24,6 @@ import java.util.stream.IntStream;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -38,9 +37,9 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param prefData   Preference data.
      * @param hasRatings True if (user, item) pairs without training must be ignored.
      */
     public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRatings)
@@ -56,7 +55,7 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param hasRatings True if (user, item) pairs without training must be ignored.
+     * @param hasRatings    True if (user, item) pairs without training must be ignored.
      * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise
      */
     public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRatings, boolean notReciprocal)
@@ -66,7 +65,7 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
         IntStream.range(0, prefData.numItems()).forEach(iidx -> this.numTimes[iidx] = 0);
     }
 
-    public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U,I> prefData, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, boolean hasRatings, KnowledgeDataUse dataUse)
+    public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean hasRatings, KnowledgeDataUse dataUse)
     {
         super(uIndex, iIndex, prefData, knowledgeData, hasRatings, dataUse);
         this.numTimes = new double[prefData.numItems()];

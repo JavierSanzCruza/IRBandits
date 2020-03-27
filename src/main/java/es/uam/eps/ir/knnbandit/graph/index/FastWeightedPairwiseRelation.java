@@ -19,7 +19,6 @@ import java.util.stream.Stream;
  * is the number of items.
  *
  * @param <W> Type of the weight.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -50,9 +49,9 @@ public class FastWeightedPairwiseRelation<W> extends FastWeightedRelation<W>
         for (int i = 0; i < weightsList.size(); ++i)
         {
             List<IdxValue<W>> list = weightsList.get(i);
-            for (int j = 0; j < list.size(); ++j)
+            for (IdxValue<W> wIdxValue : list)
             {
-                this.firstIdxList.get(list.get(j).getIdx()).add(new IdxValue<>(i, list.get(j).getValue()));
+                this.firstIdxList.get(wIdxValue.getIdx()).add(new IdxValue<>(i, wIdxValue.getValue()));
             }
         }
 

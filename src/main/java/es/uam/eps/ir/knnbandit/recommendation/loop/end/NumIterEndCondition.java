@@ -16,6 +16,7 @@ public class NumIterEndCondition implements EndCondition
 
     /**
      * Constructor.
+     *
      * @param numIter The number of iterations.
      */
     public NumIterEndCondition(int numIter)

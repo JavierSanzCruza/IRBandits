@@ -26,14 +26,13 @@ import java.util.stream.Stream;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
  */
-public class TransposedUserKnowledgePreferenceData<I, U> extends TransposedPreferenceData<I,U> implements FastUserKnowledgePreferenceData<I,U>,FastPointWisePreferenceData<I,U>
+public class TransposedUserKnowledgePreferenceData<I, U> extends TransposedPreferenceData<I, U> implements FastUserKnowledgePreferenceData<I, U>, FastPointWisePreferenceData<I, U>
 {
-    protected FastUserKnowledgePreferenceData<U,I> recommenderData;
+    protected FastUserKnowledgePreferenceData<U, I> recommenderData;
 
     /**
      * Constructor with default converters between IdxPref and IdPref.
@@ -190,19 +189,19 @@ public class TransposedUserKnowledgePreferenceData<I, U> extends TransposedPrefe
     @Override
     public PreferenceData<I, U> getKnownPreferenceData()
     {
-        return new TransposedPreferenceData<>((FastPreferenceData<U,I>) this.recommenderData.getKnownPreferenceData());
+        return new TransposedPreferenceData<>((FastPreferenceData<U, I>) this.recommenderData.getKnownPreferenceData());
     }
 
     @Override
     public PreferenceData<I, U> getUnknownPreferenceData()
     {
-        return new TransposedPreferenceData<>((FastPreferenceData<U,I>) this.recommenderData.getUnknownPreferenceData());
+        return new TransposedPreferenceData<>((FastPreferenceData<U, I>) this.recommenderData.getUnknownPreferenceData());
     }
 
     @Override
     public PreferenceData<I, U> getPreferenceData()
     {
-        return new TransposedPreferenceData<>((FastPreferenceData<U,I>) this.recommenderData.getPreferenceData());
+        return new TransposedPreferenceData<>((FastPreferenceData<U, I>) this.recommenderData.getPreferenceData());
     }
 
 

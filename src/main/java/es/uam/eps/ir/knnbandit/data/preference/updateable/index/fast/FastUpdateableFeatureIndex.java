@@ -19,7 +19,6 @@ import java.util.stream.Stream;
  * Fast and updateable version of a FeatureIndex, where features are internally represented with numerical indices from 0 (inclusive) to the number of indexed features (exclusive).
  *
  * @param <F> Feature type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -35,6 +34,6 @@ public interface FastUpdateableFeatureIndex<F> extends UpdateableFeatureIndex<F>
     @Override
     default Stream<F> getAllFeatures()
     {
-        return IntStream.range(0, numFeatures()).mapToObj(fidx -> fidx2feature(fidx));
+        return IntStream.range(0, numFeatures()).mapToObj(this::fidx2feature);
     }
 }

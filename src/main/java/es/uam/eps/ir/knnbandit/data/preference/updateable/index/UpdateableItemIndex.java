@@ -17,7 +17,6 @@ import java.util.stream.Stream;
  * Updateable index for a set of items.
  *
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -28,7 +27,6 @@ public interface UpdateableItemIndex<I> extends ItemIndex<I>
      * Adds a new item.
      *
      * @param i The item.
-     *
      * @return the identifier of the new item.
      */
     int addItem(I i);
@@ -40,6 +38,6 @@ public interface UpdateableItemIndex<I> extends ItemIndex<I>
      */
     default void addItems(Stream<I> items)
     {
-        items.forEach(i -> this.addItem(i));
+        items.forEach(this::addItem);
     }
 }

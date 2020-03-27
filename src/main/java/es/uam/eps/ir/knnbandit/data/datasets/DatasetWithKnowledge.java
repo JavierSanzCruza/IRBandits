@@ -21,37 +21,38 @@ import java.util.*;
 import java.util.function.DoublePredicate;
 import java.util.function.DoubleUnaryOperator;
 
-public class DatasetWithKnowledge<U,I> extends Dataset<U,I>
+public class DatasetWithKnowledge<U, I> extends Dataset<U, I>
 {
-    protected final SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData;
+    protected final SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData;
     protected final int numRelKnown;
 
     /**
      * Constructor.
-     * @param uIndex User index.
-     * @param iIndex Item index.
+     *
+     * @param uIndex        User index.
+     * @param iIndex        Item index.
      * @param knowledgeData Preference data.
-     * @param numRel Number of relevant (user, item) pairs.
-     * @param numRelKnown Number of relevant known (user, item) pairs.
+     * @param numRel        Number of relevant (user, item) pairs.
+     * @param numRelKnown   Number of relevant known (user, item) pairs.
      */
-    protected DatasetWithKnowledge(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, int numRel, int numRelKnown, DoublePredicate relevance)
+    protected DatasetWithKnowledge(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, int numRel, int numRelKnown, DoublePredicate relevance)
     {
-        super(uIndex, iIndex, (SimpleFastPreferenceData<U,I>) knowledgeData.getPreferenceData(), numRel, relevance);
+        super(uIndex, iIndex, (SimpleFastPreferenceData<U, I>) knowledgeData.getPreferenceData(), numRel, relevance);
         this.knowledgeData = knowledgeData;
         this.numRelKnown = numRelKnown;
     }
 
-    public SimpleFastPreferenceData<U,I> getKnownPrefData()
+    public SimpleFastPreferenceData<U, I> getKnownPrefData()
     {
-        return (SimpleFastPreferenceData<U,I>) this.knowledgeData.getKnownPreferenceData();
+        return (SimpleFastPreferenceData<U, I>) this.knowledgeData.getKnownPreferenceData();
     }
 
-    public SimpleFastPreferenceData<U,I> getUnknownPrefData()
+    public SimpleFastPreferenceData<U, I> getUnknownPrefData()
     {
-        return (SimpleFastPreferenceData<U,I>) this.knowledgeData.getUnknownPreferenceData();
+        return (SimpleFastPreferenceData<U, I>) this.knowledgeData.getUnknownPreferenceData();
     }
 
-    public SimpleFastUserKnowledgePreferenceData<U,I> getKnowledgeData()
+    public SimpleFastUserKnowledgePreferenceData<U, I> getKnowledgeData()
     {
         return this.knowledgeData;
     }
@@ -86,20 +87,22 @@ public class DatasetWithKnowledge<U,I> extends Dataset<U,I>
                 "\nNum. relevant unknown ratings: " +
                 this.getNumRelUnknown();
     }
+
     /**
      * Loads a dataset.
-     * @param filename the name of the file where the dataset is.
-     * @param uParser parser for the users.
-     * @param iParser parser for the items.
-     * @param separator separator for the different fields in the file.
+     *
+     * @param filename       the name of the file where the dataset is.
+     * @param uParser        parser for the users.
+     * @param iParser        parser for the items.
+     * @param separator      separator for the different fields in the file.
      * @param weightFunction function for determining the rating value.
-     * @param relevance function that determines if a (user, item) pair is relevant or not.
-     * @param <U> type of the users.
-     * @param <I> type of the items.
+     * @param relevance      function that determines if a (user, item) pair is relevant or not.
+     * @param <U>            type of the users.
+     * @param <I>            type of the items.
      * @return the dataset.
      * @throws IOException if something fails while reading the dataset file.
      */
-    public static <U,I> DatasetWithKnowledge<U,I> load(String filename, Parser<U> uParser, Parser<I> iParser, String separator, DoubleUnaryOperator weightFunction, DoublePredicate relevance) throws IOException
+    public static <U, I> DatasetWithKnowledge<U, I> load(String filename, Parser<U> uParser, Parser<I> iParser, String separator, DoubleUnaryOperator weightFunction, DoublePredicate relevance) throws IOException
     {
         // Then, we read the ratings.
         Set<U> users = new HashSet<>();
@@ -125,7 +128,10 @@ public class DatasetWithKnowledge<U,I> extends Dataset<U,I>
                 if (relevance.test(rating))
                 {
                     numrel++;
-                    if(known) numrelknown++;
+                    if (known)
+                    {
+                        numrelknown++;
+                    }
                 }
 
                 quartets.add(new Tuple4<>(user, item, rating, known));
@@ -141,18 +147,18 @@ public class DatasetWithKnowledge<U,I> extends Dataset<U,I>
         return new DatasetWithKnowledge<>(uIndex, iIndex, knowledgeData, numrel, numrelknown, relevance);
     }
 
-    public static <U,I> DatasetWithKnowledge<U,I> load(DatasetWithKnowledge<U,I> dataset, List<Tuple2<Integer, Integer>> list)
+    public static <U, I> DatasetWithKnowledge<U, I> load(DatasetWithKnowledge<U, I> dataset, List<Tuple2<Integer, Integer>> list)
     {
         List<Tuple4<U, I, Double, Boolean>> quartets = new ArrayList<>();
         FastUpdateableUserIndex<U> userIndex = dataset.getUserIndex();
         FastUpdateableItemIndex<I> itemIndex = dataset.getItemIndex();
 
-        SimpleFastUserKnowledgePreferenceData<U,I> datasetKnowledgeData = dataset.getKnowledgeData();
+        SimpleFastUserKnowledgePreferenceData<U, I> datasetKnowledgeData = dataset.getKnowledgeData();
 
         int numrel = 0;
         int numrelknown = 0;
 
-        for(Tuple2<Integer, Integer> tuple : list)
+        for (Tuple2<Integer, Integer> tuple : list)
         {
             int uidx = tuple.v1;
             int iidx = tuple.v2;
@@ -169,10 +175,13 @@ public class DatasetWithKnowledge<U,I> extends Dataset<U,I>
                     Tuple4<U, I, Double, Boolean> t = new Tuple4<>(u, i, value, known);
                     quartets.add(t);
 
-                    if(dataset.relevance.test(value))
+                    if (dataset.relevance.test(value))
                     {
                         numrel++;
-                        if(known) numrelknown++;
+                        if (known)
+                        {
+                            numrelknown++;
+                        }
                     }
                 }
             }

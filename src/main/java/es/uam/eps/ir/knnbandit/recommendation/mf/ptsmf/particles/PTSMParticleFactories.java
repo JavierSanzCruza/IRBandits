@@ -14,7 +14,6 @@ public class PTSMParticleFactories
      * @param sigmaQ the variance for the item vectors.
      * @param <U>    Type of the users.
      * @param <I>    Type of the items.
-     *
      * @return The particle factory.
      */
     public static <U, I> PTSMFParticleFactory<U, I> normalFactory(int k, double sigma, double sigmaP, double sigmaQ)
@@ -37,7 +36,6 @@ public class PTSMParticleFactories
      * @param beta   the rate of the inverse gamma distributions for the user latent factor variance.
      * @param <U>    Type of the users.
      * @param <I>    Type of the items.
-     *
      * @return The particle factory.
      */
     public static <U, I> PTSMFParticleFactory<U, I> bayesianFactory(int k, double sigma, double sigmaQ, double alpha, double beta)

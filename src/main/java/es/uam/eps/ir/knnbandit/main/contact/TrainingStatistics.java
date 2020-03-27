@@ -86,8 +86,7 @@ public class TrainingStatistics
         // Read the training data.
         Reader reader = new Reader();
         List<Tuple2<Integer, Integer>> train = reader.read(trainingFile, "\t", true);
-        graph.getAllNodes().forEach(u ->
-            graph.getAdjacentNodes(u).forEach(v -> triplets.add(new Tuple3<>(u, v, 1.0))));
+        graph.getAllNodes().forEach(u -> graph.getAdjacentNodes(u).forEach(v -> triplets.add(new Tuple3<>(u, v, 1.0))));
 
         FastUpdateableUserIndex<Long> uIndex = SimpleFastUpdateableUserIndex.load(users.stream());
         FastUpdateableItemIndex<Long> iIndex = SimpleFastUpdateableItemIndex.load(users.stream());

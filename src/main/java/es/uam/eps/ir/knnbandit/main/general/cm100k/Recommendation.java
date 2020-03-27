@@ -50,6 +50,7 @@ public class Recommendation
 {
     /**
      * Program that runs a simulation of interactive contact recommendation.
+     *
      * @param args Execution arguments:
      *             <ol>
      *                  <li><b>Algorithms:</b> the recommender systems to apply validation for</li>
@@ -111,15 +112,17 @@ public class Recommendation
 
         // Read (if defined) the number of times an algorithm has to be executed
         // and the distance between data points in the summary.
-        for(int i = 8; i < args.length; ++i)
+        for (int i = 8; i < args.length; ++i)
         {
-            switch(args[i])
+            switch (args[i])
             {
                 case "-k":
-                    auxK = Parsers.ip.parse(args[++i]);
+                    ++i;
+                    auxK = Parsers.ip.parse(args[i]);
                     break;
                 case "-interval":
-                    auxinterval = Parsers.ip.parse(args[++i]);
+                    ++i;
+                    auxinterval = Parsers.ip.parse(args[i]);
                     break;
             }
         }
@@ -141,7 +144,7 @@ public class Recommendation
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 
-        int interval = auxinterval == 0 ? 10*dataset.numUsers() : auxinterval;
+        int interval = auxinterval == 0 ? 10 * dataset.numUsers() : auxinterval;
 
         // Initialize the metrics to compute.
         Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
@@ -200,7 +203,7 @@ public class Recommendation
             double maxIter = 0;
 
             // Execute each recommender k times.
-            for(int i = 0; i < k; ++i)
+            for (int i = 0; i < k; ++i)
             {
                 int rngSeed = rngSeedGen.nextSeed();
 
@@ -226,6 +229,7 @@ public class Recommendation
 
                     // Resume the loop with the previous iterations.
                     Writer writer = new Writer(outputFolder + name + "_" + i + ".txt", metricNames);
+                    writer.writeHeader();
                     if (resume && !list.isEmpty())
                     {
                         metricValues.putAll(AuxiliarMethods.updateWithPrevious(loop, list, writer, interval));
@@ -233,7 +237,7 @@ public class Recommendation
 
                     // Execute until the loop ends.
                     int currentIter = AuxiliarMethods.executeRemaining(loop, writer, interval, metricValues);
-                    maxIter = maxIter + (currentIter - maxIter)/(i+1.0);
+                    maxIter = maxIter + (currentIter - maxIter) / (i + 1.0);
                     writer.close();
                 }
                 catch (IOException ioe)
@@ -241,16 +245,23 @@ public class Recommendation
                     System.err.println("ERROR: Some error occurred when executing algorithm " + name + " (" + i + ") ");
                 }
 
-                // Update the average values.
-                for(String metric : metricNames)
+                boolean first = true;
+                for (String metric : metricNames)
                 {
-                    if(i == 0)
+                    if (i == 0)
                     {
                         List<Double> values = metricValues.get(metric);
                         int auxSize = values.size();
-                        averagedValues.get(metric).addAll(values.subList(0, auxSize-1));
-                        averagedLastIteration.put(metric, values.get(auxSize-1));
-                        for(int j = 0; j < auxSize - 1; ++j) counter.add(1);
+                        averagedValues.get(metric).addAll(values.subList(0, auxSize - 1));
+                        averagedLastIteration.put(metric, values.get(auxSize - 1));
+                        if (first)
+                        {
+                            for (int j = 0; j < auxSize - 1; ++j)
+                            {
+                                counter.add(1);
+                            }
+                        }
+                        first = false;
                     }
                     else
                     {
@@ -258,9 +269,9 @@ public class Recommendation
                         int currentSize = oldVals.size();
                         List<Double> newVals = metricValues.get(metric);
                         int auxSize = newVals.size();
-                        for(int j = 0; j < auxSize-1; ++j)
+                        for (int j = 0; j < auxSize - 1; ++j)
                         {
-                            if(j >= currentSize)
+                            if (j >= currentSize)
                             {
                                 oldVals.add(newVals.get(j));
                                 counter.add(1);
@@ -268,13 +279,13 @@ public class Recommendation
                             else
                             {
                                 double oldM = oldVals.get(j);
-                                double averaged = oldM + (newVals.get(j) - oldM)/(counter.get(j)+1);
-                                counter.set(j, counter.get(j)+1);
+                                double averaged = oldM + (newVals.get(j) - oldM) / (counter.get(j) + 1);
+                                counter.set(j, counter.get(j) + 1);
                                 oldVals.set(j, averaged);
                             }
 
                             double lastIter = averagedLastIteration.get(metric);
-                            double newValue = lastIter + (newVals.get(auxSize-1) - lastIter)/(i + 1.0);
+                            double newValue = lastIter + (newVals.get(auxSize - 1) - lastIter) / (i + 1.0);
                             averagedLastIteration.put(metric, newValue);
                         }
                     }
@@ -283,38 +294,38 @@ public class Recommendation
                 System.out.println("Algorithm " + name + " (" + i + ") " + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
             }
 
-            // Write the summary.
-            try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFolder + name + "-summary.txt"))))
+             // Write the summary.
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFolder + name + "-summary.txt"))))
             {
                 int size = counter.size();
                 bw.write("Iteration");
-                for(String metricName : metricNames)
+                for (String metricName : metricNames)
                 {
-                    bw.write("\t"+metricName);
+                    bw.write("\t" + metricName);
                 }
 
-                for(int i = 0; i < size-1; ++i)
+                for (int i = 0; i < size; ++i)
                 {
-                    bw.write("\n"+(interval*(i+1)));
-                    for(String metricName : metricNames)
+                    bw.write("\n" + (interval * (i + 1)));
+                    for (String metricName : metricNames)
                     {
-                        bw.write("\t"+averagedValues.get(metricName).get(i));
+                        bw.write("\t" + averagedValues.get(metricName).get(i));
                     }
                 }
 
                 bw.write("\n" + maxIter);
-                for(String metricName : metricNames)
+                for (String metricName : metricNames)
                 {
-                    bw.write("\t"+averagedLastIteration.get(metricName));
+                    bw.write("\t" + averagedLastIteration.get(metricName));
                 }
             }
-            catch(IOException ioe)
+            catch (IOException ioe)
             {
                 System.err.println("Something failed while writing the summary file");
             }
 
             long bbb = System.nanoTime();
-            System.out.println("Algorithm " + name + " has finished (" + (bbb-aaa)/1000000.0 + " ms.)");
+            System.out.println("Algorithm " + name + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
         });
     }
 }

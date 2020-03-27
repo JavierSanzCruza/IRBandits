@@ -27,7 +27,6 @@ import java.util.stream.Stream;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -251,28 +250,14 @@ public class TransposedUpdateablePreferenceData<I, U> implements FastUpdateableP
     public Optional<IdxPref> getPreference(int uidx, int iidx)
     {
         Optional<? extends IdxPref> pref = ((FastPointWisePreferenceData<U, I>) d).getPreference(iidx, uidx);
-        if (pref.isPresent())
-        {
-            return Optional.of(idxPrefFun.apply(iidx, pref.get()));
-        }
-        else
-        {
-            return Optional.empty();
-        }
+        return pref.map(idxPref -> idxPrefFun.apply(iidx, idxPref));
     }
 
     @Override
     public Optional<IdPref<U>> getPreference(I u, U i)
     {
         Optional<? extends IdPref<I>> pref = ((FastPointWisePreferenceData<U, I>) d).getPreference(i, u);
-        if (pref.isPresent())
-        {
-            return Optional.of(idPrefFun.apply(i, pref.get()));
-        }
-        else
-        {
-            return Optional.empty();
-        }
+        return pref.map(iIdPref -> idPrefFun.apply(i, iIdPref));
     }
 
     @Override

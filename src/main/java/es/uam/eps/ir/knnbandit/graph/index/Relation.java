@@ -16,7 +16,6 @@ import java.util.stream.Stream;
  * A relation between two different sets of objects.
  *
  * @param <W> Type of the weights.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -33,7 +32,6 @@ public interface Relation<W>
      * Gets the total number of elements of the first item related to a second item.
      *
      * @param secondIdx Identifier of the second item.
-     *
      * @return the first item count.
      */
     int numFirst(int secondIdx);
@@ -49,7 +47,6 @@ public interface Relation<W>
      * Gets the total number of elements of the second item related to a first item.
      *
      * @param firstIdx Identifier of the first item.
-     *
      * @return the second item count.
      */
     int numSecond(int firstIdx);
@@ -72,7 +69,6 @@ public interface Relation<W>
      * Gets all the identifiers of items related to a second identifier.
      *
      * @param secondIdx Identifier of the second object.
-     *
      * @return A stream containing all the weights of the first items.
      */
     Stream<IdxValue<W>> getIdsFirst(int secondIdx);
@@ -81,7 +77,6 @@ public interface Relation<W>
      * Gets all the identifiers of items related to a first identifier.
      *
      * @param firstdIdx Identifier of the first object.
-     *
      * @return A stream containing all the weights of the second items.
      */
     Stream<IdxValue<W>> getIdsSecond(int firstdIdx);
@@ -90,7 +85,6 @@ public interface Relation<W>
      * Adds a new item to the relation (if it does not previously exist).
      *
      * @param firstIdx Identifier of the first item.
-     *
      * @return true if everything went OK, false if it did previously exist, or something went wrong.
      */
     boolean addFirstItem(int firstIdx);
@@ -99,7 +93,6 @@ public interface Relation<W>
      * Adds a new second item to the relation (if it does not previously exist).
      *
      * @param secondIdx Identifier of the second item.
-     *
      * @return true if everything went OK, false if it did previously exist, or something went wrong.
      */
     boolean addSecondItem(int secondIdx);
@@ -110,7 +103,6 @@ public interface Relation<W>
      * @param firstIdx  Identifier of the first object.
      * @param secondIdx Identifier of the second object.
      * @param weight    Weight of the relation.
-     *
      * @return true if everything went OK, false if it did previously exist, or something went wrong.
      */
     boolean addRelation(int firstIdx, int secondIdx, W weight);
@@ -120,7 +112,6 @@ public interface Relation<W>
      *
      * @param firstIdx  Identifier of the first object.
      * @param secondIdx Identifier of the second object.
-     *
      * @return the weight if it exists, NaN if not.
      */
     W getValue(int firstIdx, int secondIdx);
@@ -134,7 +125,6 @@ public interface Relation<W>
      * @param firstIdx  Index of the first element.
      * @param secondIdx Index of the second element.
      * @param weight    Weight of the link.
-     *
      * @return true if everything went ok, false if not.
      */
     default boolean updatePair(int firstIdx, int secondIdx, W weight)
@@ -149,7 +139,6 @@ public interface Relation<W>
      * @param secondIdx      Index of the second element.
      * @param weight         New weight for the element.
      * @param createRelation If true, adds the new relation.
-     *
      * @return true if everything went ok, false if not.
      */
     boolean updatePair(int firstIdx, int secondIdx, W weight, boolean createRelation);
@@ -159,7 +148,6 @@ public interface Relation<W>
      *
      * @param firstIdx  Index of the first element.
      * @param secondIdx Index of the second element.
-     *
      * @return true if everything went ok, false if not.
      */
     boolean removePair(int firstIdx, int secondIdx);
@@ -182,7 +170,6 @@ public interface Relation<W>
      * Checks whether the first element has relations with some second element.
      *
      * @param firstIdx the index of the first element.
-     *
      * @return true if it has, false otherwise.
      */
     boolean hasSeconds(int firstIdx);
@@ -191,7 +178,6 @@ public interface Relation<W>
      * Checks whether the second element has relations with some first element.
      *
      * @param secondIdx The index of the second element.
-     *
      * @return true if it has, false otherwise.
      */
     boolean hasFirsts(int secondIdx);
@@ -201,7 +187,7 @@ public interface Relation<W>
      * in the second.
      *
      * @return the elements in the first set without relations with elements.
-     *         in the second.
+     * in the second.
      */
     IntStream getIsolatedFirsts();
 
@@ -210,7 +196,7 @@ public interface Relation<W>
      * in the first.
      *
      * @return the elements in the second set without relations with elements.
-     *         in the first.
+     * in the first.
      */
     IntStream getIsolatedSeconds();
 

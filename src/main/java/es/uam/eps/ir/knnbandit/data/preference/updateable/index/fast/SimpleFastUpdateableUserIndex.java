@@ -17,7 +17,6 @@ import java.util.stream.Stream;
  * Simple implementation of FastUpdateableUserIndex backed by a bi-map IdxIndex.
  *
  * @param <U> User type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -29,7 +28,6 @@ public class SimpleFastUpdateableUserIndex<U> extends SimpleFastUserIndex<U> imp
      *
      * @param <U>   User type.
      * @param users Stream of user objects.
-     *
      * @return a fast user index.
      */
     public static <U> SimpleFastUpdateableUserIndex<U> load(Stream<U> users)

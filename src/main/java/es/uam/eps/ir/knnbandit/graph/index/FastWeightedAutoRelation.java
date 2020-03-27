@@ -19,7 +19,6 @@ import java.util.stream.IntStream;
  * is the number of items.
  *
  * @param <W> Type of the weights.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -50,9 +49,9 @@ public class FastWeightedAutoRelation<W> extends FastWeightedRelation<W> impleme
         for (int i = 0; i < weightsList.size(); ++i)
         {
             List<IdxValue<W>> list = weightsList.get(i);
-            for (int j = 0; j < list.size(); ++j)
+            for (IdxValue<W> wIdxValue : list)
             {
-                this.firstIdxList.get(list.get(j).getIdx()).add(new IdxValue<>(i, list.get(j).getValue()));
+                this.firstIdxList.get(wIdxValue.getIdx()).add(new IdxValue<>(i, wIdxValue.getValue()));
             }
         }
 
@@ -89,16 +88,16 @@ public class FastWeightedAutoRelation<W> extends FastWeightedRelation<W> impleme
         {
             List<IdxValue<W>> auxFList = new ArrayList<>();
             List<IdxValue<W>> fList = this.firstIdxList.get(i);
-            int auxCount = IntStream.range(0, fList.size()).map(j ->
+            int auxCount = fList.stream().mapToInt(wIdxValue ->
             {
                 int c = 0;
-                if (fList.get(j).getIdx() < idx)
+                if (wIdxValue.getIdx() < idx)
                 {
-                    auxFList.add(fList.get(j));
+                    auxFList.add(wIdxValue);
                 }
-                else if (fList.get(j).getIdx() > idx)
+                else if (wIdxValue.getIdx() > idx)
                 {
-                    auxFList.add(new IdxValue<>(fList.get(j).getIdx() - 1, fList.get(j).getValue()));
+                    auxFList.add(new IdxValue<>(wIdxValue.getIdx() - 1, wIdxValue.getValue()));
                 }
                 else
                 {
@@ -112,16 +111,16 @@ public class FastWeightedAutoRelation<W> extends FastWeightedRelation<W> impleme
             List<IdxValue<W>> auxSList = new ArrayList<>();
             List<IdxValue<W>> sList;
             sList = this.secondIdxList.get(i);
-            auxCount += IntStream.range(0, sList.size()).map(j ->
+            auxCount += sList.stream().mapToInt(wIdxValue ->
             {
                 int c = 0;
-                if (sList.get(j).getIdx() < idx)
+                if (wIdxValue.getIdx() < idx)
                 {
-                    auxSList.add(sList.get(j));
+                    auxSList.add(wIdxValue);
                 }
-                else if (sList.get(j).getIdx() > idx)
+                else if (wIdxValue.getIdx() > idx)
                 {
-                    auxSList.add(new IdxValue<>(sList.get(j).getIdx() - 1, sList.get(j).getValue()));
+                    auxSList.add(new IdxValue<>(wIdxValue.getIdx() - 1, wIdxValue.getValue()));
                 }
                 else
                 {
@@ -141,27 +140,18 @@ public class FastWeightedAutoRelation<W> extends FastWeightedRelation<W> impleme
     @Override
     public IntStream getIsolated()
     {
-        return IntStream.range(0, this.numFirst()).filter(i ->
-        {
-            return this.firstIdxList.get(i).isEmpty() && this.secondIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numFirst()).filter(i -> this.firstIdxList.get(i).isEmpty() && this.secondIdxList.get(i).isEmpty());
     }
 
     @Override
     public IntStream firstsWithSeconds()
     {
-        return IntStream.range(0, this.numFirst()).filter(i ->
-        {
-            return !this.secondIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numFirst()).filter(i -> !this.secondIdxList.get(i).isEmpty());
     }
 
     @Override
     public IntStream secondsWithFirsts()
     {
-        return IntStream.range(0, this.numFirst()).filter(i ->
-        {
-            return !this.firstIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numFirst()).filter(i -> !this.firstIdxList.get(i).isEmpty());
     }
 }

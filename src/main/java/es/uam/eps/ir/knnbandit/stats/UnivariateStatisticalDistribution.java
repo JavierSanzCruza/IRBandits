@@ -43,7 +43,6 @@ public interface UnivariateStatisticalDistribution
      * Obtains the value of a given parameter.
      *
      * @param i The index of the parameter.
-     *
      * @return the value of the parameter.
      */
     double getParameter(int i);

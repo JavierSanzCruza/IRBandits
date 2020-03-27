@@ -19,7 +19,6 @@ import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -28,14 +27,14 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param ignoreZeros   True if we ignore zero ratings when updating.
-     * @param userK
-     * @param itemK
-     * @param sim           Updateable similarity
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param prefData    Preference data.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param userK       Number of users to select.
+     * @param itemK       Number of items to take as neighbors
+     * @param sim         Updateable similarity
      */
     public InteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
     {
@@ -45,13 +44,13 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
-     * @param userK         Number of neighbors to use.
-     * @param itemK
-     * @param sim           Updateable similarity
+     * @param userK     Number of neighbors to use.
+     * @param itemK     Number of items to take as neighbors
+     * @param sim       Updateable similarity
      */
     public InteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, boolean notReciprocal, int userK, int itemK, UpdateableSimilarity sim)
     {
@@ -62,9 +61,9 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
     public void updateMethod(int uidx, int iidx, double value)
     {
         this.trainData.getUidxPreferences(uidx).forEach(jidx ->
-        {
-            this.sim.update(iidx, jidx.v1, uidx, value, jidx.v2);
-        });
+                                                        {
+                                                            this.sim.update(iidx, jidx.v1, uidx, value, jidx.v2);
+                                                        });
     }
 
     @Override

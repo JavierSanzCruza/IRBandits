@@ -20,7 +20,6 @@ public class Reader
      *
      * @param file      name of the file
      * @param delimiter field separator
-     *
      * @return the list of user-item pairs in the file.
      */
     public List<Tuple2<Integer, Integer>> read(String file, String delimiter, boolean header)
@@ -55,7 +54,6 @@ public class Reader
      * Parses one line.
      *
      * @param line the line.
-     *
      * @return the user-item pair if everything is OK, null otherwise
      */
     private Tuple2<Integer, Integer> parseLine(String line, String delimiter)

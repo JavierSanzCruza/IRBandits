@@ -8,7 +8,6 @@ import es.uam.eps.ir.ranksys.fast.index.FastUserIndex;
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
- *
  * @author Javier Sanz-Cruzado
  */
 public abstract class FastParticle<U, I> implements Particle<U, I>

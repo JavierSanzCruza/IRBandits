@@ -29,6 +29,7 @@ public class UntieRandomNumberReader
 
     /**
      * Gets the current random number generator seed.
+     *
      * @return the current random number generator seed.
      */
     public int getRngSeed()
@@ -38,11 +39,12 @@ public class UntieRandomNumberReader
 
     /**
      * Advances to the next random number generator seed.
+     *
      * @return the next random number generator seed.
      */
     public int nextSeed()
     {
-        counter = (counter + 1)%rngSeeds.size();
+        counter = (counter + 1) % rngSeeds.size();
         return this.getRngSeed();
     }
 

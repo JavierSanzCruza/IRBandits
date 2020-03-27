@@ -19,7 +19,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -197,7 +196,7 @@ public class ThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
     @Override
     public void reset()
     {
-        if (initialAlphas == null)
+        if (initialAlphas == null || initialBetas == null)
         {
             for (int i = 0; i < numItems; ++i)
             {

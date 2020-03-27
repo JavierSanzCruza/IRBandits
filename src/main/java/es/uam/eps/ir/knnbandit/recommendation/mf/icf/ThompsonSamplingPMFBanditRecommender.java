@@ -49,15 +49,15 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
-     * @param k             Number of latent factors to use
-     * @param stdevP        Prior standard deviation for the user factors.
-     * @param stdevQ        Prior standard deviation for the item factors.
-     * @param stdev         Prior standard deviation for the ratings.
-     * @param numIter       Number of training iterations.
+     * @param k         Number of latent factors to use
+     * @param stdevP    Prior standard deviation for the user factors.
+     * @param stdevQ    Prior standard deviation for the item factors.
+     * @param stdev     Prior standard deviation for the ratings.
+     * @param numIter   Number of training iterations.
      */
     public ThompsonSamplingPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter)
     {
@@ -70,7 +70,7 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
+     * @param hasRating     True if we must ignore unknown items when updating.
      * @param k             Number of latent factors to use
      * @param stdevP        Prior standard deviation for the user factors.
      * @param stdevQ        Prior standard deviation for the item factors.
@@ -87,7 +87,6 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
      * Given a covariance matrix A, finds a matrix L such that A = L^T L
      *
      * @param covarianceMatrix the covariance matrix.
-     *
      * @return the covariance matrix.
      */
     private static Pair<DoubleMatrix2D> findL(DoubleMatrix2D covarianceMatrix)
@@ -251,7 +250,6 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
      * @param mean        mean.
      * @param eigenvector eigenvector matrix.
      * @param eigenvalues eigenvalues matrix.
-     *
      * @return the sampled vector.
      */
     private DoubleMatrix1D sampleMultivariateNormalDistrib(DoubleMatrix1D mean, DoubleMatrix2D eigenvector, DoubleMatrix2D eigenvalues)

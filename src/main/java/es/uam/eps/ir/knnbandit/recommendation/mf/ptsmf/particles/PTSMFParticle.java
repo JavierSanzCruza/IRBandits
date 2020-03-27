@@ -247,7 +247,6 @@ public abstract class PTSMFParticle<U, I> extends FastParticle<U, I>
      * @param mu         the mean of the distribution.
      * @param covariance the covariance matrix.
      * @param sigma      a product of the distribution.
-     *
      * @return the sample from the Gaussian distribution.
      */
     private DoubleMatrix1D gaussianSample(DoubleMatrix1D mu, DoubleMatrix2D covariance, double sigma)

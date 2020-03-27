@@ -25,7 +25,6 @@ public interface ValueFunction
      * @param iidx         Identifier of the item.
      * @param currentValue Current value of the arm.
      * @param numTimes     Number of times the arm has been selected.
-     *
      * @return the value of the arm in our context.
      */
     double apply(int uidx, int iidx, double currentValue, double numTimes);

@@ -21,7 +21,6 @@ import java.util.Optional;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
  */
 public class CumulativeRecall<U, I> implements CumulativeMetric<U, I>
@@ -78,21 +77,22 @@ public class CumulativeRecall<U, I> implements CumulativeMetric<U, I>
     {
         this.current = 0.0;
         this.toRemove = train.stream().mapToInt(pref ->
-        {
-            int uidx = pref.v1;
-            int iidx = pref.v2;
+                                                {
+                                                    int uidx = pref.v1;
+                                                    int iidx = pref.v2;
 
-            int count = 0;
-            if(this.prefData.numUsers(iidx) > 0 && this.prefData.numItems(uidx) > 0)
-            {
-                Optional<IdxPref> optional = this.prefData.getPreference(uidx, iidx);
-                if (optional.isPresent() && optional.get().v2 >= threshold) {
-                    count += 1;
-                }
-            }
+                                                    int count = 0;
+                                                    if (this.prefData.numUsers(iidx) > 0 && this.prefData.numItems(uidx) > 0)
+                                                    {
+                                                        Optional<IdxPref> optional = this.prefData.getPreference(uidx, iidx);
+                                                        if (optional.isPresent() && optional.get().v2 >= threshold)
+                                                        {
+                                                            count += 1;
+                                                        }
+                                                    }
 
-            return count;
-        }).sum();
+                                                    return count;
+                                                }).sum();
     }
 
     @Override

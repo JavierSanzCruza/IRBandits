@@ -31,7 +31,6 @@ import java.util.logging.LogManager;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -61,12 +60,12 @@ public class InteractiveMF<U, I> extends InteractiveRecommender<U, I>
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param k             Number of latent factors to use.
-     * @param factorizer    Factorizer for obtaining the factorized matrices.
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param prefData   Preference data.
+     * @param hasRating  True if we must ignore unknown items when updating.
+     * @param k          Number of latent factors to use.
+     * @param factorizer Factorizer for obtaining the factorized matrices.
      */
     public InteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, Factorizer<U, I> factorizer)
     {
@@ -84,12 +83,12 @@ public class InteractiveMF<U, I> extends InteractiveRecommender<U, I>
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param k             Number of latent factors to use.
-     * @param factorizer    Factorizer for obtaining the factorized matrices.
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param prefData   Preference data.
+     * @param hasRating  True if we must ignore unknown items when updating.
+     * @param k          Number of latent factors to use.
+     * @param factorizer Factorizer for obtaining the factorized matrices.
      */
     public InteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int k, Factorizer<U, I> factorizer)
     {

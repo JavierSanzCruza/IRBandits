@@ -20,7 +20,6 @@ import java.util.Random;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -45,7 +44,6 @@ public abstract class ItemBandit<U, I>
      * @param uidx      Identifier of the user that selects the item.
      * @param available The selection of available items.
      * @param valF      A function that determines the effective value of the arm, given a context.
-     *
      * @return the next selected item.
      */
     public abstract int next(int uidx, int[] available, ValueFunction valF);
@@ -56,7 +54,6 @@ public abstract class ItemBandit<U, I>
      * @param uidx      Identifier of the user that selects the item.
      * @param available The selection of available items.
      * @param valF      A function that determines the effective value of the arm, given a context.
-     *
      * @return the next selected item.
      */
     public abstract int next(int uidx, IntList available, ValueFunction valF);

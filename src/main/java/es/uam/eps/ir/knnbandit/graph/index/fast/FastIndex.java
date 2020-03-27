@@ -22,7 +22,6 @@ import java.util.stream.Stream;
  * Fast implementation of a generic index.
  *
  * @param <T> Type of the objects.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */

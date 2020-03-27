@@ -21,7 +21,7 @@ public class EpsilonGreedyUpdateFunctions
      * Updates the value of the corresponding arm as if the reward was stationary.
      *
      * @return an Epsilon-Greedy update function that updates the value of the corresponding
-     *         arm as if the reward was stationary.
+     * arm as if the reward was stationary.
      */
     public static EpsilonGreedyUpdateFunction stationary()
     {
@@ -42,7 +42,6 @@ public class EpsilonGreedyUpdateFunctions
      * Updates the value of the corresponding arm, giving more weight to new rewards.
      *
      * @param alpha The weight of the new value compared with the old (1-alpha)
-     *
      * @return the Epsilon-Greedy update function for non-stationary rewards.
      */
     public static EpsilonGreedyUpdateFunction nonStationary(double alpha)
@@ -63,7 +62,7 @@ public class EpsilonGreedyUpdateFunctions
     /**
      * Updates the value of the arm by adding the reward to the old value.
      *
-     * @return
+     * @return c
      */
     public static EpsilonGreedyUpdateFunction count()
     {

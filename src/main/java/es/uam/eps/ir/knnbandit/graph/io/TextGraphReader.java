@@ -13,7 +13,6 @@ import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.generator.EmptyGraphGenerator;
 import es.uam.eps.ir.knnbandit.graph.generator.GeneratorBadConfiguredException;
 import es.uam.eps.ir.knnbandit.graph.generator.GeneratorNotConfiguredException;
-import es.uam.eps.ir.knnbandit.graph.generator.GraphGenerator;
 import es.uam.eps.ir.knnbandit.graph.index.Index;
 import org.ranksys.formats.parsing.Parser;
 import org.ranksys.formats.parsing.Parsers;
@@ -36,7 +35,6 @@ import java.io.*;
  * is a tab space.
  *
  * @param <V> The type of the vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -122,9 +120,9 @@ public class TextGraphReader<V> implements GraphReader<V>
     {
         try
         {
-            GraphGenerator<V> gg = new EmptyGraphGenerator<>();
+            EmptyGraphGenerator<V> gg = new EmptyGraphGenerator<>();
 
-            EmptyGraphGenerator<V> empty = (EmptyGraphGenerator<V>) gg;
+            EmptyGraphGenerator<V> empty = gg;
             empty.configure(directed, weighted);
 
             Graph<V> graph = gg.generate();
@@ -169,7 +167,7 @@ public class TextGraphReader<V> implements GraphReader<V>
             return graph;
         }
 
-        catch (GeneratorNotConfiguredException | GeneratorBadConfiguredException ex)
+        catch (GeneratorNotConfiguredException ex)
         {
             ex.printStackTrace();
             return null;
@@ -196,9 +194,9 @@ public class TextGraphReader<V> implements GraphReader<V>
     {
         try
         {
-            GraphGenerator<V> gg = new EmptyGraphGenerator<>();
+            EmptyGraphGenerator<V> gg = new EmptyGraphGenerator<>();
 
-            EmptyGraphGenerator<V> empty = (EmptyGraphGenerator<V>) gg;
+            EmptyGraphGenerator<V> empty = gg;
             empty.configure(directed, weighted);
 
             Graph<V> graph = gg.generate();
@@ -245,7 +243,7 @@ public class TextGraphReader<V> implements GraphReader<V>
             return graph;
         }
 
-        catch (GeneratorNotConfiguredException | GeneratorBadConfiguredException ex)
+        catch (GeneratorNotConfiguredException ex)
         {
             ex.printStackTrace();
             return null;

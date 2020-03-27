@@ -24,7 +24,6 @@ import java.util.Random;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -38,9 +37,9 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
     /**
      * Constructor.
      *
-     * @param uIndex        user index.
-     * @param iIndex        item index.
-     * @param prefData      preference data.
+     * @param uIndex    user index.
+     * @param iIndex    item index.
+     * @param prefData  preference data.
      * @param hasRating true if we want to ignore missing ratings at updating, false if we want to treat them as failures.
      */
     public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating)

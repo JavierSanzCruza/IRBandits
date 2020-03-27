@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
  * Writes a graph to a file.
  *
  * @param <V> Type of the vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  */
 public class TextGraphWriter<V> implements GraphWriter<V>
@@ -99,7 +98,6 @@ public class TextGraphWriter<V> implements GraphWriter<V>
      * @param bw           The file
      * @param writeWeights Indicates if weights have to be written or not.
      * @param writeTypes   Indicates if types have to be written or not.
-     *
      * @return true if everything went OK, false if not.
      */
     private boolean writeSimpleGraph(Graph<V> graph, BufferedWriter bw, boolean writeWeights, boolean writeTypes)
@@ -144,8 +142,8 @@ public class TextGraphWriter<V> implements GraphWriter<V>
                     List<V> adjacentNodes = graph.getAdjacentNodes(node).filter(v -> !visited.contains(v)).collect(Collectors.toCollection(ArrayList::new));
                     for (V v : adjacentNodes)
                     {
-                        Double weight = graph.getEdgeWeight(node, v);
-                        Integer type = graph.getEdgeType(node, v);
+                        double weight = graph.getEdgeWeight(node, v);
+                        int type = graph.getEdgeType(node, v);
 
                         bw.write(node.toString() + delimiter + v.toString());
                         if (writeWeights)

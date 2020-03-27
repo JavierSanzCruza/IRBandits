@@ -16,7 +16,6 @@ import java.util.Objects;
  *
  * @param <U> Type of first object.
  * @param <I> Type of second object.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */

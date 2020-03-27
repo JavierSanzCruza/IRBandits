@@ -51,7 +51,7 @@ public class VectorCosineSimilarity implements UpdateableSimilarity
     @Override
     public void update(int uidx, int vidx, int iidx, double uval, double vval)
     {
-        if (vval != Double.NaN)
+        if (!Double.isNaN(vval))
         {
             this.num[uidx][vidx] += uval * vval;
             this.num[vidx][uidx] += uval * vval;
@@ -91,24 +91,15 @@ public class VectorCosineSimilarity implements UpdateableSimilarity
     @Override
     public void initialize(FastPreferenceData<?, ?> trainData)
     {
-        trainData.getAllUidx().forEach(uidx ->
-        {
-            trainData.getAllUidx().forEach(vidx ->
-            {
-                this.num[uidx][vidx] = 0.0;
-            });
-        });
+        trainData.getAllUidx().forEach(uidx -> trainData.getAllUidx().forEach(vidx -> this.num[uidx][vidx] = 0.0));
 
-        trainData.getAllUidx().forEach(uidx ->
+        trainData.getAllUidx().forEach(uidx -> this.norm[uidx] = trainData.getUidxPreferences(uidx).mapToDouble(iidx ->
         {
-            this.norm[uidx] = trainData.getUidxPreferences(uidx).mapToDouble(iidx ->
+            trainData.getIidxPreferences(iidx.v1).forEach(vidx ->
             {
-                trainData.getIidxPreferences(iidx.v1).forEach(vidx ->
-                {
-                    this.num[uidx][vidx.v1] += iidx.v2 * vidx.v2;
-                });
-                return iidx.v2 * iidx.v2;
-            }).sum();
-        });
+                this.num[uidx][vidx.v1] += iidx.v2 * vidx.v2;
+            });
+            return iidx.v2 * iidx.v2;
+        }).sum());
     }
 }

@@ -120,8 +120,6 @@ public class TrainingStatistics
         System.out.println("Users\tItems\tRatings\tRel.Ratings");
         System.out.println(uIndex.numUsers() + "\t" + iIndex.numItems() + "\t" + numrat + "\t" + numrel);
 
-        int trainingSize = train.size();
-
         // Then, for each split:
         System.out.println("Training");
         System.out.println("Num.Split\tNum.Recs\tRatings\tRel.Ratings");
@@ -148,6 +146,7 @@ public class TrainingStatistics
             {
                 if (prefData.numItems(t.v1) > 0)
                 {
+
                     Optional<IdxPref> pref = prefData.getPreference(t.v1, t.v2);
                     return pref.isPresent() && pref.get().v2 > 0.0;
                 }

@@ -22,7 +22,6 @@ import java.util.stream.Stream;
  * Value of indexes go from 0 (included) to the number of elements (excluded).
  *
  * @param <T> Type of the element.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -52,7 +51,6 @@ public class GenericIndex<T> implements Serializable
      * Adds an element to the structure, if it is not in the
      *
      * @param t The element to add.
-     *
      * @return the index for the corresponding element.
      */
     public int add(T t)
@@ -71,7 +69,6 @@ public class GenericIndex<T> implements Serializable
      * Gets the index of the object.
      *
      * @param t The object.
-     *
      * @return the index of the object if it exists, -1 if not.
      */
     public int getIdx(T t)
@@ -83,7 +80,6 @@ public class GenericIndex<T> implements Serializable
      * Gets the object corresponding to the given index.
      *
      * @param idx The index.
-     *
      * @return the object in that index.
      */
     public T getObject(int idx)
@@ -95,7 +91,6 @@ public class GenericIndex<T> implements Serializable
      * Checks if the corresponding object is included in the index.
      *
      * @param t The object.
-     *
      * @return true if it exists, false if not.
      */
     public boolean containsId(T t)

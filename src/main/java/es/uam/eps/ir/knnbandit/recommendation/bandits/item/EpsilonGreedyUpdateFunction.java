@@ -26,7 +26,6 @@ public interface EpsilonGreedyUpdateFunction
      * @param oldSum    The sum of all the arms.
      * @param increment The sum of the increments of all arms.
      * @param numTimes  Number of times the arm has been selected.
-     *
      * @return the new value of the arm.
      */
     double apply(double oldValue, double reward, double oldSum, double increment, double numTimes);

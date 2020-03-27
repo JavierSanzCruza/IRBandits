@@ -52,13 +52,13 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param K             Number of latent factors to use.
-     * @param numParticles  Number of particles to use.
-     * @param factory       A factory for the particles.
+     * @param uIndex       User index.
+     * @param iIndex       Item index.
+     * @param prefData     Preference data.
+     * @param hasRating    True if we must ignore unknown items when updating.
+     * @param K            Number of latent factors to use.
+     * @param numParticles Number of particles to use.
+     * @param factory      A factory for the particles.
      */
     public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int K, int numParticles, ICTRParticleFactory<U, I> factory)
     {
@@ -77,13 +77,13 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
+     * @param hasRating     True if we must ignore unknown items when updating.
      * @param notReciprocal True if reciprocal users can be recommended, false otherwise.
      * @param K             Number of latent factors to use.
      * @param numParticles  Number of particles to use.
      * @param factory       A factory for the particles.
      */
-    public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int K, int numParticles, ICTRParticleFactory factory)
+    public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int K, int numParticles, ICTRParticleFactory<U,I> factory)
     {
         super(uIndex, iIndex, prefData, hasRating, notReciprocal);
         this.K = K;
@@ -103,7 +103,7 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
         // Initialize the different particles.
         for (int i = 0; i < numParticles; ++i)
         {
-            ICTRParticle ICTRParticle = factory.create(this.uIndex, this.iIndex, this.K);
+            ICTRParticle<U,I> ICTRParticle = factory.create(this.uIndex, this.iIndex, this.K);
             this.particles.add(ICTRParticle);
             this.particleWeight.add(1.0 / (this.numParticles + 0.0));
         }
@@ -159,7 +159,6 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
      *
      * @param uidx the user identifier.
      * @param iidx the item identifier.
-     *
      * @return the estimated reward.
      */
     protected abstract double getEstimatedReward(int uidx, int iidx);

@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.function.DoublePredicate;
 import java.util.function.DoubleUnaryOperator;
 
-public class ContactDataset<U> extends Dataset<U,U>
+public class ContactDataset<U> extends Dataset<U, U>
 {
 
     private final int numRecipr;
@@ -32,10 +32,10 @@ public class ContactDataset<U> extends Dataset<U,U>
     /**
      * Constructor.
      *
-     * @param uIndex   User index.
-     * @param iIndex   Item index.
-     * @param prefData Preference data.
-     * @param numEdges Number of edges
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param prefData  Preference data.
+     * @param numEdges  Number of edges
      * @param numRecipr Number of reciprocal edges.
      */
     protected ContactDataset(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<U> iIndex, SimpleFastPreferenceData<U, U> prefData, int numEdges, int numRecipr, boolean directed)
@@ -47,12 +47,13 @@ public class ContactDataset<U> extends Dataset<U,U>
 
     /**
      * Gets the number of relevant (user, user) pairs.
+     *
      * @param notReciprocal true if we do not count the reciprocal, false otherwise.
      * @return the number of relevant (user, user) pairs.
      */
     public int getNumRel(boolean notReciprocal)
     {
-        return (notReciprocal ? this.numRel - this.numRecipr/2 : this.numRel);
+        return (notReciprocal ? this.numRel - this.numRecipr / 2 : this.numRel);
     }
 
     public boolean isDirected()
@@ -75,11 +76,12 @@ public class ContactDataset<U> extends Dataset<U,U>
 
     /**
      * Loads the dataset.
-     * @param filename name of the file containing the dataset.
-     * @param directed true if the graph is directed, false otherwise
-     * @param uParser parser for the user type.
+     *
+     * @param filename  name of the file containing the dataset.
+     * @param directed  true if the graph is directed, false otherwise
+     * @param uParser   parser for the user type.
      * @param separator file delimiter characters.
-     * @param <U> type of the users.
+     * @param <U>       type of the users.
      * @return the contact recommendation dataset.
      */
     public static <U> ContactDataset<U> load(String filename, boolean directed, Parser<U> uParser, String separator)
@@ -112,26 +114,26 @@ public class ContactDataset<U> extends Dataset<U,U>
         List<Tuple3<U, U, Double>> validationTriplets = new ArrayList<>();
         Graph<U> graph = (dataset.isDirected() ? new FastDirectedUnweightedGraph<>() : new FastUndirectedUnweightedGraph<>());
         dataset.getUserIndex().getAllUsers().forEach(graph::addNode);
-        SimpleFastPreferenceData<U,U> prefData = dataset.getPrefData();
+        SimpleFastPreferenceData<U, U> prefData = dataset.getPrefData();
 
         list.forEach(tuple ->
-        {
-            int uidx = tuple.v1;
-            int iidx = tuple.v2;
-            U u = prefData.uidx2user(uidx);
-            U i = prefData.iidx2item(iidx);
+                     {
+                         int uidx = tuple.v1;
+                         int iidx = tuple.v2;
+                         U u = prefData.uidx2user(uidx);
+                         U i = prefData.iidx2item(iidx);
 
-            if(prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0 && prefData.getPreference(uidx, iidx).isPresent())
-            {
-                validationTriplets.add(new Tuple3<>(prefData.uidx2user(uidx), prefData.iidx2item(iidx),1.0));
-                graph.addEdge(u,i);
-                if(notReciprocal && prefData.numItems(iidx) > 0 && prefData.numUsers(uidx) > 0 && prefData.getPreference(iidx, uidx).isPresent())
-                {
-                    validationTriplets.add(new Tuple3<>(prefData.uidx2user(iidx), prefData.iidx2item(uidx),1.0));
-                    graph.addEdge(i,u);
-                }
-            }
-        });
+                         if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0 && prefData.getPreference(uidx, iidx).isPresent())
+                         {
+                             validationTriplets.add(new Tuple3<>(prefData.uidx2user(uidx), prefData.iidx2item(iidx), 1.0));
+                             graph.addEdge(u, i);
+                             if (notReciprocal && prefData.numItems(iidx) > 0 && prefData.numUsers(uidx) > 0 && prefData.getPreference(iidx, uidx).isPresent())
+                             {
+                                 validationTriplets.add(new Tuple3<>(prefData.uidx2user(iidx), prefData.iidx2item(uidx), 1.0));
+                                 graph.addEdge(i, u);
+                             }
+                         }
+                     });
 
         int numEdges = ((int) graph.getEdgeCount()) * (dataset.isDirected() ? 1 : 2);
         int numRecipr = graph.getAllNodes().mapToInt(graph::getMutualNodesCount).sum();

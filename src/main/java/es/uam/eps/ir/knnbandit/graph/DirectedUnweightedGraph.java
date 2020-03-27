@@ -13,7 +13,6 @@ package es.uam.eps.ir.knnbandit.graph;
  * Interface for directed unweighted graphs.
  *
  * @param <V> Type of vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */

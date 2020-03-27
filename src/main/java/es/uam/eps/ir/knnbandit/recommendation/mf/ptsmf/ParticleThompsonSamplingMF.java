@@ -15,8 +15,9 @@ import java.util.Random;
 
 /**
  * Particle Thompson Sampling algorithm.
- *
+ * <p>
  * Kawale et al. Efficient Thompson Sampling for Online Matrix-Factorization Recommendation
+ *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
  */
@@ -41,12 +42,13 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
 
     /**
      * Constructor.
-     * @param uIndex user index.
-     * @param iIndex item index.
-     * @param prefData preference data.
-     * @param hasRating true if the algorithm must not be updated when the rating is unknown, false otherwise.
+     *
+     * @param uIndex       user index.
+     * @param iIndex       item index.
+     * @param prefData     preference data.
+     * @param hasRating    true if the algorithm must not be updated when the rating is unknown, false otherwise.
      * @param numParticles the number of particles.
-     * @param factory the particle factory.
+     * @param factory      the particle factory.
      */
     public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int numParticles, PTSMFParticleFactory<U, I> factory)
     {
@@ -59,13 +61,14 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
 
     /**
      * Constructor.
-     * @param uIndex user index.
-     * @param iIndex item index.
-     * @param prefData preference data.
-     * @param hasRating true if the algorithm must not be updated when the rating is unknown, false otherwise.
+     *
+     * @param uIndex        user index.
+     * @param iIndex        item index.
+     * @param prefData      preference data.
+     * @param hasRating     true if the algorithm must not be updated when the rating is unknown, false otherwise.
      * @param notReciprocal true if reciprocal relations are not recommended, false otherwise.
-     * @param numParticles the number of particles.
-     * @param factory the particle factory.
+     * @param numParticles  the number of particles.
+     * @param factory       the particle factory.
      */
     public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int numParticles, PTSMFParticleFactory<U, I> factory)
     {
@@ -81,14 +84,14 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
     {
         for (int b = 0; b < numParticles; ++b)
         {
-            Particle<U,I> particle = factory.create(this.uIndex, this.iIndex);
+            Particle<U, I> particle = factory.create(this.uIndex, this.iIndex);
             this.uIndex.getAllUidx().forEach(uidx ->
-                this.trainData.getUidxPreferences(uidx).forEach(pref ->
-                {
-                    int iidx = pref.v1;
-                    double val = pref.v2;
-                    particle.update(uidx, iidx, val);
-                }));
+                                                     this.trainData.getUidxPreferences(uidx).forEach(pref ->
+                                                                                                     {
+                                                                                                         int iidx = pref.v1;
+                                                                                                         double val = pref.v2;
+                                                                                                         particle.update(uidx, iidx, val);
+                                                                                                     }));
             particleList.add(particle);
         }
     }
@@ -105,7 +108,7 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
 
         // Then, we randomly select a particle:
         int idx = ptsrng.nextInt(numParticles);
-        Particle<U,I> current = particleList.get(idx);
+        Particle<U, I> current = particleList.get(idx);
 
         // Then, using that particle, for each item:
         double max = Double.NEGATIVE_INFINITY;

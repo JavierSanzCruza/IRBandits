@@ -17,7 +17,6 @@ import java.util.stream.Stream;
  * Interface for directed graphs.
  *
  * @param <V> Type of vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -107,7 +106,6 @@ public interface DirectedGraph<V> extends Graph<V>
      * Obtains the in-degree of a node.
      *
      * @param node The node.
-     *
      * @return the in-degree of the node.
      */
     @Override
@@ -120,7 +118,6 @@ public interface DirectedGraph<V> extends Graph<V>
      * Obtains the out-degree of a node.
      *
      * @param node The node.
-     *
      * @return the out-degree of the node.
      */
     @Override

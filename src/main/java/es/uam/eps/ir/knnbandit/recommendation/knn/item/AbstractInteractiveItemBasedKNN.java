@@ -64,14 +64,14 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param ignoreZeros   True if we ignore zero ratings when updating.
-     * @param userK         Number of items rated by the user to pick.
-     * @param itemK         Number of users rated by the item to pick.
-     * @param sim           Updateable similarity
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param prefData    Preference data.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param userK       Number of items rated by the user to pick.
+     * @param itemK       Number of users rated by the item to pick.
+     * @param sim         Updateable similarity
      */
     public AbstractInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
     {
@@ -80,7 +80,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
         this.userK = userK;
         this.itemK = (itemK > 0) ? itemK : prefData.numItems();
         this.itemList = new IntArrayList();
-        uIndex.getAllUidx().forEach(uidx -> itemList.add(uidx));
+        uIndex.getAllUidx().forEach(itemList::add);
         this.comp = (Tuple2id x, Tuple2id y) ->
         {
             int value = (int) Math.signum(x.v2 - y.v2);
@@ -99,7 +99,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
+     * @param hasRating     True if we must ignore unknown items when updating.
      * @param ignoreZeros   True if we ignore zero ratings when updating.
      * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise.
      * @param userK         Number of items rated by the user to pick.
@@ -113,7 +113,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
         this.userK = userK;
         this.itemK = (itemK > 0) ? itemK : prefData.numItems();
         this.itemList = new IntArrayList();
-        iIndex.getAllIidx().forEach(uidx -> itemList.add(uidx));
+        iIndex.getAllIidx().forEach(itemList::add);
         this.comp = (Tuple2id x, Tuple2id y) ->
         {
             int value = (int) Math.signum(x.v2 - y.v2);
@@ -148,13 +148,13 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
 
         if (this.userK == 0)
         {
-            this.trainData.getUidxPreferences(uidx).filter(iv -> !ignoreZeros || iv.v2 > 0).forEach(iv -> firstHeap.add(iv));
+            this.trainData.getUidxPreferences(uidx).filter(iv -> !ignoreZeros || iv.v2 > 0).forEach(firstHeap::add);
         }
         else
         {
             this.trainData.getUidxPreferences(uidx).forEach(iv ->
             {
-                if(!this.ignoreZeros || iv.v2 > 0.0)
+                if (!this.ignoreZeros || iv.v2 > 0.0)
                 {
                     if (firstHeap.size() == userK)
                     {
@@ -185,7 +185,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
             PriorityQueue<Tuple2id> heap = new PriorityQueue<>(itemK, comp);
             this.sim.similarElems(jidx).forEach(jv ->
             {
-                if(list.contains(jv.v1))
+                if (list.contains(jv.v1))
                 {
                     if (heap.size() == itemK)
                     {
@@ -246,8 +246,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
      *
      * @param vidx   Identifier of the neighbor user.
      * @param rating The rating value.
-     *
-     * @return
+     * @return the score value.
      */
     protected abstract double score(int vidx, double rating);
 

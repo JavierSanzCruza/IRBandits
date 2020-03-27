@@ -6,6 +6,7 @@ public class ParallelConfigurator
 {
     /**
      * Given algorithm rankings for validation splits, obtains the configuration files to run all of them in parallel
+     *
      * @param args Execution arguments:
      *             <ul>
      *              <li><b>Directory:</b> The base directory of the validation, where the validation folders are.</li>
@@ -14,11 +15,11 @@ public class ParallelConfigurator
      *              <li><b>Header:</b> True if the ranking file contains a header, false otherwise.</li>
      *              <li><b>Output:</b> Name of the output configuration file</li>
      *             </ul>
-     * @throws IOException
+     * @throws IOException if something fails.
      */
-    public static void main(String args[]) throws IOException
+    public static void main(String[] args) throws IOException
     {
-        if(args.length < 2)
+        if (args.length < 2)
         {
             System.err.println("ERROR: Invalid arguments");
             System.err.println("Arguments:");
@@ -31,29 +32,32 @@ public class ParallelConfigurator
         }
 
         String directory = args[0];
-        int numPartitions = Integer.valueOf(args[1]);
+        int numPartitions = Integer.parseInt(args[1]);
         String rankingFile = args[2];
         boolean header = args[3].equalsIgnoreCase("true");
         String output = args[4];
 
-        try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output))))
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output))))
         {
-            for(int i = 0; i < numPartitions; ++i)
+            for (int i = 0; i < numPartitions; ++i)
             {
-                try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(directory + i + File.separator + rankingFile))))
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(directory + i + File.separator + rankingFile))))
                 {
                     String line;
-                    if(header) line = br.readLine();
+                    if (header)
+                    {
+                        line = br.readLine();
+                    }
                     line = br.readLine();
 
                     String[] split = line.split("\t");
 
-                    if(split[0].endsWith(".txt"))
+                    if (split[0].endsWith(".txt"))
                     {
                         String[] auxSplit = split[0].split("\\.");
                         int length = auxSplit.length;
                         String text = "";
-                        for(int j = 0; j < length - 1; ++j)
+                        for (int j = 0; j < length - 1; ++j)
                         {
                             text += auxSplit[i];
                         }
@@ -61,7 +65,7 @@ public class ParallelConfigurator
                     }
                     else
                     {
-                        bw.write(split[0]+"\n");
+                        bw.write(split[0] + "\n");
                     }
                 }
             }

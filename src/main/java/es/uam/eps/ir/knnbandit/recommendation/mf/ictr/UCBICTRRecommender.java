@@ -23,16 +23,16 @@ public class UCBICTRRecommender<U, I> extends ICTRRecommender<U, I>
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param K             Number of latent factors to use.
-     * @param numParticles  Number of particles to use.
-     * @param factory       A factory for the particles.
-     * @param gamma         Estimates the importance of the UCB.
+     * @param uIndex       User index.
+     * @param iIndex       Item index.
+     * @param prefData     Preference data.
+     * @param hasRating    True if we must ignore unknown items when updating.
+     * @param K            Number of latent factors to use.
+     * @param numParticles Number of particles to use.
+     * @param factory      A factory for the particles.
+     * @param gamma        Estimates the importance of the UCB.
      */
-    public UCBICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int K, int numParticles, ICTRParticleFactory factory, double gamma)
+    public UCBICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int K, int numParticles, ICTRParticleFactory<U,I> factory, double gamma)
     {
         super(uIndex, iIndex, prefData, hasRating, K, numParticles, factory);
         this.gamma = gamma;
@@ -44,14 +44,14 @@ public class UCBICTRRecommender<U, I> extends ICTRRecommender<U, I>
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
+     * @param hasRating     True if we must ignore unknown items when updating.
      * @param notReciprocal True if reciprocal users can be recommended, false otherwise.
      * @param K             Number of latent factors to use.
      * @param numParticles  Number of particles to use.
      * @param factory       A factory for the particles.
      * @param gamma         Estimates the importance of the UCB.
      */
-    public UCBICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int K, int numParticles, ICTRParticleFactory factory, double gamma)
+    public UCBICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int K, int numParticles, ICTRParticleFactory<U,I> factory, double gamma)
     {
         super(uIndex, iIndex, prefData, hasRating, notReciprocal, K, numParticles, factory);
         this.gamma = gamma;
@@ -67,6 +67,8 @@ public class UCBICTRRecommender<U, I> extends ICTRRecommender<U, I>
         {
             double reward = particle.getEstimatedReward(uidx, iidx);
             double var = ((ICTRParticle<U, I>) particle).getVariance(iidx);
+            average += reward;
+            averageVar += var;
             ++counter;
         }
 

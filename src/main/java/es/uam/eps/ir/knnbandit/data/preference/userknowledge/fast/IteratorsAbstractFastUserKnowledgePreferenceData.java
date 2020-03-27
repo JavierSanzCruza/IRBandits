@@ -26,7 +26,6 @@ import static java.util.stream.IntStream.range;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (Saul@VargasSandoval.es)
@@ -99,7 +98,6 @@ public abstract class IteratorsAbstractFastUserKnowledgePreferenceData<U, I> ext
      * @param n    Length of iterators.
      * @param idxs Iterator of user/item indices.
      * @param vs   Iterator of user/item values.
-     *
      * @return Stream of IdxPref.
      */
     protected Stream<IdxPref> getPreferences(int n, IntIterator idxs, DoubleIterator vs)

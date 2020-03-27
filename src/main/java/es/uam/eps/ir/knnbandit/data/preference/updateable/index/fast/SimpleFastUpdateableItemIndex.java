@@ -17,7 +17,6 @@ import java.util.stream.Stream;
  * Simple implementation of FastUpdateableItemIndex backed by a bi-map IdxIndex.
  *
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -29,7 +28,6 @@ public class SimpleFastUpdateableItemIndex<I> extends SimpleFastItemIndex<I> imp
      *
      * @param <I>   Item type.
      * @param items Stream of item objects.
-     *
      * @return a fast item index.
      */
     public static <I> SimpleFastUpdateableItemIndex<I> load(Stream<I> items)

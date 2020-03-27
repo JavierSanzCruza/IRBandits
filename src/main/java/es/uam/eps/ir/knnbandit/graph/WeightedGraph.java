@@ -15,7 +15,6 @@ import java.util.stream.Stream;
  * Interface for directed graphs.
  *
  * @param <V> Type of vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -25,7 +24,6 @@ public interface WeightedGraph<V> extends Graph<V>
      * Given a node, finds all the nodes u such that the edge (u to node) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream of the incident nodes.
      */
     @Override
@@ -38,7 +36,6 @@ public interface WeightedGraph<V> extends Graph<V>
      * Given a node, finds all the nodes u such that the edge (node to u) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing the adjacent nodes.
      */
     @Override
@@ -51,7 +48,6 @@ public interface WeightedGraph<V> extends Graph<V>
      * Given a node, finds all the nodes u so that either (node to u) or (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood.
      */
     @Override

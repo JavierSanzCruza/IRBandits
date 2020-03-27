@@ -17,7 +17,6 @@ import java.io.OutputStream;
  * Interface for graph writers.
  *
  * @param <V> type of the vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -28,7 +27,6 @@ public interface GraphWriter<V>
      *
      * @param graph The graph we want to write.
      * @param file  The file.
-     *
      * @return true if everything went OK, false otherwise.
      */
     boolean write(Graph<V> graph, String file);
@@ -38,7 +36,6 @@ public interface GraphWriter<V>
      *
      * @param graph The graph we want to write.
      * @param file  The output stream.
-     *
      * @return true if everything went OK, false otherwise.
      */
     boolean write(Graph<V> graph, OutputStream file);
@@ -51,7 +48,6 @@ public interface GraphWriter<V>
      * @param file         The file.
      * @param writeWeights Indicates if weights have to be written.
      * @param writeTypes   Indicates if types have to be written.
-     *
      * @return true if everything is ok, false otherwise.
      */
     boolean write(Graph<V> graph, String file, boolean writeWeights, boolean writeTypes);
@@ -64,7 +60,6 @@ public interface GraphWriter<V>
      * @param file         The file.
      * @param writeWeights Indicates if weights have to be written.
      * @param writeTypes   Indicates if types have to be written.
-     *
      * @return true if everything is ok, false otherwise.
      */
     boolean write(Graph<V> graph, OutputStream file, boolean writeWeights, boolean writeTypes);

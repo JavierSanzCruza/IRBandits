@@ -16,7 +16,6 @@ import java.util.stream.Stream;
  * Generic index.
  *
  * @param <I> The type of indexed objects.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -26,7 +25,6 @@ public interface Index<I> extends ReducedIndex<I>
      * Checks whether the index contains a given object.
      *
      * @param i The object to check.
-     *
      * @return true if the index contains the object, false if not.
      */
     boolean containsObject(I i);
@@ -56,7 +54,6 @@ public interface Index<I> extends ReducedIndex<I>
      * Adds an object to the index.
      *
      * @param i Object to add.
-     *
      * @return the index of the added object.
      */
     int addObject(I i);
@@ -65,7 +62,6 @@ public interface Index<I> extends ReducedIndex<I>
      * Removes an object from the index.
      *
      * @param i The object to remove.
-     *
      * @return the index of the removed object, -1 if it did not exist.
      */
     int removeObject(I i);

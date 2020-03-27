@@ -19,7 +19,6 @@ import java.util.stream.Stream;
  * Unweighted relation between different types of objects.
  *
  * @param <W> type of the weights.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -64,9 +63,9 @@ public class FastUnweightedPairwiseRelation<W> extends FastUnweightedRelation<W>
         for (int i = 0; i < size; ++i)
         {
             List<Integer> list = this.secondIdxList.get(i);
-            for (int j = 0; j < list.size(); ++j)
+            for (Integer integer : list)
             {
-                this.firstIdxList.get(list.get(j)).add(i);
+                this.firstIdxList.get(integer).add(i);
             }
         }
 
@@ -279,9 +278,8 @@ public class FastUnweightedPairwiseRelation<W> extends FastUnweightedRelation<W>
      * @param secondIdx The second element.
      * @param firstList True if the element has to be found on the list of first elements,
      *                  false if it has to be found on the list of second elements.
-     *
      * @return the index of the element if it exists, - (insertpoint - 1) if it does not,
-     *         where insertpoint is the corresponding point where the element should be added.
+     * where insertpoint is the corresponding point where the element should be added.
      */
     private Integer binarySearch(int firstIdx, int secondIdx, boolean firstList)
     {

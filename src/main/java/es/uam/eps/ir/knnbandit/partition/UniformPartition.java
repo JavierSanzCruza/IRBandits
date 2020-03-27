@@ -12,9 +12,9 @@ public class UniformPartition implements Partition
     {
         List<Integer> splitPoints = new ArrayList<>();
         int size = trainingData.size();
-        for(int part = 1; part <= numParts; ++part)
+        for (int part = 1; part <= numParts; ++part)
         {
-            int point = (size*part)/numParts;
+            int point = (size * part) / numParts;
             splitPoints.add(point);
         }
 
@@ -25,7 +25,7 @@ public class UniformPartition implements Partition
     public int split(List<Tuple2<Integer, Integer>> trainingData, double percentage)
     {
         int size = trainingData.size();
-        Double point = percentage*size;
+        Double point = percentage * size;
         return point.intValue();
     }
 }

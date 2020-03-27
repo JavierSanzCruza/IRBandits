@@ -13,7 +13,6 @@ package es.uam.eps.ir.knnbandit.utils;
  * Class that represents a pair of objects of the same type.
  *
  * @param <U> Type of the objects.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */

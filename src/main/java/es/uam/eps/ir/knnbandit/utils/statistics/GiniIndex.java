@@ -98,7 +98,7 @@ public class GiniIndex
      * Obtains the current value of the Gini index.
      *
      * @return the current value: a number between 0 and 1 representing the proper value of the index,
-     *         NaN if the frequencies are all equal to zero, or there is less than one element in the collection.
+     * NaN if the frequencies are all equal to zero, or there is less than one element in the collection.
      */
     public double getValue()
     {
@@ -121,7 +121,6 @@ public class GiniIndex
      *
      * @param idx       the index of the element to increase.
      * @param increment how much the frequency varies.
-     *
      * @return true if everything is OK, false otherwise
      */
     public boolean updateFrequency(int idx, int increment)
@@ -150,7 +149,6 @@ public class GiniIndex
      *
      * @param idx       the identifier of the element.
      * @param decrement the decrement.
-     *
      * @return true if the decrease could be computed, false otherwise.
      */
     private boolean updateFrequencyDecrease(int idx, int decrement)
@@ -238,7 +236,6 @@ public class GiniIndex
      *
      * @param idx       index of the element to update.
      * @param increment the amount that frequency for the element is increased.
-     *
      * @return true if everything is OK, false otherwise.
      */
     private boolean updateFrequencyIncrease(int idx, int increment)
@@ -329,14 +326,14 @@ public class GiniIndex
      *
      * @param frequencies the relation between elements and its frequencies.
      */
-    private final void fillValues(Map<Integer, Long> frequencies)
+    private void fillValues(Map<Integer, Long> frequencies)
     {
         Long2IntSortedMap counter = new Long2IntAVLTreeMap();
         counter.defaultReturnValue(0);
-        frequencies.entrySet().forEach(entry ->
+        frequencies.forEach((key, value1) ->
         {
-            int item = entry.getKey();
-            long value = entry.getValue();
+            int item = key;
+            long value = value1;
 
             if (item >= 0 && item < numElements)
             {

@@ -54,7 +54,6 @@ import java.util.function.DoubleUnaryOperator;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -87,7 +86,7 @@ public class AlgorithmSelector<U, I>
     /**
      * Information about previous knowledge of the user
      */
-    private SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData;
+    private SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData;
     /**
      *
      */
@@ -104,6 +103,7 @@ public class AlgorithmSelector<U, I>
      * Relevance threshold.
      */
     private double threshold;
+
     /**
      * Constructor.
      */
@@ -178,7 +178,7 @@ public class AlgorithmSelector<U, I>
      * @param prefData  Preference data.
      * @param threshold Relevance threshold
      */
-    public void configure(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, double threshold, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, KnowledgeDataUse dataUse)
+    public void configure(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, double threshold, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, KnowledgeDataUse dataUse)
     {
         this.uIndex = uIndex;
         this.iIndex = iIndex;
@@ -195,9 +195,7 @@ public class AlgorithmSelector<U, I>
      * Given a string containing its configuration, obtains an interactive recommendation algorithm.
      *
      * @param algorithm The string containing the configuration of the algorithm.
-     *
      * @return an interactive recommender.
-     *
      * @throws es.uam.eps.ir.knnbandit.selector.UnconfiguredException if the experiment is not configured.
      */
     public InteractiveRecommender<U, I> getAlgorithm(String algorithm) throws UnconfiguredException
@@ -242,7 +240,7 @@ public class AlgorithmSelector<U, I>
                     {
                         return new AvgRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal);
                     }
-                    else if(this.dataUse != KnowledgeDataUse.ALL && knowledgeData != null)
+                    else if (this.dataUse != KnowledgeDataUse.ALL && knowledgeData != null)
                     {
                         return new AvgRecommender<>(uIndex, iIndex, prefData, knowledgeData, hasRating, dataUse);
                     }
@@ -258,7 +256,7 @@ public class AlgorithmSelector<U, I>
                     {
                         return new PopularityRecommender<>(uIndex, iIndex, prefData, true, notReciprocal, threshold);
                     }
-                    else if(this.dataUse != KnowledgeDataUse.ALL && knowledgeData != null)
+                    else if (this.dataUse != KnowledgeDataUse.ALL && knowledgeData != null)
                     {
                         return new PopularityRecommender<>(uIndex, iIndex, prefData, knowledgeData, true, dataUse, threshold);
                     }
@@ -578,7 +576,6 @@ public class AlgorithmSelector<U, I>
      * Adds a single algorithm to the selector.
      *
      * @param algorithm The String name of the algorithm.
-     *
      * @throws es.uam.eps.ir.knnbandit.selector.UnconfiguredException if the selector is not configured
      */
     public void addAlgorithm(String algorithm) throws UnconfiguredException
@@ -599,8 +596,7 @@ public class AlgorithmSelector<U, I>
      * Adds a set of algorithms.
      *
      * @param file File containing the configuration of the algorithms.
-     *
-     * @throws IOException if something fails while reading
+     * @throws IOException                                            if something fails while reading
      * @throws es.uam.eps.ir.knnbandit.selector.UnconfiguredException if the selector has not been configured
      */
     public void addFile(String file) throws IOException, UnconfiguredException
@@ -635,7 +631,6 @@ public class AlgorithmSelector<U, I>
      *
      * @param split    A list containing the configuration.
      * @param numItems The number of items in the system.
-     *
      * @return the corresponding item bandit if everything is ok, null otherwise.
      */
     private ItemBandit<U, I> getItemBandit(List<String> split, int numItems)
@@ -687,7 +682,6 @@ public class AlgorithmSelector<U, I>
      * Obtains a function to update an Epsilon-greedy algorithm.
      *
      * @param split Strings containing the configuration.
-     *
      * @return the update function if everything is OK, null otherwise.
      */
     private EpsilonGreedyUpdateFunction getUpdateFunction(List<String> split)
@@ -717,7 +711,6 @@ public class AlgorithmSelector<U, I>
      * Obtains a MF Factorizer.
      *
      * @param split Strings containing the configuration.
-     *
      * @return the factorizer if everything is OK, null otherwise.
      */
     private Factorizer<U, I> getFactorizer(List<String> split)
@@ -764,7 +757,6 @@ public class AlgorithmSelector<U, I>
      * @param lambdaQ the prior standard deviation for the item factors.
      * @param stdev   the prior standard deviation for the ratings.
      * @param numIter the number of iterations.
-     *
      * @return the algorithm if everything is fine, null otherwise.
      */
     private InteractiveRecommender<U, I> getPMFBanditAlgorithm(List<String> split, int k, double lambdaP, double lambdaQ, double stdev, int numIter)

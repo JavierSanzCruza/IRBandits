@@ -20,7 +20,6 @@ import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedWeightedGraph;
  * Empty graph generator.
  *
  * @param <V> Type of the vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -39,7 +38,6 @@ public class EmptyGraphGenerator<V> implements GraphGenerator<V>
      */
     private boolean weighted;
 
-    @SuppressWarnings("unchecked")
     @Override
     public void configure(Object... configuration)
     {
@@ -71,9 +69,9 @@ public class EmptyGraphGenerator<V> implements GraphGenerator<V>
     }
 
     @Override
-    public Graph<V> generate() throws GeneratorNotConfiguredException, GeneratorBadConfiguredException
+    public Graph<V> generate() throws GeneratorNotConfiguredException
     {
-        if (configured == false)
+        if (!configured)
         {
             throw new GeneratorNotConfiguredException("Empty graph: the generator was not configured");
         }

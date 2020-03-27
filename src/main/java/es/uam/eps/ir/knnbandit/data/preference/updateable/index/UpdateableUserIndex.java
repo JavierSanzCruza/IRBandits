@@ -17,7 +17,6 @@ import java.util.stream.Stream;
  * Updateable index for a set of users.
  *
  * @param <U> User type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -28,7 +27,6 @@ public interface UpdateableUserIndex<U> extends UserIndex<U>
      * Adds a user to the index.
      *
      * @param u The user.
-     *
      * @return the identifier of the new user.
      */
     int addUser(U u);
@@ -40,6 +38,6 @@ public interface UpdateableUserIndex<U> extends UserIndex<U>
      */
     default void addUsers(Stream<U> users)
     {
-        users.forEach(u -> this.addUser(u));
+        users.forEach(this::addUser);
     }
 }

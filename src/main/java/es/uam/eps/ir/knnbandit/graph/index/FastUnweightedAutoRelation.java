@@ -18,7 +18,6 @@ import java.util.stream.IntStream;
  * Fast implementation for an unweighted relation of objects with themselves.
  *
  * @param <W> Type of the weights.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -50,9 +49,9 @@ public class FastUnweightedAutoRelation<W> extends FastUnweightedRelation<W> imp
         for (int i = 0; i < size; ++i)
         {
             List<Integer> list = this.secondIdxList.get(i);
-            for (int j = 0; j < list.size(); ++j)
+            for (Integer integer : list)
             {
-                this.firstIdxList.get(list.get(j)).add(i);
+                this.firstIdxList.get(integer).add(i);
             }
         }
 
@@ -68,28 +67,19 @@ public class FastUnweightedAutoRelation<W> extends FastUnweightedRelation<W> imp
     @Override
     public IntStream getIsolated()
     {
-        return IntStream.range(0, this.numFirst()).filter(i ->
-        {
-            return this.firstIdxList.get(i).isEmpty() && this.secondIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numFirst()).filter(i -> this.firstIdxList.get(i).isEmpty() && this.secondIdxList.get(i).isEmpty());
     }
 
     @Override
     public IntStream firstsWithSeconds()
     {
-        return IntStream.range(0, this.numFirst()).filter(i ->
-        {
-            return !this.secondIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numFirst()).filter(i -> !this.secondIdxList.get(i).isEmpty());
     }
 
     @Override
     public IntStream secondsWithFirsts()
     {
-        return IntStream.range(0, this.numFirst()).filter(i ->
-        {
-            return !this.firstIdxList.get(i).isEmpty();
-        });
+        return IntStream.range(0, this.numFirst()).filter(i -> !this.firstIdxList.get(i).isEmpty());
     }
 
     @Override

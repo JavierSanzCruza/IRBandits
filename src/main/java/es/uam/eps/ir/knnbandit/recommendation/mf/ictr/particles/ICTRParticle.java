@@ -22,11 +22,11 @@ import java.util.Random;
  *
  * @author Javier Sanz-Cruzado
  * @author Pablo Castells
- *         <p>
- *         TODO: Remaining doubts about the correctness of the implementation:
- *         TODO: is lambda, alpha, beta unique for each particle? i.e. do they depend on the user/item? Otherwise, they would not be personalized...
- *         TODO: is it necessary to update everything each time? At least, p_m must only be updated once
- *         TODO: as I do not know the value of z_{m,t}, how do I estimate E[p_{m,k}|\lambda_k, r_m,t]?
+ * <p>
+ * TODO: Remaining doubts about the correctness of the implementation:
+ * TODO: is lambda, alpha, beta unique for each particle? i.e. do they depend on the user/item? Otherwise, they would not be personalized...
+ * TODO: is it necessary to update everything each time? At least, p_m must only be updated once
+ * TODO: as I do not know the value of z_{m,t}, how do I estimate E[p_{m,k}|\lambda_k, r_m,t]?
  */
 public class ICTRParticle<U, I> extends FastParticle<U, I>
 {
@@ -358,7 +358,6 @@ public class ICTRParticle<U, I> extends FastParticle<U, I>
      * @param mu         the mean of the distribution.
      * @param covariance the covariance matrix.
      * @param sigma      a product of the distribution.
-     *
      * @return the sample from the Gaussian distribution.
      */
     private DoubleMatrix1D gaussianSample(DoubleMatrix1D mu, DoubleMatrix2D covariance, double sigma)
@@ -383,7 +382,6 @@ public class ICTRParticle<U, I> extends FastParticle<U, I>
      *
      * @param thetas the not-normalized probabilities.
      * @param sum    the sum of the not-normalized probabilities.
-     *
      * @return the sampled element.
      */
     private int multinomialSampling(DenseDoubleMatrix1D thetas, double sum)
@@ -394,7 +392,7 @@ public class ICTRParticle<U, I> extends FastParticle<U, I>
         do
         {
             ++idx;
-            thetas.getQuick(idx);
+            w+= thetas.getQuick(idx);
         }
         while (rnd <= w);
 
@@ -405,7 +403,6 @@ public class ICTRParticle<U, I> extends FastParticle<U, I>
      * Function for sampling from a Dirichlet distribution.
      *
      * @param lambda the lambda hyperparameters.
-     *
      * @return the vector containing the sample.
      */
     private DoubleMatrix1D dirichletSampling(DoubleMatrix1D lambda)
@@ -433,7 +430,6 @@ public class ICTRParticle<U, I> extends FastParticle<U, I>
      *
      * @param alpha the shape of the distribution.
      * @param beta  the scale of the distribution.
-     *
      * @return the sampled value.
      */
     private double inverseGammaSample(double alpha, double beta)
@@ -449,7 +445,6 @@ public class ICTRParticle<U, I> extends FastParticle<U, I>
      * This implementation was adapted from https://github.com/gesiscss/promoss.
      *
      * @param shape the shape of the distribution.
-     *
      * @return the sampled value.
      */
     private double gammaSample(double shape)
@@ -504,7 +499,6 @@ public class ICTRParticle<U, I> extends FastParticle<U, I>
      * Obtains the variance for the item ratings.
      *
      * @param i the item.
-     *
      * @return the variance.
      */
     public double getVariance(I i)
@@ -517,7 +511,6 @@ public class ICTRParticle<U, I> extends FastParticle<U, I>
      * Obtains the variance for the item ratings.
      *
      * @param iidx the item identifier.
-     *
      * @return the variance.
      */
     public double getVariance(int iidx)

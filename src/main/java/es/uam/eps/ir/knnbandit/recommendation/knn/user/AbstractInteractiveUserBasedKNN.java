@@ -56,13 +56,13 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param ignoreZeros   True if we ignore zero ratings when updating.
-     * @param k             Number of neighbors to use.
-     * @param sim           Updateable similarity
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param prefData    Preference data.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param k           Number of neighbors to use.
+     * @param sim         Updateable similarity
      */
     public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim)
     {
@@ -70,7 +70,7 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         this.sim = sim;
         this.k = (k > 0) ? k : prefData.numUsers();
         this.userList = new IntArrayList();
-        uIndex.getAllUidx().forEach(uidx -> userList.add(uidx));
+        uIndex.getAllUidx().forEach(userList::add);
         this.comp = (Tuple2id x, Tuple2id y) ->
         {
             int value = (int) Math.signum(x.v2 - y.v2);
@@ -89,7 +89,7 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
+     * @param hasRating     True if we must ignore unknown items when updating.
      * @param ignoreZeros   True if we ignore zero ratings when updating.
      * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise.
      * @param k             Number of neighbors to use.
@@ -101,7 +101,7 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         this.sim = sim;
         this.k = (k > 0) ? k : prefData.numUsers();
         this.userList = new IntArrayList();
-        uIndex.getAllUidx().forEach(uidx -> userList.add(uidx));
+        uIndex.getAllUidx().forEach(userList::add);
         this.comp = (Tuple2id x, Tuple2id y) ->
         {
             int value = (int) Math.signum(x.v2 - y.v2);
@@ -135,18 +135,18 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         // Obtain the top-k best neighbors for user uidx.
         PriorityQueue<Tuple2id> neighborHeap = new PriorityQueue<>(k, comp);
         this.sim.similarElems(uidx).forEach(vidx ->
-        {
-            double s = vidx.v2;
-            if (neighborHeap.size() < k)
-            {
-                neighborHeap.add(new Tuple2id(vidx.v1, vidx.v2));
-            }
-            else if (neighborHeap.peek().v2 <= s)
-            {
-                neighborHeap.poll();
-                neighborHeap.add(new Tuple2id(vidx.v1, s));
-            }
-        });
+                                            {
+                                                double s = vidx.v2;
+                                                if (neighborHeap.size() < k)
+                                                {
+                                                    neighborHeap.add(new Tuple2id(vidx.v1, vidx.v2));
+                                                }
+                                                else if (neighborHeap.peek().v2 <= s)
+                                                {
+                                                    neighborHeap.poll();
+                                                    neighborHeap.add(new Tuple2id(vidx.v1, s));
+                                                }
+                                            });
 
         if (neighborHeap.isEmpty())
         {
@@ -162,13 +162,13 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
             Tuple2id neigh = neighborHeap.poll();
 
             this.trainData.getUidxPreferences(neigh.v1).forEach(vs ->
-            {
-                double p = neigh.v2 * this.score(neigh.v1, vs.v2);
-                if (!ignoreZeros || p > 0)
-                {
-                    itemScores.addTo(vs.v1, p);
-                }
-            });
+                                                                {
+                                                                    double p = neigh.v2 * this.score(neigh.v1, vs.v2);
+                                                                    if (!ignoreZeros || p > 0)
+                                                                    {
+                                                                        itemScores.addTo(vs.v1, p);
+                                                                    }
+                                                                });
         }
 
         // Select the best item.
@@ -212,8 +212,7 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
      *
      * @param vidx   Identifier of the neighbor user.
      * @param rating The rating value.
-     *
-     * @return
+     * @return the score.
      */
     protected abstract double score(int vidx, double rating);
 

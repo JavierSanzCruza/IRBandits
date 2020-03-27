@@ -22,7 +22,6 @@ import java.util.Optional;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -30,37 +29,39 @@ public interface FastUserKnowledgePointWisePreferenceData<U, I> extends FastPoin
 {
     /**
      * Gets a preference if exists and the user knew about the item before submitting the rating.
+     *
      * @param uidx the identifier of the user.
      * @param iidx the identifier of the item.
      * @return the rating if exists.
      */
-    public Optional<IdxPref> getKnownPreference(int uidx, int iidx);
+    Optional<IdxPref> getKnownPreference(int uidx, int iidx);
 
     /**
      * Gets a preference if exists and the user did not know about the item before submitting the rating.
+     *
      * @param uidx the identifier of the user.
      * @param iidx the identifier of the item.
      * @return the rating if exists.
      */
-    public Optional<IdxPref> getUnknownPreference(int uidx, int iidx);
+    Optional<IdxPref> getUnknownPreference(int uidx, int iidx);
 
     /**
      * Gets a preference if exists and the user knew about the item before submitting the rating.
+     *
      * @param u the user.
      * @param i the item.
      * @return the rating if exists.
      */
-    public Optional<? extends IdPref<I>> getKnownPreference(U u, I i);
+    Optional<? extends IdPref<I>> getKnownPreference(U u, I i);
 
     /**
      * Gets a preference if exists and the user did not know about the item before submitting the rating.
+     *
      * @param u the user.
      * @param i the item.
      * @return the rating if exists.
      */
-    public Optional<? extends IdPref<I>> getUnknownPreference(U u, I i);
-
-
+    Optional<? extends IdPref<I>> getUnknownPreference(U u, I i);
 
 
 }

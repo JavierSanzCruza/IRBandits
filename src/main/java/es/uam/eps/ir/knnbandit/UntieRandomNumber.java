@@ -26,10 +26,12 @@ public class UntieRandomNumber
 {
     public static List<Integer> rngSeeds;
     public static int RNG = 0;
+
     /**
      * Configures the random number seed.
+     *
      * @param resume true if we want to use a previous seed.
-     * @param route the route from which to read the previous seed / to write the new seed.
+     * @param route  the route from which to read the previous seed / to write the new seed.
      */
     public static void configure(boolean resume, String route) throws IOException
     {
@@ -39,24 +41,27 @@ public class UntieRandomNumber
 
     /**
      * Configures a list of random number seeds.
+     *
      * @param resume true if we want to use a previous seed.
-     * @param route the route from which to read the previous seed / to write the new seed.
+     * @param route  the route from which to read the previous seed / to write the new seed.
      */
     public static void configure(boolean resume, String route, int k) throws IOException
     {
         rngSeeds = new ArrayList<>();
-        if(resume)
+        if (resume)
         {
             File f = new File(route + "rngseedlist");
-            if(f.exists())
+            if (f.exists())
             {
-                try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f))))
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f))))
                 {
                     String line;
-                    while((line = br.readLine()) != null)
+                    while ((line = br.readLine()) != null)
                     {
-                        if(!line.equals(""))
+                        if (!line.equals(""))
+                        {
                             rngSeeds.add(Integer.parseInt(line));
+                        }
                     }
                 }
             }
@@ -64,7 +69,7 @@ public class UntieRandomNumber
 
         int remaining = k - rngSeeds.size();
         Random rng = new Random();
-        for(int i = 0; i < remaining; ++i)
+        for (int i = 0; i < remaining; ++i)
         {
             rngSeeds.add(rng.nextInt());
         }
@@ -73,9 +78,9 @@ public class UntieRandomNumber
 
         try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(route + "rngseedlist"))))
         {
-            for(int seed : rngSeeds)
+            for (int seed : rngSeeds)
             {
-                bw.write(""+ seed +"\n");
+                bw.write("" + seed + "\n");
             }
         }
     }

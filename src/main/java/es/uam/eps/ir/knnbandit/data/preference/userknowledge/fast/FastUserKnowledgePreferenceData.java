@@ -24,7 +24,6 @@ import java.util.stream.Stream;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -32,6 +31,7 @@ public interface FastUserKnowledgePreferenceData<U, I> extends UserKnowledgePref
 {
     /**
      * Obtains the number of ratings for an item which were previously known by users.
+     *
      * @param iidx the item.
      * @return the number of ratings for item i which were previously known by users.
      */
@@ -39,6 +39,7 @@ public interface FastUserKnowledgePreferenceData<U, I> extends UserKnowledgePref
 
     /**
      * Obtains the number of ratings for an item which were not previously known by users.
+     *
      * @param iidx the item.
      * @return the number of ratings for item i which were not previously known by users.
      */
@@ -49,6 +50,7 @@ public interface FastUserKnowledgePreferenceData<U, I> extends UserKnowledgePref
 
     /**
      * Obtains the number rated items previously known by a user.
+     *
      * @param uidx the user.
      * @return the number rated items previously known by u.
      */
@@ -56,6 +58,7 @@ public interface FastUserKnowledgePreferenceData<U, I> extends UserKnowledgePref
 
     /**
      * Obtains the number rated items not previously known by a user.
+     *
      * @param uidx the user.
      * @return the number rated items not previously known by u.
      */
@@ -65,17 +68,27 @@ public interface FastUserKnowledgePreferenceData<U, I> extends UserKnowledgePref
     }
 
     Stream<? extends IdxPref> getUidxKnownPreferences(int uidx);
+
     Stream<? extends IdxPref> getIidxKnownPreferences(int iidx);
+
     Stream<? extends IdxPref> getUidxUnknownPreferences(int uidx);
+
     Stream<? extends IdxPref> getIidxUnknownPreferences(int iidx);
 
-    public DoubleIterator getUidxKnownVs(int uidx);
-    public IntIterator getUidxKnownIidxs(int uidx);
-    public DoubleIterator getUidxUnknownVs(int uidx);
-    public IntIterator getUidxUnknownIidxs(int uidx);
-    public DoubleIterator getIidxKnownVs(int iidx);
-    public IntIterator getIidxKnownUidxs(int iidx);
-    public DoubleIterator getIidxUnknownVs(int iidx);
-    public IntIterator getIidxUnknownUidxs(int iidx);
+    DoubleIterator getUidxKnownVs(int uidx);
+
+    IntIterator getUidxKnownIidxs(int uidx);
+
+    DoubleIterator getUidxUnknownVs(int uidx);
+
+    IntIterator getUidxUnknownIidxs(int uidx);
+
+    DoubleIterator getIidxKnownVs(int iidx);
+
+    IntIterator getIidxKnownUidxs(int iidx);
+
+    DoubleIterator getIidxUnknownVs(int iidx);
+
+    IntIterator getIidxUnknownUidxs(int iidx);
 
 }

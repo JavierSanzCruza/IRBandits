@@ -15,7 +15,7 @@ public class PercentagePositiveRatingsEndCondition implements EndCondition
 
     public PercentagePositiveRatingsEndCondition(int totalRel, double percentage, double threshold)
     {
-        this.numRel = ((Double) Math.ceil(totalRel*percentage)).intValue();
+        this.numRel = ((Double) Math.ceil(totalRel * percentage)).intValue();
         this.threshold = threshold;
         this.init();
     }
@@ -35,6 +35,9 @@ public class PercentagePositiveRatingsEndCondition implements EndCondition
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        if(value >= threshold) this.currentRel++;
+        if (value >= threshold)
+        {
+            this.currentRel++;
+        }
     }
 }

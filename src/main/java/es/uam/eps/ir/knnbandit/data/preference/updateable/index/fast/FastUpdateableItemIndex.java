@@ -18,7 +18,6 @@ import java.util.stream.Stream;
  * Fast updateable version of ItemIndex, where items are internally represented with numerical indices from 0 (inclusive) to the number of indexed items (exclusive).
  *
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  * @author Saúl Vargas (saul.vargas@uam.es)
@@ -28,6 +27,6 @@ public interface FastUpdateableItemIndex<I> extends UpdateableItemIndex<I>, Fast
     @Override
     default Stream<I> getAllItems()
     {
-        return getAllIidx().mapToObj(iidx -> iidx2item(iidx));
+        return getAllIidx().mapToObj(this::iidx2item);
     }
 }

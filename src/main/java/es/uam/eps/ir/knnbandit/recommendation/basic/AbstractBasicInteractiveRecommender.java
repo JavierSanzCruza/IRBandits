@@ -25,7 +25,6 @@ import java.util.stream.IntStream;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -39,9 +38,9 @@ public abstract class AbstractBasicInteractiveRecommender<U, I> extends Interact
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param prefData  Preference data.
      * @param hasRating True if (user, item) pairs without training must be ignored.
      */
     public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating)
@@ -57,7 +56,7 @@ public abstract class AbstractBasicInteractiveRecommender<U, I> extends Interact
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param hasRating True if (user, item) pairs without training must be ignored.
+     * @param hasRating     True if (user, item) pairs without training must be ignored.
      * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise.
      */
     public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal)
@@ -68,15 +67,15 @@ public abstract class AbstractBasicInteractiveRecommender<U, I> extends Interact
     }
 
     /**
+     * Constructor.
      *
-     * @param uIndex
-     * @param iIndex
-     * @param prefData
-     * @param knowledgeData
-     * @param hasRating
-     * @param dataUse
+     * @param uIndex        User index.
+     * @param iIndex        Item index.
+     * @param prefData      Preference data.
+     * @param hasRating     True if (user, item) pairs without training must be ignored.
+     * @param dataUse       Which data must be used in updates (known, unknown or all)
      */
-    public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U,I> prefData, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, boolean hasRating, KnowledgeDataUse dataUse)
+    public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean hasRating, KnowledgeDataUse dataUse)
     {
         super(uIndex, iIndex, prefData, knowledgeData, hasRating, dataUse);
         this.values = new double[prefData.numItems()];

@@ -151,7 +151,6 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
      *
      * @param alpha The alpha value of the Beta.
      * @param beta  The beta value of the Beta.
-     *
      * @return the sampled value.
      */
     public double betaSample(double alpha, double beta)
@@ -215,35 +214,14 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
     @Override
     public void initialize(FastPreferenceData<?, ?> trainData)
     {
-        trainData.getAllUidx().forEach(uidx ->
-        {
-            trainData.getAllUidx().forEach(vidx ->
-            {
-                this.sims[uidx][vidx] = 0.0;
-            });
-        });
+        trainData.getAllUidx().forEach(uidx -> trainData.getAllUidx().forEach(vidx -> this.sims[uidx][vidx] = 0.0));
 
         // First, find the norms.
-        trainData.getAllUidx().forEach(uidx ->
+        trainData.getAllUidx().forEach(uidx -> this.usercount[uidx] = trainData.getUidxPreferences(uidx).filter(iidx -> iidx.v2 > 0.0)
+        .mapToDouble(iidx ->
         {
-            this.usercount[uidx] = trainData.getUidxPreferences(uidx).mapToDouble(iidx ->
-            {
-                if (iidx.v2 > 0.0)
-                {
-                    trainData.getIidxPreferences(iidx.v1).forEach(vidx ->
-                    {
-                        if (vidx.v2 > 0.0)
-                        {
-                            this.sims[uidx][vidx.v1] += 1.0;
-                        }
-                    });
-                    return 1.0;
-                }
-                else
-                {
-                    return 0.0;
-                }
-            }).sum();
-        });
+            trainData.getIidxPreferences(iidx.v1).filter(vidx -> vidx.v2 > 0.0).forEach(vidx -> this.sims[uidx][vidx.v1] += 1.0);
+            return 1.0;
+        }).sum());
     }
 }

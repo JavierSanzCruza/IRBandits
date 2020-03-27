@@ -107,7 +107,8 @@ public class Main
 
     /**
      * For the different classes that depend on dataset selection, choose the most appropriate one.
-     * @param args the list of arguments received by the Main program.
+     *
+     * @param args        the list of arguments received by the Main program.
      * @param programName the name of the program we want to find the route to.
      * @return the point of the arguments where the real arguments begin and the class name.
      */
@@ -116,12 +117,12 @@ public class Main
         String command = "es.uam.eps.ir.knnbandit.main";
         String type = args[1];
         Tuple2<Integer, String> tuple = null;
-        if(type.equalsIgnoreCase("contact"))
+        if (type.equalsIgnoreCase("contact"))
         {
             command += ".contact." + programName;
             tuple = new Tuple2<>(2, command);
         }
-        else if(type.equalsIgnoreCase("general"))// general
+        else if (type.equalsIgnoreCase("general"))// general
         {
             String dataset = args[2].toLowerCase();
             command += ".general." + dataset + "." + programName;

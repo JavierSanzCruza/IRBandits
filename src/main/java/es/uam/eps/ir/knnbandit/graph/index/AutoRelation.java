@@ -16,7 +16,6 @@ import java.util.stream.Stream;
  * Interface for defining the relation of a set of objects with themselves.
  *
  * @param <W> Type of the weights.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -37,7 +36,6 @@ public interface AutoRelation<W> extends Relation<W>
      * Gets the total number of elements of the second item related to a first item.
      *
      * @param firstIdx Identifier of the first item.
-     *
      * @return the second item count.
      */
     @Override
@@ -68,7 +66,6 @@ public interface AutoRelation<W> extends Relation<W>
      * be reduced by 1.
      *
      * @param idx The identifier of the element.
-     *
      * @return true if everything went OK, false otherwise.
      */
     boolean remove(int idx);
@@ -84,7 +81,6 @@ public interface AutoRelation<W> extends Relation<W>
      * Checks whether an element is related to someone or not.
      *
      * @param idx The identifier of the element.
-     *
      * @return true if the node is isolated, false otherwise.
      */
     default boolean isIsolated(int idx)

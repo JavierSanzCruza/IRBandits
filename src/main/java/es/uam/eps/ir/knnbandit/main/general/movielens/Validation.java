@@ -61,7 +61,7 @@ public class Validation
      */
     public static void main(String[] args) throws IOException, UnconfiguredException
     {
-        if (args.length < 8)
+        if (args.length < 7)
         {
             System.err.println("ERROR: Invalid arguments");
             System.err.println("Usage:");
@@ -96,11 +96,12 @@ public class Validation
 
         int auxK = 1;
 
-        for(int i = 7; i < args.length; ++i)
+        for (int i = 7; i < args.length; ++i)
         {
-            if(args[i].equals("-k"))
+            if ("-k".equals(args[i]))
             {
-                auxK = Parsers.ip.parse(args[++i]);
+                ++i;
+                auxK = Parsers.ip.parse(args[i]);
             }
         }
 
@@ -176,7 +177,7 @@ public class Validation
 
             double maxIter = 0;
             // Execute each recommender k times.
-            for(int i = 0; i < k; ++i)
+            for (int i = 0; i < k; ++i)
             {
                 int rngSeed = rngSeedGen.nextSeed();
 
@@ -185,7 +186,6 @@ public class Validation
                 loop.init(false);
                 long bbb = System.nanoTime();
                 System.out.println("Algorithm " + name + " has been initialized (" + (bbb - aaa) / 1000000.0 + " ms.)");
-
                 Map<String, List<Double>> metricValues = new HashMap<>();
                 metricNames.forEach(metricName -> metricValues.put(metricName, new ArrayList<>()));
 
@@ -199,13 +199,15 @@ public class Validation
                     }
 
                     Writer writer = new Writer(outputFolder + name + "_" + i + ".txt", metricNames);
+                    writer.writeHeader();
+
                     if (resume && !list.isEmpty())
                     {
                         metricValues.putAll(AuxiliarMethods.updateWithPrevious(loop, list, writer, interval));
                     }
 
                     int currentIter = AuxiliarMethods.executeRemaining(loop, writer, interval, metricValues);
-                    maxIter = maxIter + (currentIter - maxIter)/(i+1.0);
+                    maxIter = maxIter + (currentIter - maxIter) / (i + 1.0);
                     writer.close();
                 }
                 catch (IOException ioe)
@@ -213,40 +215,48 @@ public class Validation
                     System.err.println("ERROR: Some error occurred when executing algorithm " + name + " (" + i + ") ");
                 }
 
-                for(String metric : metricNames)
+                for (String metric : metricNames)
                 {
                     List<Double> values = metricValues.get(metric);
                     int auxSize = values.size();
-                    if(i == 0)
+                    if (i == 0)
                     {
-                        averagedLastIteration.put(metric, values.get(auxSize-1));
+                        averagedLastIteration.put(metric, values.get(auxSize - 1));
                     }
                     else
                     {
                         double lastIter = averagedLastIteration.get(metric);
-                        double newValue = lastIter + (values.get(auxSize-1) - lastIter)/(i + 1.0);
+                        double newValue = lastIter + (values.get(auxSize - 1) - lastIter) / (i + 1.0);
                         averagedLastIteration.put(metric, newValue);
                     }
                 }
-
                 System.out.println("Algorithm " + name + " (" + i + ") " + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
             }
 
-            if(iterationsStop) auxiliarValues.put(name, averagedLastIteration.get("recall"));
-            else auxiliarValues.put(name, maxIter);
+            if (iterationsStop)
+            {
+                auxiliarValues.put(name, averagedLastIteration.get("recall"));
+            }
+            else
+            {
+                auxiliarValues.put(name, maxIter);
+            }
 
             long bbb = System.nanoTime();
             System.out.println("Algorithm " + name + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
         });
 
-        PriorityQueue<Tuple2<String, Double>> ranking = new PriorityQueue<>(recs.size(), (Tuple2<String, Double> x, Tuple2<String, Double> y) -> Double.compare(y.v2,x.v2));
+        PriorityQueue<Tuple2<String, Double>> ranking = new PriorityQueue<>(recs.size(), (Tuple2<String, Double> x, Tuple2<String, Double> y) -> Double.compare(y.v2, x.v2));
         auxiliarValues.forEach((algorithm, value) -> ranking.add(new Tuple2<>(algorithm, value)));
 
+        File aux = new File(algorithms);
+        String rankingname = aux.getName();
+
         // Write the algorithm ranking
-        try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output + "ranking.txt"))))
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output + rankingname + "-ranking.txt"))))
         {
             bw.write("Algorithm\t" + (iterationsStop ? "recall@" + numIter : "numIters@" + auxIter));
-            while(!ranking.isEmpty())
+            while (!ranking.isEmpty())
             {
                 Tuple2<String, Double> alg = ranking.poll();
                 bw.write("\n" + alg.v1 + "\t" + alg.v2);

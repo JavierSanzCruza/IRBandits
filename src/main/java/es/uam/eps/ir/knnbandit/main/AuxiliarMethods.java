@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.FileInputStream;
+
 import es.uam.eps.ir.knnbandit.io.Writer;
 
 import java.util.*;
@@ -23,11 +24,12 @@ public class AuxiliarMethods
 {
     /**
      * Retrieves previous iterations of an execution.
+     *
      * @param filename the name of the file.
      * @return a list containing the retrieved (uidx, iidx, time) triplets.
      * @throws IOException if something fails while reading the file.
      */
-    public static List<Tuple3<Integer,Integer,Long>> retrievePreviousIterations(String filename) throws IOException
+    public static List<Tuple3<Integer, Integer, Long>> retrievePreviousIterations(String filename) throws IOException
     {
         // Initialize the list
         List<Tuple3<Integer, Integer, Long>> recovered = new ArrayList<>();
@@ -71,21 +73,22 @@ public class AuxiliarMethods
 
     /**
      * Given the list of recovered triplets, updates the recommendation loop.
-     * @param loop the recommendation loop.
+     *
+     * @param loop      the recommendation loop.
      * @param recovered the list of recovered (uidx, iidx, time) triplets.
-     * @param writer a writer for storing the recommendation loop in a file.
-     * @param interval the interval between different data points.
-     * @param <U> type of the users
-     * @param <I> type of the items.
+     * @param writer    a writer for storing the recommendation loop in a file.
+     * @param interval  the interval between different data points.
+     * @param <U>       type of the users
+     * @param <I>       type of the items.
      * @return a map containing the values of the metrics in certain time points.
      * @throws IOException if something fails while writing.
      */
-    public static <U,I> Map<String, List<Double>> updateWithPrevious(RecommendationLoop<U,I> loop, List<Tuple3<Integer, Integer, Long>> recovered, Writer writer, int interval) throws IOException
+    public static <U, I> Map<String, List<Double>> updateWithPrevious(RecommendationLoop<U, I> loop, List<Tuple3<Integer, Integer, Long>> recovered, Writer writer, int interval) throws IOException
     {
         Set<String> metricNames = loop.getMetricsNames();
         Map<String, List<Double>> metricValues = new HashMap<>();
 
-        for(String name : metricNames)
+        for (String name : metricNames)
         {
             metricValues.put(name, new ArrayList<>());
         }
@@ -101,9 +104,9 @@ public class AuxiliarMethods
 
             writer.writeLine(iter, uidx, iidx, metricVals, time);
 
-            if(iter % interval == 0)
+            if (iter % interval == 0)
             {
-                for(String name : metricNames)
+                for (String name : metricNames)
                 {
                     double value = metricVals.get(name);
                     metricValues.get(name).add(value);
@@ -116,15 +119,16 @@ public class AuxiliarMethods
 
     /**
      * Execute the remaining loop
-     * @param loop the recommendation loop.
-     * @param writer the writer.
-     * @param interval the interval.
+     *
+     * @param loop         the recommendation loop.
+     * @param writer       the writer.
+     * @param interval     the interval.
      * @param metricValues the list of metric values.
-     * @param <U> type of the users.
-     * @param <I> type of the items.
+     * @param <U>          type of the users.
+     * @param <I>          type of the items.
      * @return the number of iterations for finishing the loop.
      */
-    public static <U,I> int executeRemaining(RecommendationLoop<U,I> loop, Writer writer, int interval, Map<String, List<Double>> metricValues) throws IOException
+    public static <U, I> int executeRemaining(RecommendationLoop<U, I> loop, Writer writer, int interval, Map<String, List<Double>> metricValues) throws IOException
     {
         Set<String> metricNames = loop.getMetricsNames();
 
@@ -137,13 +141,13 @@ public class AuxiliarMethods
 
             int uidx = tuple.v1;
             int iidx = tuple.v2;
-            long time = bb-aa;
+            long time = bb - aa;
             int numIter = loop.getCurrentIteration();
             Map<String, Double> metrics = loop.getMetrics();
 
             writer.writeLine(numIter, uidx, iidx, metrics, time);
 
-            if(numIter % interval == 0)
+            if (numIter % interval == 0)
             {
                 for (String name : metricNames)
                 {
@@ -155,7 +159,7 @@ public class AuxiliarMethods
 
         // Store the value of the last iteration.
         int numIter = loop.getCurrentIteration();
-        if(numIter % interval != 0)
+        if (numIter % interval != 0)
         {
             Map<String, Double> metrics = loop.getMetrics();
             for (String name : metricNames)

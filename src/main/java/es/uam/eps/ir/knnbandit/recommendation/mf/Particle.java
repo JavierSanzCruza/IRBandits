@@ -11,7 +11,7 @@ public interface Particle<U, I>
     /**
      * Initializes the particle.
      */
-    public void initialize();
+    void initialize();
 
     /**
      * Updates the particle.
@@ -20,7 +20,7 @@ public interface Particle<U, I>
      * @param i     the item.
      * @param value the value of the interaction between user and item.
      */
-    public void update(U u, I i, double value);
+    void update(U u, I i, double value);
 
     /**
      * Updates the particle.
@@ -29,20 +29,19 @@ public interface Particle<U, I>
      * @param iidx  the index of the item.
      * @param value the value of the interaction between user and item.
      */
-    public void update(int uidx, int iidx, double value);
+    void update(int uidx, int iidx, double value);
 
     /**
      * Obtains the estimated value of the interaction between user and item.
      *
      * @param u the user.
      * @param i the item.
-     *
      * @return the estimated reward
      */
-    public double getEstimatedReward(U u, I i);
+    double getEstimatedReward(U u, I i);
 
 
-    public double getEstimatedReward(int uidx, int iidx);
+    double getEstimatedReward(int uidx, int iidx);
 
     /**
      * Obtains the weight of the particle.
@@ -50,12 +49,11 @@ public interface Particle<U, I>
      * @param u     the user.
      * @param i     the item.
      * @param value the value of the interaction between user and item.
-     *
      * @return the weight of the particle.
      */
-    public double getWeight(U u, I i, double value);
+    double getWeight(U u, I i, double value);
 
-    public double getWeight(int uidx, int iidx, double value);
+    double getWeight(int uidx, int iidx, double value);
 
-    public Particle<U, I> clone();
+    Particle<U, I> clone();
 }

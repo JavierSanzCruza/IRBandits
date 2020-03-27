@@ -30,6 +30,10 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.PercentagePositiveRatingsEndCondition;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
+import es.uam.eps.ir.knnbandit.warmup.FullWarmup;
+import es.uam.eps.ir.knnbandit.warmup.OnlyRatingsWarmup;
+import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import es.uam.eps.ir.knnbandit.warmup.WarmupType;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
@@ -124,21 +128,29 @@ public class WarmupRecommendationParallel
         boolean relevantPartition = auxNumParts < 0;
         int numParts = Math.abs(auxNumParts);
 
+        WarmupType warmupType = WarmupType.fromString(args[10]);
+        if(warmupType == null)
+        {
+            System.err.println("ERROR: Invalid warm-up type");
+            return;
+        }
 
-        boolean alsoWithoutTraining = args[10].equalsIgnoreCase("true");
+        boolean alsoWithoutTraining = args[11].equalsIgnoreCase("true");
 
         int auxinterval = 0;
         int auxK = 1;
 
-        for(int i = 11; i < args.length; ++i)
+        for (int i = 12; i < args.length; ++i)
         {
-            switch(args[i])
+            switch (args[i])
             {
                 case "-k":
-                    auxK = Parsers.ip.parse(args[++i]);
+                    ++i;
+                    auxK = Parsers.ip.parse(args[i]);
                     break;
                 case "-interval":
-                    auxinterval = Parsers.ip.parse(args[++i]);
+                    ++i;
+                    auxinterval = Parsers.ip.parse(args[i]);
                     break;
             }
         }
@@ -160,7 +172,7 @@ public class WarmupRecommendationParallel
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 
-        int interval = auxinterval == 0 ? 10*dataset.numUsers() : auxinterval;
+        int interval = auxinterval == 0 ? 10 * dataset.numUsers() : auxinterval;
 
         // Read the training data
         Reader reader = new Reader();
@@ -181,7 +193,7 @@ public class WarmupRecommendationParallel
         List<InteractiveRecommender<Long, Long>> recs = new ArrayList<>();
         AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
         algorithmSelector.configure(dataset.getUserIndex(), dataset.getItemIndex(), dataset.getPrefData(), realThreshold, dataset.getKnowledgeData(), dataUse);
-        for(String algorithm : algorithmNames)
+        for (String algorithm : algorithmNames)
         {
             InteractiveRecommender<Long, Long> rec = algorithmSelector.getAlgorithm(algorithm);
             recs.add(rec);
@@ -199,8 +211,8 @@ public class WarmupRecommendationParallel
             UntieRandomNumberReader rngSeedGen = new UntieRandomNumberReader();
 
             // Obtain the training.
-            List<Tuple2<Integer,Integer>> partTrain;
-            String extraString = (part != numParts+1) ? "for the " + (part + 1) + "/" + numParts + " split" : "for the non-training split";
+            List<Tuple2<Integer, Integer>> partTrain;
+            String extraString = (part != numParts + 1) ? "for the " + (part + 1) + "/" + numParts + " split" : "for the non-training split";
             long aaa = System.nanoTime();
 
             // Find the training data.
@@ -224,6 +236,18 @@ public class WarmupRecommendationParallel
                 }
             }
 
+            Warmup warmup;
+            switch (warmupType)
+            {
+                case FULL:
+                    warmup = new FullWarmup(dataset.getPrefData(), partTrain, false, false);
+                    break;
+                case ONLYRATINGS:
+                default:
+                    warmup = new OnlyRatingsWarmup(dataset.getPrefData(), partTrain, false, false);
+
+            }
+
             // Obtain the algorithm to apply:
             String algorithmName = algorithmNames.get(part);
             InteractiveRecommender<Long, Long> rec = recs.get(part);
@@ -244,7 +268,7 @@ public class WarmupRecommendationParallel
             metricNames.forEach(metricName -> averagedLastIteration.put(metricName, 0.0));
             double maxIter = 0.0;
             // Execute each recommender k times.
-            for(int i = 0; i < k; ++i)
+            for (int i = 0; i < k; ++i)
             {
                 int rngSeed = rngSeedGen.nextSeed();
                 // Create the recommendation loop:
@@ -257,7 +281,7 @@ public class WarmupRecommendationParallel
                 }
                 else
                 {
-                    loop.init(partTrain, false);
+                    loop.init(warmup, false);
                 }
                 bbb = System.nanoTime();
                 System.out.println("Algorithm " + algorithmName + "(" + i + ") " + extraString + " has been initialized (" + (bbb - aaa) / 1000000.0 + " ms.)");
@@ -275,13 +299,14 @@ public class WarmupRecommendationParallel
                     }
 
                     Writer writer = new Writer(outputFolder + algorithmName + ".txt", metricNames);
+                    writer.writeHeader();
                     if (resume && !list.isEmpty())
                     {
                         metricValues.putAll(AuxiliarMethods.updateWithPrevious(loop, list, writer, interval));
                     }
 
                     int currentIter = AuxiliarMethods.executeRemaining(loop, writer, interval, metricValues);
-                    maxIter = maxIter + (currentIter - maxIter)/(i+1.0);
+                    maxIter = maxIter + (currentIter - maxIter) / (i + 1.0);
 
                     writer.close();
                 }
@@ -290,15 +315,23 @@ public class WarmupRecommendationParallel
                     System.err.println("ERROR: Some error occurred when executing algorithm " + algorithmName + " (" + i + ") " + extraString);
                 }
 
-                for(String metric : metricNames)
+                boolean first = true;
+                for (String metric : metricNames)
                 {
-                    if(i == 0)
+                    if (i == 0)
                     {
                         List<Double> values = metricValues.get(metric);
                         int auxSize = values.size();
-                        averagedValues.get(metric).addAll(values.subList(0, auxSize-1));
-                        averagedLastIteration.put(metric, values.get(auxSize-1));
-                        for(int j = 0; j < auxSize - 1; ++j) counter.add(1);
+                        averagedValues.get(metric).addAll(values.subList(0, auxSize - 1));
+                        averagedLastIteration.put(metric, values.get(auxSize - 1));
+                        if (first)
+                        {
+                            for (int j = 0; j < auxSize - 1; ++j)
+                            {
+                                counter.add(1);
+                            }
+                        }
+                        first = false;
                     }
                     else
                     {
@@ -306,9 +339,9 @@ public class WarmupRecommendationParallel
                         int currentSize = oldVals.size();
                         List<Double> newVals = metricValues.get(metric);
                         int auxSize = newVals.size();
-                        for(int j = 0; j < auxSize-1; ++j)
+                        for (int j = 0; j < auxSize - 1; ++j)
                         {
-                            if(j >= currentSize)
+                            if (j >= currentSize)
                             {
                                 oldVals.add(newVals.get(j));
                                 counter.add(1);
@@ -316,13 +349,13 @@ public class WarmupRecommendationParallel
                             else
                             {
                                 double oldM = oldVals.get(j);
-                                double averaged = oldM + (newVals.get(j) - oldM)/(counter.get(j)+1);
-                                counter.set(j, counter.get(j)+1);
+                                double averaged = oldM + (newVals.get(j) - oldM) / (counter.get(j) + 1);
+                                counter.set(j, counter.get(j) + 1);
                                 oldVals.set(j, averaged);
                             }
 
                             double lastIter = averagedLastIteration.get(metric);
-                            double newValue = lastIter + (newVals.get(auxSize-1) - lastIter)/(i + 1.0);
+                            double newValue = lastIter + (newVals.get(auxSize - 1) - lastIter) / (i + 1.0);
                             averagedLastIteration.put(metric, newValue);
                         }
                     }
@@ -332,54 +365,55 @@ public class WarmupRecommendationParallel
             }
 
             // Write the summary.
-            try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFolder + algorithmName + "-summary.txt"))))
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFolder + algorithmName + "-summary.txt"))))
             {
                 int size = counter.size();
                 bw.write("Iteration");
-                for(String metricName : metricNames)
+                for (String metricName : metricNames)
                 {
-                    bw.write("\t"+metricName);
+                    bw.write("\t" + metricName);
                 }
 
-                for(int i = 0; i < size-1; ++i)
+                for (int i = 0; i < size; ++i)
                 {
-                    bw.write("\n"+(interval*(i+1)));
-                    for(String metricName : metricNames)
+                    bw.write("\n" + (interval * (i + 1)));
+                    for (String metricName : metricNames)
                     {
-                        bw.write("\t"+averagedValues.get(metricName).get(i));
+                        bw.write("\t" + averagedValues.get(metricName).get(i));
                     }
                 }
 
                 bw.write("\n" + maxIter);
-                for(String metricName : metricNames)
+                for (String metricName : metricNames)
                 {
-                    bw.write("\t"+averagedLastIteration.get(metricName));
+                    bw.write("\t" + averagedLastIteration.get(metricName));
                 }
             }
-            catch(IOException ioe)
+            catch (IOException ioe)
             {
                 System.err.println("Something failed while writing the summary file");
             }
 
 
             bbb = System.nanoTime();
-            System.out.println("Algorithm " + algorithmName + " " + extraString + " has finished (" + (bbb-aaa)/1000000.0 + " ms.)");
+            System.out.println("Algorithm " + algorithmName + " " + extraString + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
         });
     }
 
     /**
      * Reads a list of algorithms.
+     *
      * @param file the file containing the algorithms.
-     * @param num number of algorithms to read.
+     * @param num  number of algorithms to read.
      * @return the list containing the algorithms.
      * @throws IOException if something fails while reading the file.
      */
     private static List<String> readAlgorithmList(String file, int num) throws IOException
     {
         List<String> list = new ArrayList<>();
-        try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file))))
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file))))
         {
-            for(int i = 0; i < num; ++i)
+            for (int i = 0; i < num; ++i)
             {
                 String line = br.readLine();
                 list.add(line);

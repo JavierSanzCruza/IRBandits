@@ -23,7 +23,6 @@ import java.util.stream.Stream;
  * Interface for a generic graph.
  *
  * @param <V> Type of vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -33,7 +32,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Adds a new node to the graph.
      *
      * @param node The new node to add.
-     *
      * @return true if the node is correctly added, false if not.
      */
     boolean addNode(V node);
@@ -43,7 +41,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param nodeA The incident node.
      * @param nodeB The adjacent node.
-     *
      * @return true if the edge is correctly added, false if not.
      */
     default boolean addEdge(V nodeA, V nodeB)
@@ -57,7 +54,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * @param nodeA       The incident node.
      * @param nodeB       The adjacent node.
      * @param insertNodes If true, nodes will be inserted if they do not exist. If false, the edge will only be added if both nodes are inserted.
-     *
      * @return true if the edge is correctly added, false if not
      */
     default boolean addEdge(V nodeA, V nodeB, boolean insertNodes)
@@ -71,7 +67,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * @param nodeA  The incident node.
      * @param nodeB  The adjacent node.
      * @param weight The weight of the edge.
-     *
      * @return true if the edge is correctly added, false if not.
      */
     default boolean addEdge(V nodeA, V nodeB, double weight)
@@ -85,7 +80,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * @param nodeA The incident node.
      * @param nodeB The adjacent node.
      * @param type  The edge type.
-     *
      * @return true if the edge is correctly added, false if not.
      */
     default boolean addEdge(V nodeA, V nodeB, int type)
@@ -100,7 +94,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * @param nodeB  The adjacent node.
      * @param weight The weight of the edge.
      * @param type   The edge type.
-     *
      * @return true if the edge is correctly added, false if not.
      */
     default boolean addEdge(V nodeA, V nodeB, double weight, int type)
@@ -116,7 +109,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * @param weight      The weight.
      * @param type        The edge type.
      * @param insertNodes If true, nodes will be inserted if they do not exist. If false, the edge will only be added if both nodes are inserted.
-     *
      * @return if the edge is correctly added, false if not.
      */
     boolean addEdge(V nodeA, V nodeB, double weight, int type, boolean insertNodes);
@@ -125,7 +117,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Removes a node from the graph.
      *
      * @param node Node to remove.
-     *
      * @return true if the edge is correctly removed, false if not.
      */
     default boolean removeNode(V node)
@@ -138,7 +129,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param nodeA The incident node of the edge to remove.
      * @param nodeB The adjacent node of the edge to remove.
-     *
      * @return true if everything went ok, false if not.
      */
     default boolean removeEdge(V nodeA, V nodeB)
@@ -157,7 +147,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds all the nodes u such that the edge (u to node) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream of the incident nodes.
      */
     Stream<V> getIncidentNodes(V node);
@@ -166,7 +155,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds all the nodes u such that the edge (node to u) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing the adjacent nodes.
      */
     Stream<V> getAdjacentNodes(V node);
@@ -176,7 +164,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes which share reciprocal links.
      */
     Stream<V> getMutualNodes(V node);
@@ -185,7 +172,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds all the nodes u so that either (node to u) or (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood.
      */
     Stream<V> getNeighbourNodes(V node);
@@ -195,7 +181,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param node      The node.
      * @param direction The direction of the links.
-     *
      * @return A stream containing the corresponding neighbourhood.
      */
     Stream<V> getNeighbourhood(V node, EdgeOrientation direction);
@@ -204,7 +189,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Calculates the degree of a node.
      *
      * @param node The node.
-     *
      * @return the degree of the node if it is contained in the graph, -1 otherwise.
      */
     default int degree(V node)
@@ -220,7 +204,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Calculates the in-degree of a node.
      *
      * @param node The node.
-     *
      * @return the in-degree of the node if it is contained in the graph, -1 otherwise.
      */
     int inDegree(V node);
@@ -229,7 +212,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Calculates the out-degree of a node.
      *
      * @param node The node.
-     *
      * @return the out-degree of the node if it is contained in the graph, -1 otherwise.
      */
     int outDegree(V node);
@@ -239,7 +221,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param node        The node whose degree we want to find.
      * @param orientation The neighborhood selection.
-     *
      * @return the degree.
      */
     int degree(V node, EdgeOrientation orientation);
@@ -248,7 +229,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Calculates the number of incident edges of a node (not necessarily equal to the in-degree).
      *
      * @param node The node.
-     *
      * @return the number of incident neighbours of the node if it is contained in the graph, -1 if not.
      */
     default int getIncidentNodesCount(V node)
@@ -264,7 +244,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Calculates the number of adjacent edges of a node (not necessarily equal to the out-degree).
      *
      * @param node The node
-     *
      * @return the degree of the node if it is contained in the graph, -1 if not.
      */
     default int getAdjacentNodesCount(V node)
@@ -280,7 +259,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Calculates the total number of edges which reach a node or start from it (not necessarily equal to the degree).
      *
      * @param node The node
-     *
      * @return the degree of the node if it is contained in the graph, -1 if not.
      */
     default int getNeighbourNodesCount(V node)
@@ -297,9 +275,8 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * links exist in the graph.
      *
      * @param node The node
-     *
      * @return the number nodes for which both (u to node) and (node to u) exist in
-     *         the graph if node is in the graph, -1 otherwise.
+     * the graph if node is in the graph, -1 otherwise.
      */
     default int getMutualNodesCount(V node)
     {
@@ -315,7 +292,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param node      The node.
      * @param direction The direction of the links.
-     *
      * @return A stream containing the corresponding neighbourhood.
      */
     int getNeighbourhoodSize(V node, EdgeOrientation direction);
@@ -324,7 +300,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Calculates the number of incident edges of a node (not necessarily equal to the in-degree).
      *
      * @param node The node.
-     *
      * @return the number of incident neighbours of the node if it is contained in the graph, -1 if not.
      */
     int getIncidentEdgesCount(V node);
@@ -333,7 +308,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Calculates the number of adjacent edges of a node (not necessarily equal to the out-degree).
      *
      * @param node The node.
-     *
      * @return the degree of the node if it is contained in the graph, -1 if not.
      */
     int getAdjacentEdgesCount(V node);
@@ -342,7 +316,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Calculates the total number of edges which reach a node or start from it (not necessarily equal to the degree).
      *
      * @param node The node.
-     *
      * @return the degree of the node if it is contained in the graph, -1 if not.
      */
     int getNeighbourEdgesCount(V node);
@@ -352,7 +325,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * incident reciprocal link towards the node.
      *
      * @param node The node.
-     *
      * @return the number of reciprocal links starting from the node.
      */
     int getMutualEdgesCount(V node);
@@ -362,7 +334,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Checks if a vertex exists in the graph.
      *
      * @param node The vertex to check.
-     *
      * @return true if the vertex is contained in the graph, false if not.
      */
     boolean containsVertex(V node);
@@ -372,7 +343,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param nodeA The incident node.
      * @param nodeB The adjacent node.
-     *
      * @return true if the edge is contained in the graph, false if not.
      */
     boolean containsEdge(V nodeA, V nodeB);
@@ -383,7 +353,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param nodeA the first node.
      * @param nodeB the second node.
-     *
      * @return true if the edge is mutual, false if not (at least one of the links is missing).
      */
     default boolean isMutual(V nodeA, V nodeB)
@@ -396,7 +365,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param nodeA The incident node.
      * @param nodeB The adjacent node.
-     *
      * @return The corresponding weight. If the edge does not exist, NaN
      */
     double getEdgeWeight(V nodeA, V nodeB);
@@ -407,9 +375,8 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * @param nodeA     The incident node.
      * @param nodeB     The adjacent node.
      * @param newWeight The new weight.
-     *
      * @return true if everything goes OK, false if the edge does not exist
-     *         or something fails.
+     * or something fails.
      */
     boolean updateEdgeWeight(V nodeA, V nodeB, double newWeight);
 
@@ -418,7 +385,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the weights of the edges from the nodes u such that the edge (u to node) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing the adjacent nodes and weights.
      */
     Stream<Weight<V, Double>> getIncidentNodesWeights(V node);
@@ -427,7 +393,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the weights of the edges towards the nodes u such that the edge (node to u) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing the adjacent nodes and weights.
      */
     Stream<Weight<V, Double>> getAdjacentNodesWeights(V node);
@@ -436,7 +401,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the weights of the edges from the nodes u such that the edge (node to u) or the edge (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood and weights.
      */
     Stream<Weight<V, Double>> getNeighbourNodesWeights(V node);
@@ -445,7 +409,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the weights of the edges towards the nodes u such that the edge (node to u) and the edge (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood and weights.
      */
     Stream<Weight<V, Double>> getAdjacentMutualNodesWeights(V node);
@@ -454,7 +417,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the weights of the edges from the nodes u such that the edge (node to u) and the edge (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood and weights.
      */
     Stream<Weight<V, Double>> getIncidentMutualNodesWeights(V node);
@@ -464,7 +426,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * It finds the average value of the outgoing and incoming links.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood and weights.
      */
     Stream<Weight<V, Double>> getMutualNodesWeights(V node);
@@ -475,7 +436,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param node      The node.
      * @param direction The direction of the links
-     *
      * @return A stream containing the corresponding neighbourhood and weights.
      */
     Stream<Weight<V, Double>> getNeighbourhoodWeights(V node, EdgeOrientation direction);
@@ -485,7 +445,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param nodeA The incident node.
      * @param nodeB The adjacent node.
-     *
      * @return The corresponding type. If the edge does not exist, -1.
      */
     int getEdgeType(V nodeA, V nodeB);
@@ -494,7 +453,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the types of the edges from the nodes u such that the edge (u to node) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream of the incident nodes and types.
      */
     Stream<Weight<V, Integer>> getIncidentNodesTypes(V node);
@@ -503,7 +461,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the types of the edges towards the nodes u such that the edge (node to u) is in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing the adjacent nodes and types.
      */
     Stream<Weight<V, Integer>> getAdjacentNodesTypes(V node);
@@ -512,7 +469,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the types of the edges from the nodes u such that the edge (node to u) or the edge (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood and types.
      */
     Stream<Weight<V, Integer>> getNeighbourNodesTypes(V node);
@@ -521,7 +477,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the types of the edges towards the nodes u such that the edge (node to u) and the edge (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood and types.
      */
     Stream<Weight<V, Integer>> getAdjacentMutualNodesTypes(V node);
@@ -530,7 +485,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Given a node, finds the types of the edges from the nodes u such that the edge (node to u) and the edge (u to node) are in the graph.
      *
      * @param node The node.
-     *
      * @return A stream containing all the nodes in the neighbourhood and types.
      */
     Stream<Weight<V, Integer>> getIncidentMutualNodesTypes(V node);
@@ -542,7 +496,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      *
      * @param node      The node.
      * @param direction The direction of the links.
-     *
      * @return A stream containing the corresponding neighbourhood.
      */
     Stream<Weight<V, Integer>> getNeighbourhoodTypes(V node, EdgeOrientation direction);
@@ -589,7 +542,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Gets the adjacency matrix.
      *
      * @param direction The direction of the edges.
-     *
      * @return the matrix (Cern Colt Package).
      */
     DoubleMatrix2D getAdjacencyMatrix(EdgeOrientation direction);
@@ -598,7 +550,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Gets the adjacency matrix.
      *
      * @param direction The direction of the edges.
-     *
      * @return the matrix (MTJ Package).
      */
     Matrix getAdjacencyMatrixMTJ(EdgeOrientation direction);
@@ -613,9 +564,8 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
     /**
      * Obtains the set of nodes with edges in a particular direction.
      *
-     * @param direction
-     *
-     * @return
+     * @param direction edge orientation selection
+     * @return the set of nodes with edges.
      */
     Stream<V> getNodesWithEdges(EdgeOrientation direction);
 
@@ -651,7 +601,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Checks if the user has adjacent edges or not.
      *
      * @param u The user.
-     *
      * @return true if the user has adjacent edges, false if it is a sink or isolated node.
      */
     boolean hasAdjacentEdges(V u);
@@ -660,7 +609,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Checks if the user has incident edges or not.
      *
      * @param u the user.
-     *
      * @return true if the user has incident edges, false if it is a source or isolated node.
      */
     boolean hasIncidentEdges(V u);
@@ -669,7 +617,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Checks if the user shares at least an edge with other user.
      *
      * @param u The user.
-     *
      * @return true if the user is not isolated, false otherwise.
      */
     boolean hasEdges(V u);
@@ -678,7 +625,6 @@ public interface Graph<V> extends Serializable, ReducedIndex<V>
      * Checks if the user has mutual edges.
      *
      * @param u The user.
-     *
      * @return true if the user has mutual edges, false otherwise.
      */
     boolean hasMutualEdges(V u);

@@ -22,7 +22,6 @@ import no.uib.cipr.matrix.sparse.LinkedSparseMatrix;
  * Fast implementation for a directed unweighted graph. This implementation does not allow removing edges.
  *
  * @param <V> Type of the vertices.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -39,7 +38,7 @@ public class FastDirectedUnweightedGraph<V> extends FastGraph<V> implements Dire
     @Override
     public DoubleMatrix2D getAdjacencyMatrix(EdgeOrientation direction)
     {
-        DoubleMatrix2D matrix = new SparseDoubleMatrix2D(new Long(this.getVertexCount()).intValue(), new Long(this.getVertexCount()).intValue());
+        DoubleMatrix2D matrix = new SparseDoubleMatrix2D(Long.valueOf(this.getVertexCount()).intValue(), Long.valueOf(this.getVertexCount()).intValue());
         // Creation of the adjacency matrix
         for (int row = 0; row < matrix.rows(); ++row)
         {
@@ -75,25 +74,25 @@ public class FastDirectedUnweightedGraph<V> extends FastGraph<V> implements Dire
     @Override
     public Matrix getAdjacencyMatrixMTJ(EdgeOrientation direction)
     {
-        Matrix matrix = new LinkedSparseMatrix(new Long(this.getVertexCount()).intValue(), new Long(this.getVertexCount()).intValue());
+        Matrix matrix = new LinkedSparseMatrix(Long.valueOf(this.getVertexCount()).intValue(), Long.valueOf(this.getVertexCount()).intValue());
         this.vertices.getAllObjects().forEach(u ->
         {
             int uIdx = this.vertices.object2idx(u);
             this.getNeighbourhood(u, direction).forEach(v ->
-            {
-                int vIdx = this.vertices.object2idx(v);
-                switch (direction)
                 {
-                    case IN:
-                        matrix.set(uIdx, vIdx, 1.0);
-                        break;
-                    case OUT:
-                        matrix.set(uIdx, vIdx, 1.0);
-                        break;
-                    default:
-                        matrix.set(uIdx, vIdx, 1.0);
-                }
-            });
+                    int vIdx = this.vertices.object2idx(v);
+                    switch (direction)
+                    {
+                        case IN:
+                            matrix.set(uIdx, vIdx, 1.0);
+                            break;
+                        case OUT:
+                            matrix.set(uIdx, vIdx, 1.0);
+                            break;
+                        default:
+                            matrix.set(uIdx, vIdx, 1.0);
+                    }
+                });
         });
 
         return matrix;

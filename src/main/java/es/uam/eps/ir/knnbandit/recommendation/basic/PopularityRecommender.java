@@ -23,7 +23,6 @@ import java.util.List;
  *
  * @param <U> User type.
  * @param <I> Item type.
- *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -37,11 +36,11 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
-     * @param threshold     Relevance threshold
+     * @param threshold Relevance threshold
      */
     public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, double threshold)
     {
@@ -55,7 +54,7 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
      * @param uIndex        User index.
      * @param iIndex        Item index.
      * @param prefData      Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
+     * @param hasRating     True if we must ignore unknown items when updating.
      * @param threshold     Relevance threshold
      * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise
      */
@@ -68,32 +67,25 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
-     * @param threshold     Relevance threshold
+     * @param threshold Relevance threshold
      */
-    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U,I> knowledgeData, boolean hasRating, KnowledgeDataUse dataUse, double threshold)
+    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean hasRating, KnowledgeDataUse dataUse, double threshold)
     {
         super(uIndex, iIndex, prefData, knowledgeData, hasRating, dataUse);
         this.threshold = threshold;
     }
 
 
-
     @Override
     public void initializeMethod()
     {
-        this.trainData.getAllIidx().forEach(iidx ->
-        {
-            this.values[iidx] = 0.0;
-        });
+        this.trainData.getAllIidx().forEach(iidx -> this.values[iidx] = 0.0);
 
-        this.trainData.getIidxWithPreferences().forEach(iidx ->
-        {
-            this.values[iidx] = this.trainData.getIidxPreferences(iidx).filter(pref -> pref.v2 >= threshold).count();
-        });
+        this.trainData.getIidxWithPreferences().forEach(iidx -> this.values[iidx] = this.trainData.getIidxPreferences(iidx).filter(pref -> pref.v2 >= threshold).count());
     }
 
     @Override

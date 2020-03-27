@@ -35,7 +35,6 @@ import static java.lang.Math.sqrt;
  *
  * @param <U> type of the users
  * @param <I> type of the items
- *
  * @author Saúl Vargas (saul.vargas@uam.es)
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  */
@@ -107,7 +106,7 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
     @Override
     public void factorize(Factorization<U, I> factorization, FastPreferenceData<U, I> data)
     {
-        if(data.numPreferences() > 0)
+        if (data.numPreferences() > 0)
         {
             super.factorize(factorization, data);
         }
@@ -127,12 +126,12 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
         if (!usesZeroes)
         {
             data.getUidxWithPreferences().parallel().forEach(uidx ->
-                prepareRR1(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
+                                                                     prepareRR1(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
         }
         else
         {
             data.getUidxWithPreferences().parallel().forEach(uidx ->
-                prepareRR1Zeroes(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
+                                                                     prepareRR1Zeroes(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
         }
     }
 
@@ -174,13 +173,13 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
         }
         int[] j = {K};
         prefs.forEach(iv ->
-        {
-            q.viewRow(iv.v1).toArray(x[j[0]]);
-            double Cui = confidence.applyAsDouble(iv.v2);
-            y[j[0]] = (Cui * iv.v2) / (Cui - 1);
-            c[j[0]] = Cui - 1;
-            j[0]++;
-        });
+                      {
+                          q.viewRow(iv.v1).toArray(x[j[0]]);
+                          double Cui = confidence.applyAsDouble(iv.v2);
+                          y[j[0]] = (Cui * iv.v2) / (Cui - 1);
+                          c[j[0]] = Cui - 1;
+                          j[0]++;
+                      });
 
         doRR1(L, w, x, y, c, lambda);
     }
@@ -200,16 +199,16 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
         }
         int[] j = {K};
         prefs.forEach(iv ->
-        {
-            q.viewRow(iv.v1).toArray(x[j[0]]);
-            q.viewRow(iv.v1).toArray(x[j[0] + N]);
-            double Cui = confidence.applyAsDouble(iv.v2);
-            y[j[0]] = 0;
-            c[j[0]] = -1;
-            y[j[0] + N] = iv.v2;
-            c[j[0] + N] = Cui;
-            j[0]++;
-        });
+                      {
+                          q.viewRow(iv.v1).toArray(x[j[0]]);
+                          q.viewRow(iv.v1).toArray(x[j[0] + N]);
+                          double Cui = confidence.applyAsDouble(iv.v2);
+                          y[j[0]] = 0;
+                          c[j[0]] = -1;
+                          y[j[0] + N] = iv.v2;
+                          c[j[0] + N] = Cui;
+                          j[0]++;
+                      });
 
         doRR1(L, w, x, y, c, lambda);
     }
@@ -261,22 +260,22 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
         // TODO: add regularization, unify with HKVFactorizer's error
 
         return data.getUidxWithPreferences().parallel().mapToDouble(uidx ->
-        {
-            DoubleMatrix1D pu = p.viewRow(uidx);
-            DoubleMatrix1D su = q.zMult(pu, null);
+                                                                    {
+                                                                        DoubleMatrix1D pu = p.viewRow(uidx);
+                                                                        DoubleMatrix1D su = q.zMult(pu, null);
 
-            double err1 = data.getUidxPreferences(uidx).mapToDouble(iv ->
-            {
-                double rui = iv.v2;
-                double sui = su.getQuick(iv.v1);
-                double cui = confidence.applyAsDouble(rui);
-                return cui * (rui - sui) * (rui - sui) - confidence.applyAsDouble(0) * sui * sui;
-            }).sum();
+                                                                        double err1 = data.getUidxPreferences(uidx).mapToDouble(iv ->
+                                                                                                                                {
+                                                                                                                                    double rui = iv.v2;
+                                                                                                                                    double sui = su.getQuick(iv.v1);
+                                                                                                                                    double cui = confidence.applyAsDouble(rui);
+                                                                                                                                    return cui * (rui - sui) * (rui - sui) - confidence.applyAsDouble(0) * sui * sui;
+                                                                                                                                }).sum();
 
-            double err2 = confidence.applyAsDouble(0) * su.assign(x -> x * x).zSum();
+                                                                        double err2 = confidence.applyAsDouble(0) * su.assign(x -> x * x).zSum();
 
-            return (err1 + err2) / data.numItems();
-        }).sum() / data.numUsers();
+                                                                        return (err1 + err2) / data.numItems();
+                                                                    }).sum() / data.numUsers();
 
     }
 
