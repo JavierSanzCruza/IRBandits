@@ -45,10 +45,10 @@ public class OnlyRatingsWarmup implements Warmup
         if (contactRec)
         {
             IntStream.range(0, preferenceData.numUsers()).forEach(uidx ->
-                                                                  {
-                                                                      this.availability.add(new IntArrayList(itemList));
-                                                                      this.availability.get(uidx).removeInt(itemList.indexOf(uidx));
-                                                                  });
+            {
+                this.availability.add(new IntArrayList(itemList));
+                this.availability.get(uidx).removeInt(itemList.indexOf(uidx));
+            });
         }
         else
         {
@@ -56,28 +56,25 @@ public class OnlyRatingsWarmup implements Warmup
         }
 
         training.forEach(tuple ->
-                         {
-                             int uidx = tuple.v1();
-                             int iidx = tuple.v2();
-                             if (preferenceData.numUsers(iidx) > 0 && preferenceData.numItems(uidx) > 0 && preferenceData.getPreference(uidx, iidx).isPresent())
-                             {
-                                 this.training.add(new Tuple2<>(uidx, iidx));
-                                 this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-                                 if (notReciprocal)
-                                 {
-                                     // The only case where we might update a link that does not exist is here:
-                                     // If possible, remove this:
-                                     int index = this.availability.get(iidx).indexOf(uidx);
-                                     if (index > 0) // This pair has not been previously recommended:
-                                     {
-                                         this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
-                                     }
-                                 }
-                             }
-
-                             this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-
-                         });
+        {
+            int uidx = tuple.v1();
+            int iidx = tuple.v2();
+            if (preferenceData.numUsers(iidx) > 0 && preferenceData.numItems(uidx) > 0 && preferenceData.getPreference(uidx, iidx).isPresent())
+            {
+                this.training.add(new Tuple2<>(uidx, iidx));
+                this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
+                if (notReciprocal)
+                {
+                    // The only case where we might update a link that does not exist is here:
+                    // If possible, remove this:
+                    int index = this.availability.get(iidx).indexOf(uidx);
+                    if (index > 0) // This pair has not been previously recommended:
+                    {
+                        this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
+                    }
+                }
+            }
+        });
     }
 
     public List<IntList> getAvailability()

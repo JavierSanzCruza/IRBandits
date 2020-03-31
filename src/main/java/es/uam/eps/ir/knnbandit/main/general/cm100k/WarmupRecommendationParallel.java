@@ -217,11 +217,24 @@ public class WarmupRecommendationParallel
 
             // Find the training data.
             partTrain = (part == (numParts + 1) ? new ArrayList<>() : train.subList(0, splitPoints.get(part)));
+
+            Warmup warmup;
+            switch (warmupType)
+            {
+                case FULL:
+                    warmup = new FullWarmup(dataset.getPrefData(), partTrain, false, false);
+                    break;
+                case ONLYRATINGS:
+                default:
+                    warmup = new OnlyRatingsWarmup(dataset.getPrefData(), partTrain, false, false);
+
+            }
+
             long bbb = System.nanoTime();
-            System.out.println("Prepared training data " + extraString + ": " + partTrain.size() + " recommendations ( " + (bbb - aaa) / 1000000.0 + " ms.)");
+            System.out.println("Prepared training data " + extraString + ": " + warmup.getFullTraining().size() + " recommendations ( " + (bbb - aaa) / 1000000.0 + " ms.)");
 
             // Count the number of relevant items:
-            int norel = dataset.getNumRel(partTrain);
+            int norel = dataset.getNumRel(warmup.getFullTraining());
             System.out.println("Number of relevant items " + extraString + ": " + (dataset.getNumRel() - norel));
 
             // If it does not exist, create the directory in which to store the recommendation.
@@ -236,17 +249,7 @@ public class WarmupRecommendationParallel
                 }
             }
 
-            Warmup warmup;
-            switch (warmupType)
-            {
-                case FULL:
-                    warmup = new FullWarmup(dataset.getPrefData(), partTrain, false, false);
-                    break;
-                case ONLYRATINGS:
-                default:
-                    warmup = new OnlyRatingsWarmup(dataset.getPrefData(), partTrain, false, false);
 
-            }
 
             // Obtain the algorithm to apply:
             String algorithmName = algorithmNames.get(part);

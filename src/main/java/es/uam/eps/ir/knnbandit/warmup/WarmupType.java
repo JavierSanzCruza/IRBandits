@@ -20,7 +20,6 @@ public enum WarmupType
                 return FULL;
             default:
                 return null;
-
         }
     }
 }
