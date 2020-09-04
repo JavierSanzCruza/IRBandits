@@ -16,7 +16,7 @@ import java.util.Random;
 /**
  * Particle Thompson Sampling algorithm.
  * <p>
- * Kawale et al. Efficient Thompson Sampling for Online Matrix-Factorization Recommendation
+ * Kawale et al. Efficient Thompson Sampling for Online Matrix-Factorization Recommendation (NIPS 2015)
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
@@ -86,12 +86,12 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
         {
             Particle<U, I> particle = factory.create(this.uIndex, this.iIndex);
             this.uIndex.getAllUidx().forEach(uidx ->
-                                                     this.trainData.getUidxPreferences(uidx).forEach(pref ->
-                                                                                                     {
-                                                                                                         int iidx = pref.v1;
-                                                                                                         double val = pref.v2;
-                                                                                                         particle.update(uidx, iidx, val);
-                                                                                                     }));
+                 this.trainData.getUidxPreferences(uidx).forEach(pref ->
+                 {
+                     int iidx = pref.v1;
+                     double val = pref.v2;
+                     particle.update(uidx, iidx, val);
+                 }));
             particleList.add(particle);
         }
     }
@@ -149,7 +149,7 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
     @Override
     public void updateMethod(int uidx, int iidx, double value)
     {
-        // First, estimate the weights.
+        // Reweighting: for each particle, we recalculate the weights:
         double[] weights = new double[this.numParticles];
         double sum = 0.0;
         for (int d = 0; d < this.numParticles; ++d)

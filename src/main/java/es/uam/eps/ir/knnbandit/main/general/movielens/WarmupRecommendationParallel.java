@@ -220,7 +220,6 @@ public class WarmupRecommendationParallel
                 case ONLYRATINGS:
                 default:
                     warmup = new OnlyRatingsWarmup(dataset.getPrefData(), partTrain, false, false);
-
             }
 
             long bbb = System.nanoTime();
@@ -229,9 +228,6 @@ public class WarmupRecommendationParallel
             // Count the number of relevant items:
             int norel = dataset.getNumRel(warmup.getFullTraining());
             System.out.println("Number of relevant items " + extraString + ": " + (dataset.getNumRel() - norel));
-
-
-
 
             // If it does not exist, create the directory in which to store the recommendation.
             String outputFolder = output + part + File.separator;
@@ -289,13 +285,13 @@ public class WarmupRecommendationParallel
                 try
                 {
                     List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
-                    String fileName = outputFolder + algorithmName + ".txt";
+                    String fileName = outputFolder + algorithmName + "_" + i + ".txt";
                     if (resume)
                     {
                         list = AuxiliarMethods.retrievePreviousIterations(fileName);
                     }
 
-                    Writer writer = new Writer(outputFolder + algorithmName + ".txt", metricNames);
+                    Writer writer = new Writer(fileName, metricNames);
                     writer.writeHeader();
                     if (resume && !list.isEmpty())
                     {

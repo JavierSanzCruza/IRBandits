@@ -1,5 +1,6 @@
 package es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.particles;
 
+import cern.colt.matrix.DoubleFactory1D;
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -10,6 +11,8 @@ import cern.colt.matrix.linalg.EigenvalueDecomposition;
 import es.uam.eps.ir.knnbandit.recommendation.mf.FastParticle;
 import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
 import es.uam.eps.ir.ranksys.fast.index.FastUserIndex;
+import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
+import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.util.Random;
 
@@ -103,55 +106,66 @@ public abstract class PTSMFParticle<U, I> extends FastParticle<U, I>
     @Override
     public void initialize()
     {
-        // Initialize P
+        // We initialize the different users.
         this.P = new DenseDoubleMatrix2D(this.numUsers, this.K);
-        this.P.assign(x -> rng.nextGaussian() * sigmaP);
-
-        // Initialize Q
         this.Q = new DenseDoubleMatrix2D(this.numItems, this.K);
-        this.Q.assign(x -> rng.nextGaussian() * sigmaQ);
 
-        // Initialize the intermediate matrices for the users
+        // Initialize users
         this.Au = new DenseDoubleMatrix2D[numUsers];
         this.bu = new DenseDoubleMatrix1D[numUsers];
-        this.muU = new DenseDoubleMatrix1D[numUsers];
-        for (int i = 0; i < numUsers; ++i)
+
+        DoubleMatrix2D auxU = DoubleFactory2D.sparse.identity(this.K);
+        for (int j = 0; j < this.K; ++j)
         {
-            Au[i] = DoubleFactory2D.dense.identity(this.K);
-            if (!bayesian)
-            {
-                for (int j = 0; j < this.K; ++j)
-                {
-                    Au[i].setQuick(j, j, 1.0 / sigmaP);
-                }
+           auxU.setQuick(j, j, 1.0 / sigmaP);
+        }
+        DoubleMatrix2D auxUInv = ALG.inverse(auxU);
+        DoubleMatrix1D auxB = new DenseDoubleMatrix1D(this.K);
+        MultivariateNormalDistribution mndU = new MultivariateNormalDistribution(auxB.toArray(), auxUInv.toArray());
 
-            }
+        for(int uidx = 0; uidx < numUsers; ++uidx)
+        {
+            this.Au[uidx] = new DenseDoubleMatrix2D(this.K, this.K);
+            this.Au[uidx].assign(auxU);
+            this.bu[uidx] = new DenseDoubleMatrix1D(this.K);
 
-            bu[i] = new DenseDoubleMatrix1D(this.K);
-            muU[i] = new DenseDoubleMatrix1D(this.K);
+            double[] pu = mndU.sample();
+            this.P.viewRow(uidx).assign(pu);
         }
 
-        // Initialize the intermediate matrices for items.
+        // Initialize items
         this.Ai = new DenseDoubleMatrix2D[numItems];
         this.bi = new DenseDoubleMatrix1D[numItems];
 
-        for (int i = 0; i < numItems; ++i)
+        DoubleMatrix2D auxI = DoubleFactory2D.sparse.identity(this.K);
+        for (int j = 0; j < this.K; ++j)
         {
-            Ai[i] = DoubleFactory2D.dense.identity(this.K);
-            for (int j = 0; j < this.K; ++j)
-            {
-                Ai[i].setQuick(j, j, 1.0 / sigmaQ);
-            }
-            bi[i] = new DenseDoubleMatrix1D(this.K);
+            auxI.setQuick(j, j, 1.0 / sigmaQ);
+        }
+        DoubleMatrix2D auxIInv = ALG.inverse(auxI);
+        MultivariateNormalDistribution mndI = new MultivariateNormalDistribution(auxB.toArray(), auxIInv.toArray());
+
+
+        for(int iidx = 0; iidx < numItems; ++iidx)
+        {
+            this.Ai[iidx] = new DenseDoubleMatrix2D(this.K, this.K);
+            this.Ai[iidx].assign(auxI);
+            this.bi[iidx] = new DenseDoubleMatrix1D(this.K);
+
+            double[] qi = mndI.sample();
+            this.Q.viewRow(iidx).assign(qi);
         }
     }
 
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        DoubleMatrix1D qi = this.Q.viewRow(iidx);
+        // We first update the user:
         DoubleMatrix2D aux = new DenseDoubleMatrix2D(this.K, this.K);
-        ALG.multOuter(qi, qi, aux);
+        DoubleMatrix1D qi = this.Q.viewRow(iidx);
+        ALG.multOuter(qi,qi,aux);
+
+        // Update the Au and bu matrices
         this.Au[uidx].assign(aux, (x, y) -> x + 1 / sigma * y);
         this.bu[uidx].assign(qi, (x, y) -> x + value * y);
 
@@ -215,13 +229,14 @@ public abstract class PTSMFParticle<U, I> extends FastParticle<U, I>
     public double getWeight(int uidx, int iidx, double value)
     {
         double mean = ALG.mult(this.Q.viewRow(iidx), this.muU[uidx]);
+
         DoubleMatrix1D aux = new DenseDoubleMatrix1D(this.K);
         DoubleMatrix2D A;
-        if (bayesian)
+        if(bayesian)
         {
             A = new DenseDoubleMatrix2D(this.K, this.K);
             A.assign(Au[uidx]);
-            for (int k = 0; k < this.K; ++k)
+            for(int k = 0; k < this.K; ++k)
             {
                 A.setQuick(k, k, A.getQuick(k, k) + 1.0 / sigmaP);
             }
@@ -232,11 +247,10 @@ public abstract class PTSMFParticle<U, I> extends FastParticle<U, I>
         }
 
         A.zMult(this.Q.viewRow(iidx), aux);
-        double variance = ALG.mult(aux, this.Q.viewRow(iidx));
+        double variance = 1.0/sigma + ALG.mult(aux, this.Q.viewRow(iidx));
 
-        mean = value - mean;
-
-        return 1.0 / Math.sqrt(2 * Math.PI * variance) * Math.exp(-(mean * mean) / (2.0 * variance));
+        NormalDistribution nd = new NormalDistribution(mean, Math.sqrt(variance));
+        return nd.density(value);
     }
 
 
@@ -261,7 +275,7 @@ public abstract class PTSMFParticle<U, I> extends FastParticle<U, I>
         }
 
         decomp.getV().zMult(matrix, matrix);
-        matrix.assign(mu, (x, y) -> x + y);
+        matrix.assign(mu, Double::sum);
         return matrix;
     }
 

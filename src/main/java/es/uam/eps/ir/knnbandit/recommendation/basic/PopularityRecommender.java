@@ -99,7 +99,7 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
     {
         for (int iidx = 0; iidx < this.prefData.numItems(); ++iidx)
         {
-            this.values[iidx] = this.trainData.getIidxPreferences(iidx).filter(vidx -> vidx.v2 > 0).count();
+            this.values[iidx] = this.trainData.getIidxPreferences(iidx).filter(vidx -> vidx.v2 > threshold).count();
         }
     }
 

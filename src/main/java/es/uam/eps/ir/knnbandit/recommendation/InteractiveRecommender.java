@@ -222,24 +222,24 @@ public abstract class InteractiveRecommender<U, I>
 
         // For each element in the training set, add it to the trainData, and update the availabilities
         train.forEach(pair ->
-                      {
-                          // Retrieve user and item ids.
-                          int uidx = pair.v1;
-                          int iidx = pair.v2;
+        {
+            // Retrieve user and item ids.
+            int uidx = pair.v1;
+            int iidx = pair.v2;
 
-                          // Update the rating, and modify the corresponding availability.
-                          boolean didExist = this.auxUpdateRating(uidx, iidx, false);
-                          this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-                          if (didExist && contactRec && this.notReciprocal)
-                          {
-                              int index = this.availability.get(iidx).indexOf(uidx);
-                              if (index > 0) // It might happen that the user uidx has been previously recommended to iidx (but it was not a hit)
-                              {
-                                  this.auxUpdateRating(iidx, uidx, false);
-                                  this.availability.get(iidx).removeInt(index);
-                              }
-                          }
-                      });
+            // Update the rating, and modify the corresponding availability.
+            boolean didExist = this.auxUpdateRating(uidx, iidx, false);
+            this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
+            if (didExist && contactRec && this.notReciprocal)
+            {
+                int index = this.availability.get(iidx).indexOf(uidx);
+                if (index > 0) // It might happen that the user uidx has been previously recommended to iidx (but it was not a hit)
+                {
+                    this.auxUpdateRating(iidx, uidx, false);
+                    this.availability.get(iidx).removeInt(index);
+                }
+            }
+        });
 
         // Initialize the method.
         this.initializeMethod();
@@ -327,11 +327,16 @@ public abstract class InteractiveRecommender<U, I>
     public void update(int uidx, int iidx)
     {
         boolean hasUpdated = this.auxUpdateRating(uidx, iidx, true);
-        this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
+        int index = this.availability.get(uidx).indexOf(iidx);
+        if(index == -1)
+        {
+            System.err.println("WHAT?");
+        }
+        this.availability.get(uidx).removeInt(index);
 
         if (hasUpdated && this.notReciprocal)
         {
-            int index = this.availability.get(iidx).indexOf(uidx);
+            index = this.availability.get(iidx).indexOf(uidx);
             if (index > 0) // This pair has not been previously recommended:
             {
                 this.availability.get(iidx).removeInt(index);
@@ -424,16 +429,16 @@ public abstract class InteractiveRecommender<U, I>
 
         // Fill the availability lists.
         IntStream.range(0, prefData.numUsers()).forEach(uidx ->
-                                                        {
-                                                            if (contactRec)
-                                                            {
-                                                                availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
-                                                            }
-                                                            else
-                                                            {
-                                                                availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
-                                                            }
-                                                        });
+        {
+            if (contactRec)
+            {
+                availability.add(this.getIidx().filter(iidx -> uidx != iidx).boxed().collect(Collectors.toCollection(IntArrayList::new)));
+            }
+            else
+            {
+                availability.add(this.getIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
+            }
+        });
 
         // Load the training data (empty data).
         this.trainData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);

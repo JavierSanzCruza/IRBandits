@@ -21,10 +21,12 @@ import es.uam.eps.ir.knnbandit.recommendation.bandits.item.*;
 import es.uam.eps.ir.knnbandit.recommendation.basic.AvgRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.basic.PopularityRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.basic.RandomRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.clusters.CLUB;
 import es.uam.eps.ir.knnbandit.recommendation.knn.item.InteractiveItemBasedKNN;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.VectorCosineSimilarity;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.stochastic.BetaStochasticSimilarity;
+import es.uam.eps.ir.knnbandit.recommendation.knn.user.CollaborativeGreedy;
 import es.uam.eps.ir.knnbandit.recommendation.knn.user.InteractiveUserBasedKNN;
 import es.uam.eps.ir.knnbandit.recommendation.mf.InteractiveMF;
 import es.uam.eps.ir.knnbandit.recommendation.mf.PZTFactorizer;
@@ -559,6 +561,58 @@ public class AlgorithmSelector<U, I>
                     else
                     {
                         return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, hasRating, numP, factory);
+                    }
+                }
+                case AlgorithmIdentifiers.COLLABGREEDY:
+                {
+                    cursor++;
+                    double threshold = Parsers.dp.parse(fullAlgorithm.get(cursor));
+                    double alpha = Parsers.dp.parse(fullAlgorithm.get(cursor+1));
+                    cursor += 2;
+
+                    if (fullAlgorithm.size() == cursor)
+                    {
+                        hasRating = true;
+                    }
+                    else
+                    {
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        cursor++;
+                    }
+
+                    if(this.contactRec)
+                    {
+                        return new CollaborativeGreedy<>(uIndex, iIndex, prefData, hasRating, notReciprocal, threshold, alpha);
+                    }
+                    else
+                    {
+                        return new CollaborativeGreedy<>(uIndex, iIndex, prefData, hasRating, threshold, alpha);
+                    }
+                }
+                case AlgorithmIdentifiers.CLUB:
+                {
+                    cursor++;
+                    double alpha1 = Parsers.dp.parse(fullAlgorithm.get(cursor));
+                    double alpha2 = Parsers.dp.parse(fullAlgorithm.get(cursor));
+                    cursor+=2;
+
+                    if(fullAlgorithm.size() == cursor)
+                    {
+                        hasRating = true;
+                    }
+                    else
+                    {
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        cursor++;
+                    }
+
+                    if(this.contactRec)
+                    {
+                        return new CLUB<>(uIndex, iIndex, prefData, hasRating, notReciprocal, alpha1, alpha2);
+                    }
+                    else
+                    {
+                        return new CLUB<>(uIndex, iIndex, prefData, hasRating, alpha1, alpha2);
                     }
                 }
                 default:

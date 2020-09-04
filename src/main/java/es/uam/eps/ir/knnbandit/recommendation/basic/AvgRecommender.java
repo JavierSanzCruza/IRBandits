@@ -106,10 +106,10 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
     @Override
     public void updateMethod(List<Tuple3<Integer, Integer, Double>> train)
     {
-        for (int i = 0; i < this.prefData.numItems(); ++i)
+        for (int i = 0; i < this.trainData.numItems(); ++i)
         {
-            this.values[i] = this.prefData.getIidxPreferences(i).mapToDouble(v -> v.v2).sum();
-            this.numTimes[i] = this.prefData.numUsers(i);
+            this.values[i] = this.trainData.getIidxPreferences(i).mapToDouble(v -> v.v2).sum();
+            this.numTimes[i] = this.trainData.numUsers(i);
             if (this.numTimes[i] > 0)
             {
                 this.values[i] /= (this.numTimes[i] + 0.0);

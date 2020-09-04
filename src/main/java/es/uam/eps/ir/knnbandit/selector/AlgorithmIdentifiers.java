@@ -34,4 +34,8 @@ public class AlgorithmIdentifiers
     public static final String PMFBANDIT = "pmfbandit";
     public static final String PTS = "pts";
     public static final String BAYESIANPTS = "bayespts";
+    // Bandits using knn
+    public static final String COLLABGREEDY = "collabgreedy";
+    // Cluster-based approaches
+    public static final String CLUB = "club";
 }
