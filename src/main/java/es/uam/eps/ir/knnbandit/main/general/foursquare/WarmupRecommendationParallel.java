@@ -198,7 +198,7 @@ public class WarmupRecommendationParallel
         List<Integer> splitPoints = partition.split(train, numParts);
         int auxParts = alsoWithoutTraining ? numParts + 1 : numParts;
 
-        IntStream.range(0, auxParts).forEach(part ->
+        IntStream.range(0, auxParts).parallel().forEach(part ->
         {
             // Initialize the random number seed generator.
             UntieRandomNumberReader rngSeedGen = new UntieRandomNumberReader();

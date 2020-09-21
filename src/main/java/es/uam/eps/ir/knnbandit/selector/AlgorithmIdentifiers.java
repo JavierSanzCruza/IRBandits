@@ -38,4 +38,5 @@ public class AlgorithmIdentifiers
     public static final String COLLABGREEDY = "collabgreedy";
     // Cluster-based approaches
     public static final String CLUB = "club";
+    public static final String CLUBERDOS = "cluberdos";
 }

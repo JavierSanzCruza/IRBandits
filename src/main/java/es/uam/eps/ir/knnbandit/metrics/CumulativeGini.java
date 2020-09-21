@@ -9,7 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.metrics;
 
-import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex;
+import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
     /**
      * The updateable Gini index to compute all the operations.
      */
-    private final GiniIndex gini;
+    private final GiniIndex2 gini;
 
     /**
      * Constructor.
@@ -36,13 +36,13 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
      */
     public CumulativeGini(int numItems)
     {
-        gini = new GiniIndex(numItems);
+        gini = new GiniIndex2(numItems);
     }
 
     @Override
     public void initialize(List<Tuple2<Integer, Integer>> train, boolean notReciprocal)
     {
-
+        this.reset();
     }
 
     @Override
@@ -52,10 +52,7 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
     }
 
     @Override
-    public void update(int uidx, int iidx)
-    {
-        this.gini.updateFrequency(iidx, 1);
-    }
+    public void update(int uidx, int iidx) {this.gini.updateFrequency(iidx);}
 
     @Override
     public void reset()

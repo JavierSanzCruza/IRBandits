@@ -22,6 +22,7 @@ import es.uam.eps.ir.knnbandit.recommendation.basic.AvgRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.basic.PopularityRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.basic.RandomRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.CLUB;
+import es.uam.eps.ir.knnbandit.recommendation.clusters.CLUBERdos;
 import es.uam.eps.ir.knnbandit.recommendation.knn.item.InteractiveItemBasedKNN;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.VectorCosineSimilarity;
@@ -615,6 +616,32 @@ public class AlgorithmSelector<U, I>
                         return new CLUB<>(uIndex, iIndex, prefData, hasRating, alpha1, alpha2);
                     }
                 }
+                case AlgorithmIdentifiers.CLUBERDOS:
+                {
+                    cursor++;
+                    double alpha1 = Parsers.dp.parse(fullAlgorithm.get(cursor));
+                    double alpha2 = Parsers.dp.parse(fullAlgorithm.get(cursor));
+                    cursor+=2;
+
+                    if(fullAlgorithm.size() == cursor)
+                    {
+                        hasRating = true;
+                    }
+                    else
+                    {
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        cursor++;
+                    }
+
+                    if(this.contactRec)
+                    {
+                        return new CLUBERdos<>(uIndex, iIndex, prefData, hasRating, notReciprocal, alpha1, alpha2);
+                    }
+                    else
+                    {
+                        return new CLUBERdos<>(uIndex, iIndex, prefData, hasRating, alpha1, alpha2);
+                    }
+                }
                 default:
                 {
                     return null;
@@ -665,7 +692,8 @@ public class AlgorithmSelector<U, I>
             String line;
             while ((line = br.readLine()) != null)
             {
-                this.addAlgorithm(line);
+                if(!line.startsWith("#"))
+                    this.addAlgorithm(line);
             }
         }
     }

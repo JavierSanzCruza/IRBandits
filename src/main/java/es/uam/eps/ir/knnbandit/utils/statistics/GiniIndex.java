@@ -28,6 +28,10 @@ public class GiniIndex
      * The total number of items.
      */
     private final int numElements;
+
+    /**
+     * List containing the values for the elements.
+     */
     private final LongList values;
     /**
      * The sum of the frequencies of all items.
@@ -38,6 +42,7 @@ public class GiniIndex
      */
     private double numSum;
 
+
     /**
      * Constructor. Assumes that the initial values for frequencies are equal to 0.
      *
@@ -45,20 +50,24 @@ public class GiniIndex
      */
     public GiniIndex(int numElements)
     {
-        // Store the number of different elements.
+        // initialize:
         this.numElements = numElements;
 
-        // Initialize the sums to zero
+        // Initialize the sums to zero:
+        // The sum of all the frequencies.
         this.freqSum = 0.0;
+        // The current value for the numerator of the Gini coefficient.
         this.numSum = 0.0;
 
-        // Initialize the minimums and the maximums. In this case, only the zero has appeared.
+        // Initialize the minimums and the maximums. As we do not have any additional
+        // information, we only add the 0:
         this.mins = new Long2IntOpenHashMap();
         this.maxs = new Long2IntOpenHashMap();
+
         this.mins.put(0L, 1);
         this.maxs.put(0L, numElements);
 
-        // Initialize the frequencies
+        // Initialize the frequency values:
         this.frequencies = new Int2LongOpenHashMap();
         this.frequencies.defaultReturnValue(0L);
 

@@ -185,124 +185,123 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
      * Fixing the item feature vectors, train the user feature vectors using alternate
      * least squares (ALS).
      */
-    private void set_min_P()
+    protected final void set_min_P()
     {
         // First, find q_i * q_i^t
         DenseDoubleMatrix2D[] A2P = new DenseDoubleMatrix2D[this.numItems()];
         this.trainData.getIidxWithPreferences().parallel().forEach(iidx ->
-                                                                   {
-                                                                       A2P[iidx] = new DenseDoubleMatrix2D(this.k, this.k);
-                                                                       DoubleMatrix1D qi = this.Q.viewRow(iidx);
-                                                                       ALG.multOuter(qi, qi, A2P[iidx]);
-                                                                   });
+        {
+            A2P[iidx] = new DenseDoubleMatrix2D(this.k, this.k);
+            DoubleMatrix1D qi = this.Q.viewRow(iidx);
+            ALG.multOuter(qi, qi, A2P[iidx]);
+        });
 
         DenseDoubleMatrix2D[] As = new DenseDoubleMatrix2D[this.numUsers()];
         DenseDoubleMatrix1D[] bs = new DenseDoubleMatrix1D[this.numUsers()];
 
         this.trainData.getAllUidx().parallel().forEach(uidx ->
-                                                       {
-                                                           // For user u, find the A and b matrices.
-                                                           DenseDoubleMatrix2D A = new DenseDoubleMatrix2D(this.k, this.k);
-                                                           DenseDoubleMatrix1D b = new DenseDoubleMatrix1D(this.k);
+       {
+           // For user u, find the A and b matrices.
+           DenseDoubleMatrix2D A = new DenseDoubleMatrix2D(this.k, this.k);
+           DenseDoubleMatrix1D b = new DenseDoubleMatrix1D(this.k);
 
-                                                           for (int i = 0; i < k; ++i)
-                                                           {
-                                                               A.setQuick(i, i, A.getQuick(i, i) + this.lambdaP);
-                                                           }
+           for (int i = 0; i < k; ++i)
+           {
+               A.setQuick(i, i, A.getQuick(i, i) + this.lambdaP);
+           }
 
-                                                           // If no information is found, A = lambdaP*I, b = 0.
-                                                           // Otherwise... A = lambdaP*I + sum_i q_i q_i^T
-                                                           if (this.trainData.numItems(uidx) > 0)
-                                                           {
-                                                               this.trainData.getUidxPreferences(uidx).forEach(iv ->
-                                                                                                               {
-                                                                                                                   int iidx = iv.v1;
-                                                                                                                   double rui = iv.v2;
+           // If no information is found, A = lambdaP*I, b = 0.
+           // Otherwise... A = lambdaP*I + sum_i q_i q_i^T
+           if (this.trainData.numItems(uidx) > 0)
+           {
+               this.trainData.getUidxPreferences(uidx).forEach(iv ->
+               {
+                   int iidx = iv.v1;
+                   double rui = iv.v2;
 
-                                                                                                                   A.assign(A2P[iidx], Double::sum);
-                                                                                                                   b.assign(Q.viewRow(iidx), (x, y) -> x + rui * y);
-                                                                                                               });
-                                                           }
+                   A.assign(A2P[iidx], Double::sum);
+                   b.assign(Q.viewRow(iidx), (x, y) -> x + rui * y);
+               });
+           }
 
-                                                           DenseDoubleMatrix1D aux = new DenseDoubleMatrix1D(this.k);
-                                                           aux.assign(b);
+           DenseDoubleMatrix1D aux = new DenseDoubleMatrix1D(this.k);
+           aux.assign(b);
 
-                                                           DenseDoubleMatrix2D sigmaI = new DenseDoubleMatrix2D(this.k, this.k);
-                                                           for (int i = 0; i < k; ++i)
-                                                           {
-                                                               sigmaI.setQuick(i, i, this.stdev);
-                                                           }
+           DenseDoubleMatrix2D sigmaI = new DenseDoubleMatrix2D(this.k, this.k);
+           for (int i = 0; i < k; ++i)
+           {
+               sigmaI.setQuick(i, i, this.stdev);
+           }
 
-                                                           // Find A^-1 b
-                                                           LUDecompositionQuick lu = new LUDecompositionQuick(0);
-                                                           lu.decompose(A);
-                                                           lu.solve(aux);
-                                                           P.viewRow(uidx).assign(aux);
+           // Find A^-1 b
+           LUDecompositionQuick lu = new LUDecompositionQuick(0);
+           lu.decompose(A);
+           lu.solve(aux);
+           P.viewRow(uidx).assign(aux);
 
-                                                           // Find A^-1 sigma
-                                                           lu.solve(sigmaI);
-                                                           this.stdevP[uidx] = sigmaI;
+           // Find A^-1 sigma
+           lu.solve(sigmaI);
+           this.stdevP[uidx] = sigmaI;
 
-                                                           As[uidx] = A;
-                                                           bs[uidx] = b;
-                                                       });
+           As[uidx] = A;
+           bs[uidx] = b;
+       });
 
         this.As = As;
         this.bs = bs;
     }
 
-    private void set_min_Q()
-
+    protected final void set_min_Q()
     {
         // First, find p_u * p_u^t
         DenseDoubleMatrix2D[] A2P = new DenseDoubleMatrix2D[this.numUsers()];
         prefData.getUidxWithPreferences().parallel().forEach(uidx ->
-                                                             {
-                                                                 A2P[uidx] = new DenseDoubleMatrix2D(k, k);
-                                                                 DoubleMatrix1D pu = P.viewRow(uidx);
-                                                                 ALG.multOuter(pu, pu, A2P[uidx]);
-                                                             });
+        {
+            A2P[uidx] = new DenseDoubleMatrix2D(k, k);
+            DoubleMatrix1D pu = P.viewRow(uidx);
+            ALG.multOuter(pu, pu, A2P[uidx]);
+        });
 
         trainData.getAllIidx().parallel().forEach(iidx ->
-                                                  {
-                                                      // For user u, find the A and b matrices.
-                                                      DenseDoubleMatrix2D A = new DenseDoubleMatrix2D(this.k, this.k);
-                                                      DenseDoubleMatrix1D b = new DenseDoubleMatrix1D(this.k);
+        {
+            // For user u, find the A and b matrices.
+            DenseDoubleMatrix2D A = new DenseDoubleMatrix2D(this.k, this.k);
+            DenseDoubleMatrix1D b = new DenseDoubleMatrix1D(this.k);
 
-                                                      for (int i = 0; i < k; ++i)
-                                                      {
-                                                          A.setQuick(i, i, A.getQuick(i, i) + lambdaQ);
-                                                      }
+            for (int i = 0; i < k; ++i)
+            {
+               A.setQuick(i, i, A.getQuick(i, i) + lambdaQ);
+            }
 
-                                                      // If no information is found, A = lambdaP*I, b = 0.
-                                                      // Otherwise... A = lambdaP*I + sum_i q_i q_i^T
-                                                      if (trainData.numUsers(iidx) > 0)
-                                                      {
-                                                          trainData.getIidxPreferences(iidx).forEach(iv ->
-                                                                                                     {
-                                                                                                         int uidx = iv.v1;
-                                                                                                         double rui = iv.v2;
+            // If no information is found, A = lambdaP*I, b = 0.
+            // Otherwise... A = lambdaP*I + sum_i q_i q_i^T
+            if (trainData.numUsers(iidx) > 0)
+            {
+                trainData.getIidxPreferences(iidx).forEach(iv ->
+                {
+                    int uidx = iv.v1;
+                    double rui = iv.v2;
 
-                                                                                                         A.assign(A2P[uidx], Double::sum);
-                                                                                                         b.assign(P.viewRow(uidx), (x, y) -> x + rui * y);
-                                                                                                     });
-                                                      }
+                    A.assign(A2P[uidx], Double::sum);
+                    b.assign(P.viewRow(uidx), (x, y) -> x + rui * y);
+                });
+            }
 
-                                                      DenseDoubleMatrix2D sigmaI = new DenseDoubleMatrix2D(this.k, this.k);
-                                                      for (int i = 0; i < k; ++i)
-                                                      {
-                                                          sigmaI.setQuick(i, i, stdev);
-                                                      }
+            DenseDoubleMatrix2D sigmaI = new DenseDoubleMatrix2D(this.k, this.k);
+            for (int i = 0; i < k; ++i)
+            {
+                sigmaI.setQuick(i, i, stdev);
+            }
 
-                                                      // Find A^-1 b
-                                                      LUDecompositionQuick lu = new LUDecompositionQuick(0);
-                                                      lu.decompose(A);
-                                                      lu.solve(b);
-                                                      Q.viewRow(iidx).assign(b);
+            // Find A^-1 b
+            LUDecompositionQuick lu = new LUDecompositionQuick(0);
+            lu.decompose(A);
+            lu.solve(b);
+            Q.viewRow(iidx).assign(b);
 
-                                                      // Find A^-1 sigma
-                                                      lu.solve(sigmaI);
-                                                      stdevQ[iidx] = sigmaI;
-                                                  });
+            // Find A^-1 sigma
+            lu.solve(sigmaI);
+            stdevQ[iidx] = sigmaI;
+        });
     }
 }

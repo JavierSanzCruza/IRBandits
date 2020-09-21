@@ -9,12 +9,19 @@ import es.uam.eps.ir.knnbandit.graph.complementary.ComplementaryGraph;
 import es.uam.eps.ir.knnbandit.graph.complementary.UndirectedUnweightedComplementaryGraph;
 import es.uam.eps.ir.knnbandit.graph.fast.FastGraph;
 import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedUnweightedGraph;
+import es.uam.eps.ir.knnbandit.graph.generator.ErdosGenerator;
+import es.uam.eps.ir.knnbandit.graph.generator.GeneratorBadConfiguredException;
+import es.uam.eps.ir.knnbandit.graph.generator.GeneratorNotConfiguredException;
+import es.uam.eps.ir.knnbandit.graph.generator.GraphGenerator;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -22,27 +29,31 @@ import java.util.stream.Collectors;
  * We assume that context vectors for the different items are versors (unit vectors)
  * and that we recommend all the possible candidate items.
  *
+ * Following the theoretical analysis from the original paper, we consider sparser
+ * Erdös-Renyi graphs instead of empty ones. We use the default value in their experiments:
+ * p = 3 log(|U|)/|U|.
+ *
  * A more complex vector considers different variants for the arm context.
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
  */
-public class CLUB<U,I> extends InteractiveRecommender<U,I>
+public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
 {
     /**
      * The graph expressing how related the user vectors are.
      */
-    private FastGraph<U> graph = new FastUndirectedUnweightedGraph<>();
+    private FastGraph<Integer> graph;
     /**
      * The different user clusters (connected components of the network)
      */
-    private ClustersImpl<U> clusters = new ClustersImpl<>();
+    private Clusters<Integer> clusters = new ClustersImpl<>();
 
     // Individual matrices
     /**
      * The estimation for the user vector.
      */
-    private final Map<U, DoubleMatrix1D> ws;
+    private final Map<Integer, DoubleMatrix1D> ws;
 
     // Cluster matrices
     /**
@@ -78,7 +89,7 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
      */
     private final double alpha2;
 
-    public CLUB(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, double alpha1, double alpha2)
+    public CLUBERdos(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, double alpha1, double alpha2)
     {
         super(uIndex, iIndex, prefData, ignoreNotRated);
         this.alpha1 = alpha1;
@@ -89,7 +100,7 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
         clustB = new HashMap<>();
     }
 
-    public CLUB(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean ignoreNotRated, KnowledgeDataUse dataUse, double alpha1, double alpha2)
+    public CLUBERdos(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean ignoreNotRated, KnowledgeDataUse dataUse, double alpha1, double alpha2)
     {
         super(uIndex, iIndex, prefData, knowledgeData, ignoreNotRated, dataUse);
         this.alpha1 = alpha1;
@@ -100,7 +111,7 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
         clustB = new HashMap<>();
     }
 
-    public CLUB(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, boolean notReciprocal, double alpha1, double alpha2)
+    public CLUBERdos(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, boolean notReciprocal, double alpha1, double alpha2)
     {
         super(uIndex, iIndex, prefData, ignoreNotRated, notReciprocal);
         this.alpha1 = alpha1;
@@ -115,67 +126,83 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
     protected void initializeMethod()
     {
         // First, we initialize the network as an empty graph
-        this.graph = new FastUndirectedUnweightedGraph<>();
+        double p = 3*Math.log(uIndex.numUsers()+0.0)/(uIndex.numUsers()+0.0);
+        GraphGenerator<Integer> ggen = new ErdosGenerator<>();
+        ggen.configure(false, p, uIndex.getAllUidx().boxed().collect(Collectors.toCollection(HashSet::new)));
+
+        try
+        {
+            this.graph = (FastGraph<Integer>) ggen.generate();
+        }
+        catch (GeneratorNotConfiguredException | GeneratorBadConfiguredException e) // An (impossible) error occurred.
+        {
+            this.graph = null;
+            return;
+        }
 
         // Initialize the different maps.
         ws.clear();
         times.clear();
 
         // Initialize the values of M, b and times for each user
-        this.getUsers().forEach(user ->
+        this.getUidx().forEach(uidx ->
         {
-            graph.addNode(user);
-            ws.put(user, new SparseDoubleMatrix1D(this.numItems()));
-            times.put(this.uIndex.user2uidx(user), 0);
+            ws.put(uidx, new SparseDoubleMatrix1D(this.numItems()));
+            times.put(uidx, 0);
         });
 
+        System.out.println("Basic values initialized");
+
         // Update those values depending on the training data.
-        this.trainData.getUsersWithPreferences().forEach(u ->
+        this.trainData.getUidxWithPreferences().forEach(uidx ->
         {
-            int uidx = this.uIndex.user2uidx(u);
-            this.trainData.getUidxPreferences(uidx).forEach(i -> ws.get(u).setQuick(i.v1, i.v2/2));
+            this.trainData.getUidxPreferences(uidx).forEach(i -> ws.get(uidx).setQuick(i.v1, i.v2/2));
             this.times.put(uidx, this.trainData.numItems(uidx));
         });
 
         // Training values.
+        System.out.println("Training values considered");
         Int2DoubleMap CBs = new Int2DoubleOpenHashMap();
         this.getUidx().forEach(uidx -> CBs.put(uidx, Math.sqrt((1.0+Math.log(times.get(uidx)+1)/(1+times.get(uidx))))));
 
         IntSet visited = new IntOpenHashSet();
+        // For each user with preferences
         this.trainData.getUidxWithPreferences().forEach(uidx ->
         {
-            U u = this.uIndex.uidx2user(uidx);
             double uCB = CBs.get(uidx);
             visited.add(uidx);
-            DoubleMatrix1D uW = ws.get(u);
+            DoubleMatrix1D uW = ws.get(uidx);
             double uVal = this.trainData.getUidxPreferences(uidx).mapToDouble(i -> uW.getQuick(i.v1)*uW.getQuick(i.v1)).sum();
 
-            this.getUidx().filter(vidx -> !visited.contains(vidx)).forEach(vidx ->
+            // Check all his neighbors.
+            this.graph.getNeighbourNodes(uidx).filter(vidx -> !visited.contains(vidx)).forEach(vidx ->
             {
-                U v = this.uIndex.uidx2user(vidx);
-                DoubleMatrix1D vW = ws.get(v);
-                double dist = uVal;
-                dist += this.trainData.getUidxPreferences(vidx).mapToDouble(i ->
-                {
-                    double vWi= vW.getQuick(i.v1);
-                    return vWi*vWi - 2*vWi*uW.getQuick(i.v1);
-                }).sum();
+               DoubleMatrix1D vW = ws.get(vidx);
+               double dist = uVal;
+               dist += this.trainData.getUidxPreferences(vidx).mapToDouble(i ->
+               {
+                   double vWi= vW.getQuick(i.v1);
+                   return vWi*vWi - 2*vWi*uW.getQuick(i.v1);
+               }).sum();
 
-                dist = Math.sqrt(dist);
-                double vCB = CBs.get(vidx);
+               dist = Math.sqrt(dist);
+               double vCB = CBs.get(vidx);
 
-                if(dist > alpha2*(uCB + vCB))
-                {
-                    graph.addEdge(u, v);
-                }
+               if(dist > alpha2*(uCB + vCB))
+               {
+                   graph.removeEdge(uidx, vidx);
+               }
             });
         });
 
+        System.out.println("Graph found");
+
         // And finally, reobtain the clusters and the number of iterations.
-        ComplementaryGraph<U> compl = new UndirectedUnweightedComplementaryGraph<>(graph);
-        ConnectedComponents<U> conn = new ConnectedComponents<>();
-        this.clusters = conn.detectClusters(compl);
+        ConnectedComponents<Integer> conn = new ConnectedComponents<>();
+        this.clusters = conn.detectClusters(graph);
         this.iter = trainData.numPreferences();
+
+        System.out.println("Clusters found");
 
         // Compute the cluster values:
         this.clusters.getClusters().forEach(cluster ->
@@ -184,10 +211,9 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
             DoubleMatrix1D auxB = new SparseDoubleMatrix1D(this.numItems());
             DoubleMatrix1D auxW = new SparseDoubleMatrix1D(this.numItems());
 
-            clusters.getElements(cluster).forEach(u ->
+            clusters.getElements(cluster).forEach(uidx ->
             {
                 IntSet visitedItems = new IntOpenHashSet();
-                int uidx = this.uIndex.user2uidx(u);
                 this.trainData.getUidxPreferences(uidx).forEach(i ->
                 {
                     auxB.setQuick(i.v1, auxB.getQuick(i.v1) + i.v2);
@@ -202,6 +228,8 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
             clustB.put(cluster, auxB);
             clustW.put(cluster, auxW);
         });
+
+        System.out.println("Values for the clusters found");
     }
 
     @Override
@@ -217,7 +245,7 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
         U u = this.uIndex.uidx2user(uidx);
 
         // First, we do have to get the cluster of user u
-        int cluster = clusters.getCluster(u);
+        int cluster = clusters.getCluster(uidx);
         DoubleMatrix1D auxM = clustM.get(cluster);
         DoubleMatrix1D auxW = clustW.get(cluster);
 
@@ -255,27 +283,20 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
     @Override
     public void updateMethod(int uidx, int iidx, double value)
     {
-        U u = this.uIndex.uidx2user(uidx);
-
         ++this.iter;
 
         // Step 1: find the cluster
-        DoubleMatrix1D uW = this.ws.get(u);
+        DoubleMatrix1D uW = this.ws.get(uidx);
         uW.setQuick(iidx, value/2.0);
-        int cluster = this.clusters.getCluster(u);
-        Set<U> elements = this.clusters.getElements(cluster).collect(Collectors.toCollection(HashSet::new));
+        int cluster = this.clusters.getCluster(uidx);
         double cbU = Math.sqrt((1.0+Math.log(times.get(uidx)+1)/(1+times.get(uidx))));
 
         double uVal = this.trainData.getUidxPreferences(uidx).mapToDouble(i -> uW.getQuick(i.v1)*uW.getQuick(i.v1)).sum();
-        boolean added = false;
 
-        // Check with the elements within the cluster:
-        for(U v : elements)
+        // Check with the neighbors of the user (which aut. belong to the same cluster by def.)
+        boolean added = graph.getNeighbourNodes(uidx).map(vidx ->
         {
-            int vidx = this.uIndex.user2uidx(v);
-            if(u == v) continue;
-
-            DoubleMatrix1D vW = this.ws.get(v);
+            DoubleMatrix1D vW = this.ws.get(vidx);
             double dist = uVal;
             dist += this.trainData.getUidxPreferences(vidx).mapToDouble(i ->
             {
@@ -288,16 +309,16 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
 
             if(dist > alpha2*(cbU + cbV))
             {
-                graph.addEdge(u,v);
-                added = true;
+                graph.removeEdge(uidx,vidx);
+                return true;
             }
-        }
+            return false;
+        }).reduce(false, (x,y) -> x || y);
 
         if(added)
         {
-            ComplementaryGraph<U> compl = new UndirectedUnweightedComplementaryGraph<>(graph);
-            ConnectedComponents<U> conn = new ConnectedComponents<>();
-            Clusters<U> clusts = conn.detectClusters(compl, elements);
+            ConnectedComponents<Integer> conn = new ConnectedComponents<>();
+            Clusters<Integer> clusts = conn.detectClusters(graph, clusters.getElements(cluster).collect(Collectors.toSet()));
 
             if(clusts.getNumClusters() > 1)
             {
@@ -314,13 +335,9 @@ public class CLUB<U,I> extends InteractiveRecommender<U,I>
                     DoubleMatrix1D auxB = new SparseDoubleMatrix1D(this.numItems());
                     DoubleMatrix1D auxW = new SparseDoubleMatrix1D(this.numItems());
 
-
-
-
-                    clusts.getElements(cl).forEach(auxU ->
+                    clusts.getElements(cl).forEach(auxUidx ->
                     {
                         IntSet visitedItems = new IntOpenHashSet();
-                        int auxUidx = this.uIndex.user2uidx(auxU);
                         this.trainData.getUidxPreferences(auxUidx).forEach(i ->
                         {
                             auxB.setQuick(i.v1, auxB.getQuick(i.v1) + i.v2);

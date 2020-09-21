@@ -28,8 +28,10 @@ public class Main
     private final static String WARMUPRECOMMENDATIONPARALLEL = "warmup-rec-parallel";
     private final static String WARMUPVALIDATION = "warmup-valid";
     private final static String TRAININGSTATS = "train-stats";
-
+    private final static String DATASET = "dataset";
+    private final static String ANALYSIS = "dataset-analysis";
     private final static String SUMMARIZE = "summarize";
+    private final static String AUXSUMM = "auxsummarize";
     private final static String OUTPUTRANKER = "outputranker";
     private final static String RANKERCONFIG = "rankerconfig";
 
@@ -78,7 +80,21 @@ public class Main
                     className = alg.v2;
                     from = alg.v1;
                     break;
-
+                case DATASET:
+                    alg = Main.getAlgorithm(args, "DatasetGraph");
+                    className = alg.v2;
+                    from = alg.v1;
+                    break;
+                case ANALYSIS:
+                    alg = Main.getAlgorithm(args, "DatasetGraphAnalysis");
+                    className = alg.v2;
+                    from = alg.v1;
+                    break;
+                case AUXSUMM:
+                    alg = Main.getAlgorithm(args, "AdvancedOutputResumer");
+                    className = alg.v2;
+                    from = alg.v1;
+                    break;
                 case SUMMARIZE:
                     className = "es.uam.eps.ir.knnbandit.main.OutputResumer";
                     break;
