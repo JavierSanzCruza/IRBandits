@@ -80,6 +80,14 @@ public class ClustersImpl<E> implements Clusters<E>
     }
 
     @Override
+    public int getNumElems(int cluster)
+    {
+        if(cluster > 0 || cluster < this.getNumClusters())
+            return clusterElems.get(cluster).size();
+        return -1;
+    }
+
+    @Override
     public Stream<E> getElems()
     {
         return this.elemCluster.keySet().stream();

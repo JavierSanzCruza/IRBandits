@@ -21,6 +21,13 @@ public interface Clusters<E>
     int getNumElems();
 
     /**
+     * Obtains the number of elements in a cluster.
+     * @param cluster the cluster.
+     * @return the number if the cluster exists, -1 otherwise.
+     */
+    int getNumElems(int cluster);
+
+    /**
      * Obtains the whole set of elements.
      * @return an stream containing the elements.
      */

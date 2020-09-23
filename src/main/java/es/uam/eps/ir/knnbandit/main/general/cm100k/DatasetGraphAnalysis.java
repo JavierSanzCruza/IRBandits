@@ -112,7 +112,7 @@ public class DatasetGraphAnalysis
                     long val = uEntry.getValue();
                     if(val > i && u != v)
                     {
-                        double realVal = 1.0/(numRel.get(u) + numRel.get(v) - 2*val + 1.0);
+                        double realVal = numRel.get(u) + numRel.get(v) - 2*val + 1.0;
                         averageWeight += realVal;
                         counter++;
                         graph.addEdge(u, v, realVal);
