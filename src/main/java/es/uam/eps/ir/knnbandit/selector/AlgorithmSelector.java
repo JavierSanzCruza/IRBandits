@@ -620,7 +620,7 @@ public class AlgorithmSelector<U, I>
                 {
                     cursor++;
                     double alpha1 = Parsers.dp.parse(fullAlgorithm.get(cursor));
-                    double alpha2 = Parsers.dp.parse(fullAlgorithm.get(cursor));
+                    double alpha2 = Parsers.dp.parse(fullAlgorithm.get(cursor+1));
                     cursor+=2;
 
                     if(fullAlgorithm.size() == cursor)

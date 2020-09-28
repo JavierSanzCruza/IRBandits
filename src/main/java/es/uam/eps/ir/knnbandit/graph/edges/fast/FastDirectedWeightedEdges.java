@@ -14,6 +14,7 @@ import es.uam.eps.ir.knnbandit.graph.edges.EdgeType;
 import es.uam.eps.ir.knnbandit.graph.edges.EdgeWeight;
 import es.uam.eps.ir.knnbandit.graph.edges.WeightedEdges;
 import es.uam.eps.ir.knnbandit.graph.index.FastWeightedAutoRelation;
+import es.uam.eps.ir.knnbandit.graph.index.IdxValue;
 import es.uam.eps.ir.knnbandit.utils.OrderedListCombiner;
 import es.uam.eps.ir.knnbandit.utils.Tuple2oo;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
@@ -41,13 +42,13 @@ public class FastDirectedWeightedEdges extends FastEdges implements DirectedEdge
     @Override
     public Stream<Integer> getIncidentNodes(int node)
     {
-        return this.weights.getIdsFirst(node).map(weight -> weight.getIdx());
+        return this.weights.getIdsFirst(node).map(IdxValue::getIdx);
     }
 
     @Override
     public Stream<Integer> getAdjacentNodes(int node)
     {
-        return this.weights.getIdsSecond(node).map(weight -> weight.getIdx());
+        return this.weights.getIdsSecond(node).map(IdxValue::getIdx);
     }
 
     @Override
@@ -96,10 +97,7 @@ public class FastDirectedWeightedEdges extends FastEdges implements DirectedEdge
     public Stream<IdxPref> getNeighbourWeights(int node)
     {
         List<IdxPref> neighbors = new ArrayList<>();
-        Comparator<Tuple2oo<IdxPref, Iterator<IdxPref>>> comparator = (Tuple2oo<IdxPref, Iterator<IdxPref>> x, Tuple2oo<IdxPref, Iterator<IdxPref>> y) ->
-        {
-            return (int) (x.v1().v1() - y.v1().v1());
-        };
+        Comparator<Tuple2oo<IdxPref, Iterator<IdxPref>>> comparator = Comparator.comparingInt((Tuple2oo<IdxPref, Iterator<IdxPref>> x) -> x.v1().v1());
 
         PriorityQueue<Tuple2oo<IdxPref, Iterator<IdxPref>>> queue = new PriorityQueue<>(2, comparator);
 
@@ -166,6 +164,17 @@ public class FastDirectedWeightedEdges extends FastEdges implements DirectedEdge
         if (weightRem && typesRem)
         {
             this.numEdges -= toDel;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean removeEdge(int orig, int dest)
+    {
+        if (this.weights.removePair(orig, dest) && this.types.removePair(orig, dest))
+        {
+            this.numEdges--;
             return true;
         }
         return false;

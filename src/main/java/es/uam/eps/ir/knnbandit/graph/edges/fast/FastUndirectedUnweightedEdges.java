@@ -15,6 +15,7 @@ import es.uam.eps.ir.knnbandit.graph.edges.UndirectedEdges;
 import es.uam.eps.ir.knnbandit.graph.edges.UnweightedEdges;
 import es.uam.eps.ir.knnbandit.graph.index.FastUnweightedAutoRelation;
 import es.uam.eps.ir.knnbandit.graph.index.FastWeightedAutoRelation;
+import es.uam.eps.ir.knnbandit.graph.index.IdxValue;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 
 import java.util.stream.IntStream;
@@ -39,7 +40,7 @@ public class FastUndirectedUnweightedEdges extends FastEdges implements Undirect
     @Override
     public Stream<Integer> getNeighbourNodes(int node)
     {
-        return this.weights.getIdsFirst(node).map(weight -> weight.getIdx());
+        return this.weights.getIdsFirst(node).map(IdxValue::getIdx);
     }
 
     @Override
@@ -104,6 +105,26 @@ public class FastUndirectedUnweightedEdges extends FastEdges implements Undirect
         if (this.weights.remove(idx) && this.types.remove(idx))
         {
             this.numEdges -= toDel;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean removeEdge(int orig, int dest)
+    {
+        if(orig == dest)
+        {
+            if(this.weights.removePair(orig, dest) && this.types.removePair(dest, orig))
+            {
+                this.numEdges--;
+                return true;
+            }
+            return false;
+        }
+        else if (this.weights.removePair(orig, dest) && this.weights.removePair(dest, orig) && this.types.removePair(orig, dest) && this.types.removePair(dest,orig))
+        {
+            this.numEdges--;
             return true;
         }
         return false;

@@ -139,6 +139,8 @@ public class AuxiliarMethods
             Tuple2<Integer, Integer> tuple = loop.nextIteration();
             long bb = System.currentTimeMillis();
 
+            if(tuple == null) break; // Everything has finished
+
             int uidx = tuple.v1;
             int iidx = tuple.v2;
             long time = bb - aa;

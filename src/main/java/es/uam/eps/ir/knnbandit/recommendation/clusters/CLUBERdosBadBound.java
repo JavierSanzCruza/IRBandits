@@ -5,10 +5,7 @@ import cern.colt.matrix.impl.SparseDoubleMatrix1D;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
-import es.uam.eps.ir.knnbandit.graph.complementary.ComplementaryGraph;
-import es.uam.eps.ir.knnbandit.graph.complementary.UndirectedUnweightedComplementaryGraph;
 import es.uam.eps.ir.knnbandit.graph.fast.FastGraph;
-import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedUnweightedGraph;
 import es.uam.eps.ir.knnbandit.graph.generator.ErdosGenerator;
 import es.uam.eps.ir.knnbandit.graph.generator.GeneratorBadConfiguredException;
 import es.uam.eps.ir.knnbandit.graph.generator.GeneratorNotConfiguredException;
@@ -18,7 +15,9 @@ import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +34,7 @@ import java.util.stream.Collectors;
  * @param <U> Type of the users.
  * @param <I> Type of the items.
  */
-public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
+public class CLUBERdosBadBound<U,I> extends InteractiveRecommender<U,I>
 {
     /**
      * The graph expressing how related the user vectors are.
@@ -86,7 +85,7 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
      */
     private final double alpha2;
 
-    public CLUBERdos(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, double alpha1, double alpha2)
+    public CLUBERdosBadBound(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, double alpha1, double alpha2)
     {
         super(uIndex, iIndex, prefData, ignoreNotRated);
         this.alpha1 = alpha1;
@@ -97,7 +96,7 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
         clustB = new HashMap<>();
     }
 
-    public CLUBERdos(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean ignoreNotRated, KnowledgeDataUse dataUse, double alpha1, double alpha2)
+    public CLUBERdosBadBound(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean ignoreNotRated, KnowledgeDataUse dataUse, double alpha1, double alpha2)
     {
         super(uIndex, iIndex, prefData, knowledgeData, ignoreNotRated, dataUse);
         this.alpha1 = alpha1;
@@ -108,7 +107,7 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
         clustB = new HashMap<>();
     }
 
-    public CLUBERdos(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, boolean notReciprocal, double alpha1, double alpha2)
+    public CLUBERdosBadBound(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, boolean notReciprocal, double alpha1, double alpha2)
     {
         super(uIndex, iIndex, prefData, ignoreNotRated, notReciprocal);
         this.alpha1 = alpha1;
@@ -160,7 +159,7 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
         // Training values.
         System.out.println("Training values considered");
         Int2DoubleMap CBs = new Int2DoubleOpenHashMap();
-        this.getUidx().forEach(uidx -> CBs.put(uidx, Math.sqrt((1.0+Math.log(times.get(uidx)+1))/(1+times.get(uidx)))));
+        this.getUidx().forEach(uidx -> CBs.put(uidx, Math.sqrt((1.0+Math.log(times.get(uidx)+1)/(1+times.get(uidx))))));
 
         IntSet visited = new IntOpenHashSet();
         // For each user with preferences
@@ -286,14 +285,12 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
         DoubleMatrix1D uW = this.ws.get(uidx);
         uW.setQuick(iidx, value/2.0);
         int cluster = this.clusters.getCluster(uidx);
-        double cbU = Math.sqrt((1.0+Math.log(times.get(uidx)+2.0))/(2.0+times.get(uidx)));
+        double cbU = Math.sqrt((1.0+Math.log(times.get(uidx)+1)/(1+times.get(uidx))));
 
-        double uVal = this.trainData.getUidxPreferences(uidx).mapToDouble(i -> uW.getQuick(i.v1)*uW.getQuick(i.v1)).sum() + value*value/4.0;
+        double uVal = this.trainData.getUidxPreferences(uidx).mapToDouble(i -> uW.getQuick(i.v1)*uW.getQuick(i.v1)).sum();
 
         // Check with the neighbors of the user (which aut. belong to the same cluster by def.)
-
-        List<Integer> list = graph.getNeighbourNodes(uidx).collect(Collectors.toList());
-        boolean added = list.stream().map(vidx ->
+        boolean added = graph.getNeighbourNodes(uidx).map(vidx ->
         {
             DoubleMatrix1D vW = this.ws.get(vidx);
             double dist = uVal;
@@ -304,7 +301,7 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
             }).sum();
 
             dist = Math.sqrt(dist);
-            double cbV = Math.sqrt((1.0+Math.log(times.get(vidx)+1))/(1.0+times.get(vidx)));
+            double cbV = Math.sqrt((1.0+Math.log(times.get(vidx)+1)/(1+times.get(vidx))));
 
             if(dist > alpha2*(cbU + cbV))
             {
@@ -344,20 +341,12 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
                             visitedItems.add(i.v1);
                         });
 
-                        if(auxUidx == uidx)
-                        {
-                            auxM.setQuick(iidx,auxM.getQuick(iidx)+1.0);
-                            auxB.setQuick(iidx, auxB.getQuick(iidx)+value);
-                        }
-
-                        visitedItems.forEach(auxIidx -> auxW.setQuick(auxIidx, auxB.getQuick(auxIidx)/(1.0+auxM.getQuick(auxIidx))));
+                        visitedItems.forEach(auxIidx -> auxW.setQuick(auxIidx, auxB.getQuick(auxIidx)/(1+auxM.getQuick(auxIidx))));
                     });
 
                     clustM.put(currentClust, auxM);
                     clustB.put(currentClust, auxB);
                     clustW.put(currentClust, auxW);
-
-
                 });
             }
             else  // just update the cluster values for this particular case.
@@ -369,15 +358,6 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
                 this.clustB.get(cluster).setQuick(iidx, bValue);
                 this.clustW.get(cluster).setQuick(iidx, bValue/(mValue+1.0));
             }
-        }
-        else // If no edge is removed, then, just update the cluster value...
-        {
-            double mValue = this.clustM.get(cluster).getQuick(iidx)+1.0;
-            double bValue = this.clustB.get(cluster).getQuick(iidx)+value;
-
-            this.clustM.get(cluster).setQuick(iidx, mValue);
-            this.clustB.get(cluster).setQuick(iidx, bValue);
-            this.clustW.get(cluster).setQuick(iidx, bValue/(mValue+1.0));
         }
 
         times.put(uidx, times.get(uidx)+1);

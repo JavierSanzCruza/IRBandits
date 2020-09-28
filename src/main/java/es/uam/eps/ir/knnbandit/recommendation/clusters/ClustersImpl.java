@@ -141,6 +141,17 @@ public class ClustersImpl<E> implements Clusters<E>
         return false;
     }
 
+    private boolean update(E elem, int cluster)
+    {
+        if(cluster >= 0 && cluster < this.getNumClusters() && elemCluster.containsKey(elem))
+        {
+            this.elemCluster.put(elem, cluster);
+            this.clusterElems.get(cluster).add(elem);
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public int add(Collection<E> elems, int cluster)
     {
@@ -202,17 +213,21 @@ public class ClustersImpl<E> implements Clusters<E>
         }
 
         // Now that we have checked that the elements of the partition are correct, we divide the clusters.
-        if(division.getNumClusters() == 1) return true;
+        if(division.getNumClusters() == 1) return true; // in this case, we do not have to do anything.
         else
         {
             int numClusters = this.getNumClusters();
+            // We empty the elements in the cluster.
             this.clusterElems.get(cluster).clear();
-            this.add(division.getElements(0), cluster);
+            // And we add the elements in the "0" element there:
+
+            division.getElements(0).forEach(elem -> this.update(elem, cluster));
 
             for(int i = 1; i < division.getNumClusters();++i)
             {
                 this.addCluster();
-                this.add(division.getElements(i), numClusters);
+                int clustId = numClusters;
+                division.getElements(i).forEach(elem -> this.update(elem, clustId));
                 ++numClusters;
             }
         }

@@ -137,7 +137,8 @@ public class ErdosGenerator<U> implements GraphGenerator<U>
         }
 
         List<U> nodes = graph.getAllNodes().collect(Collectors.toCollection(ArrayList::new));
-        double numEdges = Math.ceil(prob*numNodes*(numNodes-1));
+
+        double numEdges = (directed ? Math.ceil(prob*numNodes*(numNodes-1)) : Math.ceil(prob*numNodes*(numNodes-1)/2.0));
 
         for(int i = 0; i < numEdges; ++i)
         {
