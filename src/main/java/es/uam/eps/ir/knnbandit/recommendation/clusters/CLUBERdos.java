@@ -148,8 +148,6 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
             times.put(uidx, 0);
         });
 
-        System.out.println("Basic values initialized");
-
         // Update those values depending on the training data.
         this.trainData.getUidxWithPreferences().forEach(uidx ->
         {
@@ -158,7 +156,6 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
         });
 
         // Training values.
-        System.out.println("Training values considered");
         Int2DoubleMap CBs = new Int2DoubleOpenHashMap();
         this.getUidx().forEach(uidx -> CBs.put(uidx, Math.sqrt((1.0+Math.log(times.get(uidx)+1))/(1+times.get(uidx)))));
 
@@ -172,7 +169,8 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
             double uVal = this.trainData.getUidxPreferences(uidx).mapToDouble(i -> uW.getQuick(i.v1)*uW.getQuick(i.v1)).sum();
 
             // Check all his neighbors.
-            this.graph.getNeighbourNodes(uidx).filter(vidx -> !visited.contains(vidx)).forEach(vidx ->
+            List<Integer> list = graph.getNeighbourNodes(uidx).filter(vidx -> !visited.contains(vidx)).collect(Collectors.toList());
+            list.forEach(vidx ->
             {
                DoubleMatrix1D vW = ws.get(vidx);
                double dist = uVal;
@@ -192,14 +190,10 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
             });
         });
 
-        System.out.println("Graph found");
-
         // And finally, reobtain the clusters and the number of iterations.
         ConnectedComponents<Integer> conn = new ConnectedComponents<>();
         this.clusters = conn.detectClusters(graph);
         this.iter = trainData.numPreferences();
-
-        System.out.println("Clusters found");
 
         // Compute the cluster values:
         this.clusters.getClusters().forEach(cluster ->
@@ -225,8 +219,6 @@ public class CLUBERdos<U,I> extends InteractiveRecommender<U,I>
             clustB.put(cluster, auxB);
             clustW.put(cluster, auxW);
         });
-
-        System.out.println("Values for the clusters found");
     }
 
     @Override
