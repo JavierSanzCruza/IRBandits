@@ -188,6 +188,8 @@ public class AdvancedOutputResumer
 
     private static Map<String, Map<Integer, Double>> readFile(File f, IntList list, Dataset<Long,Long> dataset) throws IOException
     {
+        System.err.println("Started reading file " + f.getAbsolutePath());
+
         int numItems = dataset.numItems();
         Map<String, Map<Integer, Double>> res = new HashMap<>();
         Map<Integer, String> mapping = new HashMap<>();
