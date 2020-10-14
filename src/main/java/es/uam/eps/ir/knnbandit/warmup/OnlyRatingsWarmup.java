@@ -1,12 +1,15 @@
 package es.uam.eps.ir.knnbandit.warmup;
 
+import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
+import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 /**
@@ -23,28 +26,27 @@ public class OnlyRatingsWarmup implements Warmup
     /**
      * The training data.
      */
-    private List<Tuple2<Integer, Integer>> training;
+    private List<Tuple3<Integer, Integer, Double>> training;
 
     /**
      * Initializes the values.
      *
-     * @param preferenceData Validation/Test data
+     * @param validData Validation/Test data
      * @param training       Training data
      * @param contactRec     True if we are using this for contact recommendation, false otherwise
      * @param notReciprocal  true if, in the case of contact recommendation, we cannot recommend reciprocal links to the ones already in the network.
      */
-    public OnlyRatingsWarmup(SimpleFastPreferenceData<?, ?> preferenceData, List<Tuple2<Integer, Integer>> training, boolean contactRec, boolean notReciprocal)
+    public OnlyRatingsWarmup(SimpleFastPreferenceData<?, ?> validData, List<Tuple2<Integer, Integer>> training, boolean contactRec, boolean notReciprocal)
     {
-        // Find only those ratings which exist:
         this.training = new ArrayList<>();
 
-        // Initialize the availability list:
+        // Initialize the availability.
         this.availability = new ArrayList<>();
         IntList itemList = new IntArrayList();
-        IntStream.range(0, preferenceData.numItems()).forEach(itemList::add);
+        IntStream.range(0, validData.numItems()).forEach(itemList::add);
         if (contactRec)
         {
-            IntStream.range(0, preferenceData.numUsers()).forEach(uidx ->
+            IntStream.range(0, validData.numUsers()).forEach(uidx ->
             {
                 this.availability.add(new IntArrayList(itemList));
                 this.availability.get(uidx).removeInt(itemList.indexOf(uidx));
@@ -52,28 +54,34 @@ public class OnlyRatingsWarmup implements Warmup
         }
         else
         {
-            IntStream.range(0, preferenceData.numUsers()).forEach(uidx -> this.availability.add(new IntArrayList(itemList)));
+            IntStream.range(0, validData.numUsers()).forEach(uidx -> this.availability.add(new IntArrayList(itemList)));
         }
 
+        // Then, for each training example, update this:
         training.forEach(tuple ->
         {
-            int uidx = tuple.v1();
-            int iidx = tuple.v2();
-            if (preferenceData.numUsers(iidx) > 0 && preferenceData.numItems(uidx) > 0 && preferenceData.getPreference(uidx, iidx).isPresent())
+            int uidx = tuple.v1;
+            int iidx = tuple.v2;
+            double value = 0.0;
+            if(validData.numUsers(iidx) > 0 && validData.numItems(uidx) > 0)
             {
-                this.training.add(new Tuple2<>(uidx, iidx));
-                this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-                if (notReciprocal)
+                Optional<IdxPref> opt = validData.getPreference(uidx, iidx);
+                if(opt.isPresent())
                 {
-                    // The only case where we might update a link that does not exist is here:
-                    // If possible, remove this:
-                    int index = this.availability.get(iidx).indexOf(uidx);
-                    if (index > 0) // This pair has not been previously recommended:
+                    value = opt.get().v2;
+                    this.training.add(new Tuple3<>(uidx, iidx, value));
+                    if(contactRec && notReciprocal)
                     {
-                        this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
+                        int index = this.availability.get(iidx).indexOf(uidx);
+                        if(index > 0) // This pair has not been previously recommended.
+                        {
+                            this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
+                        }
                     }
                 }
             }
+
+            this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
         });
     }
 
@@ -82,12 +90,12 @@ public class OnlyRatingsWarmup implements Warmup
         return availability;
     }
 
-    public List<Tuple2<Integer, Integer>> getFullTraining()
+    public List<Tuple3<Integer, Integer, Double>> getFullTraining()
     {
         return training;
     }
 
-    public List<Tuple2<Integer, Integer>> getCleanTraining()
+    public List<Tuple3<Integer, Integer, Double>> getCleanTraining()
     {
         return training;
     }

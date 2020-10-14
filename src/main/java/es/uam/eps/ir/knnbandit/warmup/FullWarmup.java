@@ -1,19 +1,37 @@
 package es.uam.eps.ir.knnbandit.warmup;
 
+import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
+import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
+/**
+ * Warm-up that stores all the possible triplets.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
 public class FullWarmup implements Warmup
 {
+    /**
+     * Indicates the viable candidate items for each user.
+     */
     private List<IntList> availability;
-    private List<Tuple2<Integer, Integer>> fullTraining;
-    private List<Tuple2<Integer, Integer>> cleanTraining;
+    /**
+     * The complete list of triplets.
+     */
+    private List<Tuple3<Integer, Integer, Double>> fullTraining;
+    /**
+     * The list of triplets, but removing those not in training.
+     */
+    private List<Tuple3<Integer, Integer, Double>> cleanTraining;
 
     /**
      * Initializes the values.
@@ -25,11 +43,10 @@ public class FullWarmup implements Warmup
      */
     public FullWarmup(SimpleFastPreferenceData<?, ?> validData, List<Tuple2<Integer, Integer>> training, boolean contactRec, boolean notReciprocal)
     {
-        this.fullTraining = training;
-        // Find only those ratings which exist:
+        this.fullTraining = new ArrayList<>();
         this.cleanTraining = new ArrayList<>();
 
-        // Initialize the availability list:
+        // Initialize the availability.
         this.availability = new ArrayList<>();
         IntList itemList = new IntArrayList();
         IntStream.range(0, validData.numItems()).forEach(itemList::add);
@@ -46,26 +63,32 @@ public class FullWarmup implements Warmup
             IntStream.range(0, validData.numUsers()).forEach(uidx -> this.availability.add(new IntArrayList(itemList)));
         }
 
+        // Then, for each training example, update this:
         training.forEach(tuple ->
         {
-            int uidx = tuple.v1();
-            int iidx = tuple.v2();
-            if (validData.numUsers(iidx) > 0 && validData.numItems(uidx) > 0 && validData.getPreference(uidx, iidx).isPresent())
+            int uidx = tuple.v1;
+            int iidx = tuple.v2;
+            double value = 0.0;
+            if(validData.numUsers(iidx) > 0 && validData.numItems(uidx) > 0)
             {
-                this.cleanTraining.add(new Tuple2<>(uidx, iidx));
-                if (notReciprocal)
+                Optional<IdxPref> opt = validData.getPreference(uidx, iidx);
+                if(opt.isPresent())
                 {
-                    // In this case, just update the availability (if possible)
-                    int index = this.availability.get(iidx).indexOf(uidx);
-                    if (index > 0) // This pair has not been previously recommended:
+                    value = opt.get().v2;
+                    this.cleanTraining.add(new Tuple3<>(uidx, iidx, value));
+                    if(contactRec && notReciprocal)
                     {
-                        this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
+                        int index = this.availability.get(iidx).indexOf(uidx);
+                        if(index > 0) // This pair has not been previously recommended.
+                        {
+                            this.availability.get(iidx).removeInt(this.availability.get(iidx).indexOf(uidx));
+                        }
                     }
                 }
             }
 
             this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-
+            this.fullTraining.add(new Tuple3<>(uidx, iidx, value));
         });
     }
 
@@ -74,12 +97,12 @@ public class FullWarmup implements Warmup
         return availability;
     }
 
-    public List<Tuple2<Integer, Integer>> getFullTraining()
+    public List<Tuple3<Integer, Integer, Double>> getFullTraining()
     {
         return fullTraining;
     }
 
-    public List<Tuple2<Integer, Integer>> getCleanTraining()
+    public List<Tuple3<Integer, Integer, Double>> getCleanTraining()
     {
         return cleanTraining;
     }

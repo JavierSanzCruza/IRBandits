@@ -125,21 +125,4 @@ public abstract class AbstractFastUpdateablePreferenceData<U, I> extends Abstrac
             this.updateDelete(uidx, iidx);
         }
     }
-
-    /**
-     * Updates a rating value.
-     *
-     * @param uidx   Identifier of the user.
-     * @param iidx   Identifier of the item.
-     * @param rating The rating.
-     */
-    protected abstract void updateRating(int uidx, int iidx, double rating);
-
-    /**
-     * Deletes a rating.
-     *
-     * @param uidx Identifier of the user.
-     * @param iidx Identifier of the item.
-     */
-    protected abstract void updateDelete(int uidx, int iidx);
 }

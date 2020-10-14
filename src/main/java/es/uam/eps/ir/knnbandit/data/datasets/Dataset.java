@@ -21,9 +21,11 @@ import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.DoublePredicate;
 import java.util.function.DoubleUnaryOperator;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
- * A dataset.
+ * A dataset. Contains all the info dataset.
  *
  * @param <U> type of the users.
  * @param <I> type of the items.
@@ -102,18 +104,48 @@ public class Dataset<U, I>
     public int getNumRel(List<Tuple2<Integer, Integer>> list)
     {
         return list.stream().mapToInt(t ->
-                                      {
-                                          if (prefData.numItems(t.v1) > 0 && prefData.numUsers(t.v2) > 0)
-                                          {
-                                              Optional<IdxPref> opt = prefData.getPreference(t.v1, t.v2);
-                                              if (opt.isPresent() && relevance.test(opt.get().v2))
-                                              {
-                                                  return 1;
-                                              }
-                                          }
-                                          return 0;
-                                      }).sum();
+        {
+            if (prefData.numItems(t.v1) > 0 && prefData.numUsers(t.v2) > 0)
+            {
+                Optional<IdxPref> opt = prefData.getPreference(t.v1, t.v2);
+                if (opt.isPresent() && relevance.test(opt.get().v2))
+                {
+                    return 1;
+                }
+            }
+            return 0;
+        }).sum();
     }
+
+    public Stream<U> getUsers()
+    {
+        return this.uIndex.getAllUsers();
+    }
+
+    public IntStream getUidx()
+    {
+        return this.uIndex.getAllUidx();
+    }
+
+    public Stream<I> getItems()
+    {
+        return this.iIndex.getAllItems();
+    }
+
+    public IntStream getIidx()
+    {
+        return this.iIndex.getAllIidx();
+    }
+
+    public Stream<U> getUsersWithPreferences()
+    {
+        return this.prefData.getUsersWithPreferences();
+    }
+    public IntStream getUidxWithPreferences()
+    {
+        return this.prefData.getUidxWithPreferences();
+    }
+
 
     public int numUsers()
     {

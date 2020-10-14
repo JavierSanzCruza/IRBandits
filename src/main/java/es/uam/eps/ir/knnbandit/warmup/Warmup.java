@@ -2,6 +2,7 @@ package es.uam.eps.ir.knnbandit.warmup;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
+import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.List;
 
@@ -22,12 +23,12 @@ public interface Warmup
      *
      * @return the full list of training tuples, null if the initializer has not been configured.
      */
-    List<Tuple2<Integer, Integer>> getFullTraining();
+    List<Tuple3<Integer, Integer, Double>> getFullTraining();
 
     /**
      * Gets the list of training tuples without unknown ratings.
      *
      * @return the full list of training tuples, null if the initializer has not been configured.
      */
-    List<Tuple2<Integer, Integer>> getCleanTraining();
+    List<Tuple3<Integer, Integer, Double>> getCleanTraining();
 }

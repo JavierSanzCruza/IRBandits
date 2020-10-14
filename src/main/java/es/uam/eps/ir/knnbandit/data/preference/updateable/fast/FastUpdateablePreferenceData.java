@@ -24,5 +24,20 @@ import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
  */
 public interface FastUpdateablePreferenceData<U, I> extends UpdateablePreferenceData<U, I>, FastPreferenceData<U, I>, FastUpdateableUserIndex<U>, FastUpdateableItemIndex<I>
 {
+    /**
+     * Updates a rating value.
+     *
+     * @param uidx   Identifier of the user.
+     * @param iidx   Identifier of the item.
+     * @param rating The rating.
+     */
+    void updateRating(int uidx, int iidx, double rating);
 
+    /**
+     * Deletes a rating.
+     *
+     * @param uidx Identifier of the user.
+     * @param iidx Identifier of the item.
+     */
+    void updateDelete(int uidx, int iidx);
 }

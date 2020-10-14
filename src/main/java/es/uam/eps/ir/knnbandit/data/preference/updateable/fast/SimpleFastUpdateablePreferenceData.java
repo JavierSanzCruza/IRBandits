@@ -389,7 +389,7 @@ public class SimpleFastUpdateablePreferenceData<U, I> extends StreamsAbstractFas
     }
 
     @Override
-    protected void updateDelete(int uidx, int iidx)
+    public void updateDelete(int uidx, int iidx)
     {
         // If the user or the item are not in the preference data, do nothing.
         if (uidx < 0 || this.uidxList.size() <= uidx || iidx < 0 || this.iidxList.size() <= iidx)

@@ -313,4 +313,16 @@ public class TransposedUpdateablePreferenceData<I, U> implements FastUpdateableP
     {
         return this.d.addUser(u);
     }
+
+    @Override
+    public void updateRating(int uidx, int iidx, double rating)
+    {
+        this.d.updateRating(iidx, uidx, rating);
+    }
+
+    @Override
+    public void updateDelete(int uidx, int iidx)
+    {
+        this.d.updateDelete(iidx, uidx);
+    }
 }
