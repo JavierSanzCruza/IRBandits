@@ -13,10 +13,13 @@ import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jooq.lambda.tuple.Tuple3;
 
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 
 /**
@@ -39,50 +42,53 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
      *
      * @param uIndex    user index.
      * @param iIndex    item index.
-     * @param prefData  preference data.
      * @param hasRating true if we want to ignore missing ratings at updating, false if we want to treat them as failures.
      */
-    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating)
+    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating)
     {
-        super(uIndex, iIndex, prefData, hasRating);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        user index.
-     * @param iIndex        item index.
-     * @param prefData      preference data.
-     * @param ignoreUnknown true if we want to ignore missing ratings at updating, false if we want to treat them as failures.
-     * @param notReciprocal true if we do not recommend reciprocal social links, false otherwise
-     */
-    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal)
-    {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, hasRating);
     }
 
     @Override
-    public void initializeMethod()
+    public void init()
     {
         // It is not necessary to do nothing here.
     }
 
     @Override
-    public int next(int uidx)
+    public void init(Stream<Tuple3<Integer, Integer, Double>> values)
     {
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+
+    }
+
+    @Override
+    public void init(FastPreferenceData<U, I> prefData)
+    {
+
+    }
+
+
+    @Override
+    public int next(int uidx, IntList availability)
+    {
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
         else
         {
-            return list.get(rng.nextInt(list.size()));
+            return availability.get(rng.nextInt(availability.size()));
         }
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
+    {
+
+    }
+
+    @Override
+    public void update(List<Tuple3<Integer, Integer, Double>> train)
     {
 
     }

@@ -10,9 +10,9 @@
 package es.uam.eps.ir.knnbandit.recommendation;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
 
@@ -48,10 +48,6 @@ public abstract class InteractiveRecommender<U, I>
      */
     protected Random rng;
     /**
-     * Training data.
-     */
-    protected SimpleFastUpdateablePreferenceData<U, I> trainData;
-    /**
      *
      */
     protected boolean ignoreNotRated;
@@ -75,9 +71,15 @@ public abstract class InteractiveRecommender<U, I>
 
     /**
      * Initializes the specific variables of a method, using some information as training data.
-     * @param values
+     * @param values a stream of (user, item, value) triplets.
      */
     public abstract void init(Stream<Tuple3<Integer, Integer, Double>> values);
+
+    /**
+     * Initializes the specific variables of a method using
+     * @param prefData the training preference data.
+     */
+    public abstract void init(FastPreferenceData<U,I> prefData);
 
     /**
      * Obtains the set of identifiers of the users.
@@ -161,7 +163,7 @@ public abstract class InteractiveRecommender<U, I>
      *
      * @param train Training data.
      */
-    public void updateMethod(List<Tuple3<Integer, Integer, Double>> train)
+    public void update(List<Tuple3<Integer, Integer, Double>> train)
     {
         train.forEach(tuple -> this.update(tuple.v1, tuple.v2, tuple.v3));
     }

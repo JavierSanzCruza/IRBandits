@@ -1,6 +1,5 @@
 package es.uam.eps.ir.knnbandit.main.general.movielens;
 
-import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedWeightedGraph;
@@ -11,16 +10,17 @@ import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
 import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2LongMap;
+import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import org.ranksys.formats.parsing.Parsers;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -75,22 +75,22 @@ public class DatasetGraphAnalysis
 
         // Find the number of common neighbors:
         prefData.getAllUidx().forEach(u ->
-                                      {
-                                          Int2IntOpenHashMap uMap = new Int2IntOpenHashMap();
-                                          long rel = prefData.getUidxPreferences(u).mapToLong(i ->
-                                                                                              {
-                                                                                                  prefData.getIidxPreferences(i.v1).filter(v -> !map.containsKey(v.v1)).forEach(v -> uMap.addTo(v.v1, 1));
-                                                                                                  return 1;
-                                                                                              }).sum();
-                                          map.put(u, uMap);
-                                          numRel.put(u, rel);
+        {
+            Int2IntOpenHashMap uMap = new Int2IntOpenHashMap();
+            long rel = prefData.getUidxPreferences(u).mapToLong(i ->
+            {
+                prefData.getIidxPreferences(i.v1).filter(v -> !map.containsKey(v.v1)).forEach(v -> uMap.addTo(v.v1, 1));
+                return 1;
+            }).sum();
+            map.put(u, uMap);
+            numRel.put(u, rel);
 
-                                          int atomicInteger = atom.incrementAndGet();
-                                          if(atomicInteger % 1000 == 0)
-                                          {
-                                              System.out.println("Processed " + atomicInteger + " users");
-                                          }
-                                      });
+            int atomicInteger = atom.incrementAndGet();
+            if(atomicInteger % 1000 == 0)
+            {
+                System.out.println("Processed " + atomicInteger + " users");
+            }
+        });
 
         DoubleList densities = new DoubleArrayList();
         DoubleList numComp = new DoubleArrayList();

@@ -21,7 +21,7 @@ import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilar
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class InteractiveUserBasedKNN<U, I> extends AbstractInteractiveUserBasedKNN<U, I>
+public class LastRatingInteractiveUserBasedKNN<U, I> extends AbstractInteractiveUserBasedKNN<U, I>
 {
     /**
      * Constructor.
@@ -33,23 +33,15 @@ public class InteractiveUserBasedKNN<U, I> extends AbstractInteractiveUserBasedK
      * @param k           Number of neighbors to use.
      * @param sim         Updateable similarity
      */
-    public InteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim)
+    public LastRatingInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim)
     {
-        super(uIndex, iIndex, hasRating, ignoreZeros, k, sim, (x,y) -> false);
-    }
-
-    @Override
-    public void update(int uidx, int iidx, double value)
-    {
-        this.sim.updateNorm(uidx, value);
-        this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, value, vidx.v2));
-        this.retrievedData.updateRating(uidx, iidx, value);
+        super(uIndex, iIndex, hasRating, ignoreZeros, k, sim, (x,y) -> !x.equals(y));
     }
 
     @Override
     protected double getUpdatedValue(double oldValue, double value)
     {
-        return oldValue;
+        return value;
     }
 
     @Override

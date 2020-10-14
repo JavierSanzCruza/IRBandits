@@ -21,6 +21,20 @@ import es.uam.eps.ir.ranksys.nn.sim.Similarity;
 public interface UpdateableSimilarity extends Similarity
 {
     /**
+     * In case there is a norm to update, this updates it.
+     * @param uidx Identifier of the user.
+     * @param value Rating of the user.
+     */
+    void updateNorm(int uidx, double value);
+
+    /**
+     * In case there is a norm to update, this updates it considering that the rating disappears.
+     * @param uidx Identifier of the user.
+     * @param value Rating of the user that disappears.
+     */
+    void updateNormDel(int uidx, double value);
+
+    /**
      * Updates the similarity between two users.
      *
      * @param uidx Identifier of the first user.
@@ -30,6 +44,22 @@ public interface UpdateableSimilarity extends Similarity
      * @param vval Rating of the second user for the item.
      */
     void update(int uidx, int vidx, int iidx, double uval, double vval);
+
+    /**
+     * Updates the similarity between two users, when a rating is removed.
+     * @param uidx Identifier of the user whose rating is removed.
+     * @param vidx Identifier of the second user.
+     * @param iidx Identifier of the item whose rating has been removed.
+     * @param uval The value of the removed rating of the first user for the item.
+     * @param vval Rating of the second user for the item.
+     */
+    void updateDel(int uidx, int vidx, int iidx, double uval, double vval);
+
+
+    /**
+     * Initializes the similarity when no data is available.
+     */
+    void initialize();
 
     /**
      * Initializes the similarity.

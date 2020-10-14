@@ -217,15 +217,7 @@ public class AlgorithmSelector<U, I>
             {
                 case AlgorithmIdentifiers.RANDOM: // Random recommendation.
                 {
-                    cursor++;
-                    if (this.contactRec)
-                    {
-                        return new RandomRecommender<>(uIndex, iIndex, prefData, true, notReciprocal);
-                    }
-                    else
-                    {
-                        return new RandomRecommender<>(uIndex, iIndex, prefData, true);
-                    }
+                    return new RandomRecommender<>(uIndex, iIndex, true);
                 }
                 case AlgorithmIdentifiers.AVG: // Average rating recommendation.
                 {
@@ -239,34 +231,12 @@ public class AlgorithmSelector<U, I>
                         hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                     }
 
-                    if (this.contactRec)
-                    {
-                        return new AvgRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal);
-                    }
-                    else if (this.dataUse != KnowledgeDataUse.ALL && knowledgeData != null)
-                    {
-                        return new AvgRecommender<>(uIndex, iIndex, prefData, knowledgeData, hasRating, dataUse);
-                    }
-                    else
-                    {
-                        return new AvgRecommender<>(uIndex, iIndex, prefData, hasRating);
-                    }
+                    return new AvgRecommender<>(uIndex, iIndex, hasRating);
                 }
                 case AlgorithmIdentifiers.POP: // Popularity recommendation.
                 {
                     cursor++;
-                    if (this.contactRec)
-                    {
-                        return new PopularityRecommender<>(uIndex, iIndex, prefData, true, notReciprocal, threshold);
-                    }
-                    else if (this.dataUse != KnowledgeDataUse.ALL && knowledgeData != null)
-                    {
-                        return new PopularityRecommender<>(uIndex, iIndex, prefData, knowledgeData, true, dataUse, threshold);
-                    }
-                    else
-                    {
-                        return new PopularityRecommender<>(uIndex, iIndex, prefData, true, threshold);
-                    }
+                    return new PopularityRecommender<>(uIndex, iIndex, threshold);
                 }
                 case AlgorithmIdentifiers.ITEMBANDIT: // Non-personalized bandits.
                 {
@@ -288,14 +258,7 @@ public class AlgorithmSelector<U, I>
                         cursor++;
                     }
 
-                    if (contactRec)
-                    {
-                        return new ItemBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, itemBandit, valFunc);
-                    }
-                    else
-                    {
-                        return new ItemBanditRecommender<>(uIndex, iIndex, prefData, hasRating, itemBandit, valFunc);
-                    }
+                    return new ItemBanditRecommender<>(uIndex, iIndex, hasRating, itemBandit, valFunc);
                 }
                 case AlgorithmIdentifiers.USERBASEDKNN: // User-based kNN.
                 {
@@ -323,14 +286,7 @@ public class AlgorithmSelector<U, I>
                         cursor += 2;
                     }
 
-                    if (this.contactRec)
-                    {
-                        return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, notReciprocal, k, sim);
-                    }
-                    else
-                    {
-                        return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, k, sim);
-                    }
+                    return new InteractiveUserBasedKNN<>(uIndex, iIndex, hasRating, ignoreZeroes, k, sim);
                 }
                 case AlgorithmIdentifiers.ITEMBASEDKNN: // User-based kNN.
                 {

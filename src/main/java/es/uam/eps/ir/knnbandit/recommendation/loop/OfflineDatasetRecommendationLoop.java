@@ -1,8 +1,6 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.FastUpdateablePreferenceData;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
@@ -14,8 +12,8 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Abstract class for determinin
@@ -57,11 +55,6 @@ public abstract class OfflineDatasetRecommendationLoop<U,I> implements FastRecom
     protected final IntList userList = new IntArrayList();
 
     /**
-     * The retrieved data.
-     */
-    protected FastUpdateablePreferenceData<U,I> retrievedData;
-
-    /**
      * A list indicating the set of items we can recommend to each user in the system.
      */
     protected final Int2ObjectMap<IntList> availability;
@@ -87,7 +80,6 @@ public abstract class OfflineDatasetRecommendationLoop<U,I> implements FastRecom
     {
         // Initialize the dataset and the already retrieved data.
         this.dataset = dataset;
-        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), dataset.getUserIndex(), dataset.getItemIndex());
 
         // Then, store the algorithm and metrics:
         this.recommender = recommender;

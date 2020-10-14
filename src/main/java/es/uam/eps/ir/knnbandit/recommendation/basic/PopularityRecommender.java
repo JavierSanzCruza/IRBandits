@@ -11,12 +11,10 @@ package es.uam.eps.ir.knnbandit.recommendation.basic;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
-import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import org.jooq.lambda.tuple.Tuple3;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Interactive version of a popularity-based algorithm.
@@ -38,69 +36,38 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
-     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
      * @param threshold Relevance threshold
      */
-    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, double threshold)
+    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, double threshold)
     {
-        super(uIndex, iIndex, prefData, hasRating);
+        super(uIndex, iIndex, hasRating);
         this.threshold = threshold;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param threshold     Relevance threshold
-     * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise
-     */
-    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, double threshold)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
-        this.threshold = threshold;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex    User index.
-     * @param iIndex    Item index.
-     * @param prefData  Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param threshold Relevance threshold
-     */
-    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean hasRating, KnowledgeDataUse dataUse, double threshold)
-    {
-        super(uIndex, iIndex, prefData, knowledgeData, hasRating, dataUse);
-        this.threshold = threshold;
-    }
-
-
-    @Override
-    public void initializeMethod()
-    {
-        this.trainData.getAllIidx().forEach(iidx -> this.values[iidx] = 0.0);
-
-        this.trainData.getIidxWithPreferences().forEach(iidx -> this.values[iidx] = this.trainData.getIidxPreferences(iidx).filter(pref -> pref.v2 >= threshold).count());
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void init()
+    {
+        this.iIndex.getAllIidx().forEach(iidx -> this.values[iidx] = 0.0);
+    }
+
+    @Override
+    public void init(Stream<Tuple3<Integer, Integer, Double>> values)
+    {
+        this.init();
+        values.filter(triplet -> triplet.v3 >= threshold).forEach(triplet -> ++this.values[triplet.v2]);
+    }
+
+    @Override
+    public void init(FastPreferenceData<U,I> prefData)
+    {
+        this.init();
+        prefData.getIidxWithPreferences().forEach(iidx -> this.values[iidx] = prefData.getIidxPreferences(iidx).filter(pref -> pref.v2 >= threshold).count());
+    }
+
+    @Override
+    public void update(int uidx, int iidx, double value)
     {
         this.values[iidx] += (value >= threshold ? 1.0 : 0.0);
     }
-
-    @Override
-    public void updateMethod(List<Tuple3<Integer, Integer, Double>> train)
-    {
-        for (int iidx = 0; iidx < this.prefData.numItems(); ++iidx)
-        {
-            this.values[iidx] = this.trainData.getIidxPreferences(iidx).filter(vidx -> vidx.v2 > threshold).count();
-        }
-    }
-
 }

@@ -14,7 +14,11 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ItemBandit;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jooq.lambda.tuple.Tuple3;
+
+import java.util.stream.Stream;
 
 /**
  * Simple non-personalized item-based multi-armed bandit recommender.
@@ -40,52 +44,47 @@ public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
      *
      * @param uIndex        User index
      * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param ignoreUnknown True if we want to ignore missing ratings when updating, false if we want to count them as failures.
+     * @param ignoreNotRated True if we want to ignore missing ratings when updating, false if we want to count them as failures.
      * @param itemBandit    An item bandit.
      * @param valFunc       A value function of the reward.
      */
-    public ItemBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, ItemBandit<U, I> itemBandit, ValueFunction valFunc)
+    public ItemBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, ItemBandit<U, I> itemBandit, ValueFunction valFunc)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown);
-        this.itemBandit = itemBandit;
-        this.valFunc = valFunc;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param ignoreUnknown True if we want to ignore missing ratings when updating, false if we want to count them as failures.
-     * @param itemBandit    An item bandit.
-     * @param valFunc       A value function of the reward.
-     */
-    public ItemBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal, ItemBandit<U, I> itemBandit, ValueFunction valFunc)
-    {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, ignoreNotRated);
         this.itemBandit = itemBandit;
         this.valFunc = valFunc;
     }
 
     @Override
-    protected void initializeMethod()
+    public void init()
     {
         this.itemBandit.reset();
-        this.trainData.getAllUidx().forEach(uidx -> this.trainData.getUidxPreferences(uidx).forEach(pref -> this.itemBandit.update(pref.v1, pref.v2)));
     }
 
     @Override
-    public int next(int uidx)
+    public void init(Stream<Tuple3<Integer, Integer, Double>> values)
     {
-        int iidx = this.itemBandit.next(uidx, availability.get(uidx).toIntArray(), valFunc);
-        return iidx;
+        this.init();
+        values.forEach(triplet -> this.itemBandit.update(triplet.v2, triplet.v3));
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void init(FastPreferenceData<U, I> prefData)
+    {
+        this.init();
+        prefData.getAllUidx().forEach(uidx -> prefData.getUidxPreferences(uidx).forEach(pref -> this.itemBandit.update(pref.v1, pref.v2)));
+    }
+
+    @Override
+    public void update(int uidx, int iidx, double value)
     {
         this.itemBandit.update(iidx, value);
+    }
+
+    @Override
+    public int next(int uidx, IntList availability)
+    {
+        int iidx = this.itemBandit.next(uidx, availability.toIntArray(), valFunc);
+        return iidx;
     }
 }

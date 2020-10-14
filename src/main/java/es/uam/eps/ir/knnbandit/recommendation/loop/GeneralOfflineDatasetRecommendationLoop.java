@@ -1,6 +1,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.FastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
@@ -40,8 +41,7 @@ public class GeneralOfflineDatasetRecommendationLoop<U,I> extends OfflineDataset
     @Override
     public void init()
     {
-        this.recommender.init(false);
-        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), dataset.getUserIndex(), dataset.getItemIndex());
+        this.recommender.init();
         this.metrics.forEach((name, metric)->metric.reset());
         this.userList.clear();
         this.dataset.getPrefData().getUidxWithPreferences().forEach(uidx ->
@@ -58,8 +58,7 @@ public class GeneralOfflineDatasetRecommendationLoop<U,I> extends OfflineDataset
     public void init(Warmup warmup)
     {
         // Initialize the recommender data.
-        this.recommender.init(warmup, false);
-        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), dataset.getUserIndex(), dataset.getItemIndex());
+        FastUpdateablePreferenceData<U,I> retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), dataset.getUserIndex(), dataset.getItemIndex());
 
         // Initialize the availability of the items for each user.
         this.userList.clear();
@@ -82,8 +81,11 @@ public class GeneralOfflineDatasetRecommendationLoop<U,I> extends OfflineDataset
             int uidx = tuple.v1;
             int iidx = tuple.v2;
             double value = tuple.v3;
-            this.retrievedData.updateRating(uidx, iidx, value);
+            retrievedData.updateRating(uidx, iidx, value);
         });
+
+        // Initialize the recommender
+        this.recommender.init(retrievedData);
 
         // Initialize the metrics
         this.metrics.forEach((name, metric) -> metric.initialize(warmup.getFullTraining(), false));

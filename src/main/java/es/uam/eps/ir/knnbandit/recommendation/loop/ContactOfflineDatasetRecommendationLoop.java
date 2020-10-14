@@ -1,7 +1,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
 import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.FastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
@@ -47,8 +47,7 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends OfflineDatasetRe
     public void init()
     {
         // Initialize the recommender data
-        this.recommender.init(true);
-        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), dataset.getUserIndex(), dataset.getItemIndex());
+        this.recommender.init();
 
         // Initialize the metrics
         this.metrics.forEach((name, metric)->metric.reset());
@@ -70,9 +69,7 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends OfflineDatasetRe
     @Override
     public void init(Warmup warmup)
     {
-        // Initialize the recommender data.
-        this.recommender.init(warmup, false);
-        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), dataset.getUserIndex(), dataset.getItemIndex());
+        FastUpdateablePreferenceData<U,U> retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), dataset.getUserIndex(), dataset.getItemIndex());
 
         // Initialize the availability of the items for each user.
         this.userList.clear();
@@ -101,10 +98,10 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends OfflineDatasetRe
             {
                 Optional<IdxPref> pref = dataset.getPrefData().getPreference(uidx, vidx);
                 double value = pref.map(idxPref1 -> idxPref1.v2).orElse(0.0);
-                this.retrievedData.updateRating(uidx, vidx, value);
+                retrievedData.updateRating(uidx, vidx, value);
                 if(!((ContactDataset<U>) this.dataset).isDirected())
                 {
-                    this.retrievedData.updateRating(vidx, uidx, value);
+                    retrievedData.updateRating(vidx, uidx, value);
                 }
                 else if(pref.isPresent() && this.notReciprocal)
                 {
@@ -112,13 +109,14 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends OfflineDatasetRe
                     {
                         pref = dataset.getPrefData().getPreference(vidx, uidx);
                         value = pref.map(idxPref -> idxPref.v2).orElse(0.0);
-                        this.retrievedData.updateRating(vidx, uidx, value);
+                        retrievedData.updateRating(vidx, uidx, value);
                     }
                 }
             }
         });
 
-
+        // Initialize the recommender data.
+        this.recommender.init(retrievedData);
         // Initialize the metrics
         this.metrics.forEach((name, metric) -> metric.initialize(warmup.getFullTraining(), false));
         this.numUsers = this.userList.size();
