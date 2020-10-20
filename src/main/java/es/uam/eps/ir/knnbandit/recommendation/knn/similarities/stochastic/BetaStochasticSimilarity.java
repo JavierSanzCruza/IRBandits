@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.similarities.stochastic;
 
@@ -103,10 +102,6 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
         });
     }
 
-
-
-
-
     /**
      * Constructor. Sets alpha and beta to 1.
      *
@@ -201,14 +196,12 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
         }
     }
 
-
-
     @Override
     public IntToDoubleFunction similarity(int idx)
     {
         return (int idx2) ->
         {
-            double auxalpha = this.sims[idx][idx2];
+            double auxalpha = this.sims.getOrDefault(idx, new Int2DoubleOpenHashMap()).getOrDefault(idx2, 0.0);
             double auxbeta = this.usercount[idx2] - auxalpha;
             return this.betaSample(auxalpha + alpha, auxbeta + beta);
         };

@@ -11,14 +11,15 @@ package es.uam.eps.ir.knnbandit.main.general.movielens;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.io.Writer;
 import es.uam.eps.ir.knnbandit.main.AuxiliarMethods;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.RecommendationLoop;
+import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
+import es.uam.eps.ir.knnbandit.recommendation.loop.GeneralOfflineDatasetRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;
@@ -136,7 +137,7 @@ public class Recommendation
         UntieRandomNumber.configure(resume, output, k);
 
         // Read the whole ratings:
-        Dataset<Long, Long> dataset = Dataset.load(input, Parsers.lp, Parsers.lp, "::", weightFunction, relevance);
+        GeneralDataset<Long, Long> dataset = GeneralDataset.load(input, Parsers.lp, Parsers.lp, "::", weightFunction, relevance);
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 
@@ -144,7 +145,7 @@ public class Recommendation
 
         // Initialize the metrics to compute.
         Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
-        metrics.put("recall", () -> new CumulativeRecall<>(dataset.getPrefData(), dataset.getNumRel(), 0.5));
+        metrics.put("recall", () -> new CumulativeRecall<>(dataset.getNumRel(), 0.5));
         metrics.put("gini", () -> new CumulativeGini<>(dataset.numItems()));
         List<String> metricNames = new ArrayList<>(metrics.keySet());
 
@@ -201,8 +202,8 @@ public class Recommendation
                 int rngSeed = rngSeedGen.nextSeed();
 
                 // Create the recommendation loop:
-                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(dataset.getUserIndex(), dataset.getItemIndex(), dataset.getPrefData(), rec, localMetrics, endcond, rngSeed, false);
-                loop.init(false);
+                FastRecommendationLoop<Long, Long> loop = new GeneralOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endcond);
+                loop.init();
                 long bbb = System.nanoTime();
                 System.out.println("Algorithm " + name + " has been initialized (" + (bbb - aaa) / 1000000.0 + " ms.)");
 
@@ -213,7 +214,7 @@ public class Recommendation
                 try
                 {
                     // Retrieve previous iterations
-                    List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
+                    List<Tuple3<Integer,Integer,Long>> list = new ArrayList<>();
                     String fileName = outputFolder + name + "_" + i + ".txt";
                     if (resume)
                     {

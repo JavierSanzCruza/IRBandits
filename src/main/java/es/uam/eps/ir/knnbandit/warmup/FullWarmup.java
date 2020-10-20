@@ -1,5 +1,6 @@
 package es.uam.eps.ir.knnbandit.warmup;
 
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -27,11 +28,11 @@ public class FullWarmup implements Warmup
     /**
      * The complete list of triplets.
      */
-    private List<Tuple3<Integer, Integer, Double>> fullTraining;
+    private List<FastRating> fullTraining;
     /**
      * The list of triplets, but removing those not in training.
      */
-    private List<Tuple3<Integer, Integer, Double>> cleanTraining;
+    private List<FastRating> cleanTraining;
 
     /**
      * Initializes the values.
@@ -75,7 +76,7 @@ public class FullWarmup implements Warmup
                 if(opt.isPresent())
                 {
                     value = opt.get().v2;
-                    this.cleanTraining.add(new Tuple3<>(uidx, iidx, value));
+                    this.cleanTraining.add(new FastRating(uidx, iidx, value));
                     if(contactRec && notReciprocal)
                     {
                         int index = this.availability.get(iidx).indexOf(uidx);
@@ -88,7 +89,7 @@ public class FullWarmup implements Warmup
             }
 
             this.availability.get(uidx).removeInt(this.availability.get(uidx).indexOf(iidx));
-            this.fullTraining.add(new Tuple3<>(uidx, iidx, value));
+            this.fullTraining.add(new FastRating(uidx, iidx, value));
         });
     }
 
@@ -97,12 +98,12 @@ public class FullWarmup implements Warmup
         return availability;
     }
 
-    public List<Tuple3<Integer, Integer, Double>> getFullTraining()
+    public List<FastRating> getFullTraining()
     {
         return fullTraining;
     }
 
-    public List<Tuple3<Integer, Integer, Double>> getCleanTraining()
+    public List<FastRating> getCleanTraining()
     {
         return cleanTraining;
     }

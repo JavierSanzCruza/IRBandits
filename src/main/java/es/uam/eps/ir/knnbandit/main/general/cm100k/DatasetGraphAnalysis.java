@@ -1,6 +1,6 @@
 package es.uam.eps.ir.knnbandit.main.general.cm100k;
 
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedWeightedGraph;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.ClusteringAlgorithm;
@@ -61,7 +61,7 @@ public class DatasetGraphAnalysis
         int limit = Parsers.ip.parse(args[3]);
 
         // First, load the dataset.
-        Dataset<Long, Long> dataset = Dataset.load(input, Parsers.lp, Parsers.lp, "\t", (double x) -> x,  (double x) -> x >= threshold);
+        GeneralDataset<Long, Long> dataset = GeneralDataset.load(input, Parsers.lp, Parsers.lp, "\t", (double x) -> x, (double x) -> x >= threshold);
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 

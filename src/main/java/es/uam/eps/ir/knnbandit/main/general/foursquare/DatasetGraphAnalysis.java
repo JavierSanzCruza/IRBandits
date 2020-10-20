@@ -1,7 +1,6 @@
 package es.uam.eps.ir.knnbandit.main.general.foursquare;
 
-import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedWeightedGraph;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.ClusteringAlgorithm;
@@ -18,9 +17,7 @@ import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -63,7 +60,7 @@ public class DatasetGraphAnalysis
         int limit = Parsers.ip.parse(args[3]);
 
         // Then, load the dataset.
-        Dataset<Long, String> dataset = Dataset.load(input, Parsers.lp, Parsers.sp, "::", (double x) -> x,  (double x) -> x >= threshold);
+        GeneralDataset<Long, String> dataset = GeneralDataset.load(input, Parsers.lp, Parsers.sp, "::", (double x) -> x, (double x) -> x >= threshold);
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 

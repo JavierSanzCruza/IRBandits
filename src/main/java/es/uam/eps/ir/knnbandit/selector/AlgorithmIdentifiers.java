@@ -39,4 +39,5 @@ public class AlgorithmIdentifiers
     // Cluster-based approaches
     public static final String CLUB = "club";
     public static final String CLUBERDOS = "cluberdos";
+    public static final String COFIBA = "cofiba";
 }

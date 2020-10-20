@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
+ * Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
  * de Madrid, http://ir.ii.uam.es.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -8,7 +8,6 @@
  *
  */
 package es.uam.eps.ir.knnbandit.data.preference.updateable.fast;
-
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
@@ -75,43 +74,44 @@ public abstract class AbstractFastUpdateablePreferenceData<U, I> extends Abstrac
     public void update(Stream<Tuple3<U, I, Double>> tuples)
     {
         tuples.forEach(t ->
-                       {
-                           if (this.containsUser(t.v1) && this.containsItem(t.v2))
-                           {
-                               int uidx = this.user2uidx(t.v1);
-                               int iidx = this.item2iidx(t.v2);
-                               this.updateRating(uidx, iidx, t.v3);
-                           }
-                       });
+        {
+            if (this.containsUser(t.v1) && this.containsItem(t.v2))
+            {
+                int uidx = this.user2uidx(t.v1);
+                int iidx = this.item2iidx(t.v2);
+                this.updateRating(uidx, iidx, t.v3);
+            }
+        });
     }
 
     @Override
-    public void update(U u, I i, double val)
+    public boolean update(U u, I i, double val)
     {
         if (this.containsUser(u) && this.containsItem(i))
         {
             int uidx = this.user2uidx(u);
             int iidx = this.item2iidx(i);
-            this.updateRating(uidx, iidx, val);
+            return this.updateRating(uidx, iidx, val);
         }
+        return false;
     }
 
     @Override
     public void updateDelete(Stream<Tuple2<U, I>> tuples)
     {
         tuples.forEach(t ->
-                       {
-                           if (this.containsUser(t.v1) && this.containsItem(t.v2))
-                           {
-                               int uidx = this.user2uidx(t.v1());
-                               int iidx = this.item2iidx(t.v2());
+        {
+            if (this.containsUser(t.v1) && this.containsItem(t.v2))
+            {
+                int uidx = this.user2uidx(t.v1());
+                int iidx = this.item2iidx(t.v2());
 
-                               if (uidx >= 0 && iidx >= 0)
-                               {
-                                   this.updateDelete(uidx, iidx);
-                               }
-                           }
-                       });
+                if (uidx >= 0 && iidx >= 0)
+                {
+                    this.updateDelete(uidx, iidx);
+                }
+            }
+        });
     }
 
     @Override

@@ -1,5 +1,6 @@
 package es.uam.eps.ir.knnbandit.warmup;
 
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -26,7 +27,7 @@ public class OnlyRatingsWarmup implements Warmup
     /**
      * The training data.
      */
-    private List<Tuple3<Integer, Integer, Double>> training;
+    private List<FastRating> training;
 
     /**
      * Initializes the values.
@@ -69,7 +70,7 @@ public class OnlyRatingsWarmup implements Warmup
                 if(opt.isPresent())
                 {
                     value = opt.get().v2;
-                    this.training.add(new Tuple3<>(uidx, iidx, value));
+                    this.training.add(new FastRating(uidx, iidx, value));
                     if(contactRec && notReciprocal)
                     {
                         int index = this.availability.get(iidx).indexOf(uidx);
@@ -90,12 +91,12 @@ public class OnlyRatingsWarmup implements Warmup
         return availability;
     }
 
-    public List<Tuple3<Integer, Integer, Double>> getFullTraining()
+    public List<FastRating> getFullTraining()
     {
         return training;
     }
 
-    public List<Tuple3<Integer, Integer, Double>> getCleanTraining()
+    public List<FastRating> getCleanTraining()
     {
         return training;
     }

@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.user;
 
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import it.unimi.dsi.fastutil.ints.*;
@@ -40,7 +41,7 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
     /**
      * Preference data.
      */
-    protected SimpleFastUpdateablePreferenceData<U,I> retrievedData;
+    protected final AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData;
 
     /**
      * Random number generator to untie neighbors.
@@ -67,11 +68,6 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
     private final boolean ignoreZeros;
 
     /**
-     * Indicates under which circumstances the similarity between two users has to be updated.
-     */
-    private final BiPredicate<Double, Double> predicate;
-
-    /**
      * Constructor.
      *
      * @param uIndex      User index.
@@ -81,7 +77,7 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
      * @param k           Number of neighbors to use.
      * @param sim         Updateable similarity
      */
-    public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim, BiPredicate<Double, Double> predicate)
+    public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
     {
         super(uIndex, iIndex, hasRating);
 
@@ -106,28 +102,29 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
 
         this.ignoreZeros = ignoreZeros;
 
-        this.predicate = predicate;
+        this.retrievedData = retrievedData;
     }
 
     @Override
     public void init()
     {
-        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+        this.retrievedData .clear();
         this.sim.initialize();
     }
 
-    @Override
+    /*@Override
     public void init(FastPreferenceData<U,I> prefData)
     {
-        this.retrievedData = (SimpleFastUpdateablePreferenceData<U,I>) prefData;
+        this.retrievedData.clear();
+        prefData.getUidxWithPreferences().forEach(uidx -> prefData.getUidxPreferences(uidx).forEach(i -> retrievedData.updateRating(uidx, i.v1, i.v2)));
         this.sim.initialize(retrievedData);
-    }
+    }*/
 
     @Override
-    public void init(Stream<Tuple3<Integer,Integer,Double>> values)
+    public void init(Stream<FastRating> values)
     {
-        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
-        values.forEach(triplet -> this.retrievedData.updateRating(triplet.v1, triplet.v2, triplet.v3));
+        this.retrievedData.clear();
+        values.forEach(triplet -> this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), triplet.value()));
         this.sim.initialize(retrievedData);
     }
 
@@ -249,29 +246,23 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         }
         else
         {
-            double newValue = this.getUpdatedValue(oldValue, value);
-            if(predicate.test(newValue, oldValue))
+            if(this.retrievedData.updateRating(uidx, iidx, value))
             {
-                this.sim.updateNormDel(uidx, oldValue);
-                this.sim.updateNorm(uidx, newValue);
-
-                double finalOldValue = oldValue;
-                this.retrievedData.getIidxPreferences(iidx).filter(vidx -> vidx.v1 != uidx).forEach(vidx ->
+                Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
+                if(opt.isPresent())
                 {
-                    this.sim.updateDel(uidx, vidx.v1, iidx, finalOldValue, vidx.v2);
-                    this.sim.update(uidx, vidx.v1, iidx, newValue, vidx.v2);
-                });
+                    double newValue = opt.get().v2;
+                    this.sim.updateNormDel(uidx, oldValue);
+                    this.sim.updateNorm(uidx, newValue);
 
-                this.retrievedData.updateRating(uidx, iidx, newValue);
+                    double finalOldValue = oldValue;
+                    this.retrievedData.getIidxPreferences(iidx).filter(vidx -> vidx.v1 != uidx).forEach(vidx ->
+                    {
+                        this.sim.updateDel(uidx, vidx.v1, iidx, finalOldValue, vidx.v2);
+                        this.sim.update(uidx, vidx.v1, iidx, newValue, vidx.v2);
+                    });
+                }
             }
         }
     }
-
-    /**
-     * Updates the value of a rating.
-     * @param oldValue the old rating value.
-     * @param value the new rating value.
-     * @return the final value of the rating.
-     */
-    protected abstract double getUpdatedValue(double oldValue, double value);
 }

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.basic;
 
@@ -13,7 +12,7 @@ import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
-import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
 
@@ -42,11 +41,10 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
      *
      * @param uIndex    user index.
      * @param iIndex    item index.
-     * @param hasRating true if we want to ignore missing ratings at updating, false if we want to treat them as failures.
      */
-    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating)
+    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex)
     {
-        super(uIndex, iIndex, hasRating);
+        super(uIndex, iIndex, true);
     }
 
     @Override
@@ -56,17 +54,10 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
     }
 
     @Override
-    public void init(Stream<Tuple3<Integer, Integer, Double>> values)
+    public void init(Stream<FastRating> values)
     {
 
     }
-
-    @Override
-    public void init(FastPreferenceData<U, I> prefData)
-    {
-
-    }
-
 
     @Override
     public int next(int uidx, IntList availability)

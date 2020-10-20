@@ -31,7 +31,7 @@ public interface FastUpdateablePreferenceData<U, I> extends UpdateablePreference
      * @param iidx   Identifier of the item.
      * @param rating The rating.
      */
-    void updateRating(int uidx, int iidx, double rating);
+    boolean updateRating(int uidx, int iidx, double rating);
 
     /**
      * Deletes a rating.

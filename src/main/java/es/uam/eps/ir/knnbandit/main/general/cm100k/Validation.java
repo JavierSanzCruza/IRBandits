@@ -18,7 +18,6 @@ import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
-import es.uam.eps.ir.knnbandit.recommendation.RecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;

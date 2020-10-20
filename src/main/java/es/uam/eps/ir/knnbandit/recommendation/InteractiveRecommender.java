@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
 
@@ -27,6 +27,7 @@ import java.util.stream.Stream;
  * @param <U> User type.
  * @param <I> Item type.
  * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public abstract class InteractiveRecommender<U, I>
 {
@@ -73,13 +74,13 @@ public abstract class InteractiveRecommender<U, I>
      * Initializes the specific variables of a method, using some information as training data.
      * @param values a stream of (user, item, value) triplets.
      */
-    public abstract void init(Stream<Tuple3<Integer, Integer, Double>> values);
+    public abstract void init(Stream<FastRating> values);
 
     /**
      * Initializes the specific variables of a method using
      * @param prefData the training preference data.
      */
-    public abstract void init(FastPreferenceData<U,I> prefData);
+    //public abstract void init(FastPreferenceData<U,I> prefData);
 
     /**
      * Obtains the set of identifiers of the users.

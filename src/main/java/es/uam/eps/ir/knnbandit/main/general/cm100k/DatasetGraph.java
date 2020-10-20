@@ -1,11 +1,8 @@
 package es.uam.eps.ir.knnbandit.main.general.cm100k;
 
-import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedWeightedGraph;
-import es.uam.eps.ir.knnbandit.graph.io.GraphWriter;
-import es.uam.eps.ir.knnbandit.graph.io.TextGraphWriter;
 import es.uam.eps.ir.ranksys.core.preference.PreferenceData;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
@@ -18,8 +15,6 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.DoublePredicate;
-import java.util.function.DoubleUnaryOperator;
 
 /**
  * Given a Movielens dataset, finds an undirected and weighted one indicating the existence of common rated (relevant) items.
@@ -58,7 +53,7 @@ public class DatasetGraph
         double threshold = Parsers.dp.parse(args[2]);
 
         // First, load the dataset.
-        Dataset<Long, Long> dataset = Dataset.load(input, Parsers.lp, Parsers.lp, "::", (double x) -> x,  (double x) -> x >= threshold);
+        GeneralDataset<Long, Long> dataset = GeneralDataset.load(input, Parsers.lp, Parsers.lp, "::", (double x) -> x, (double x) -> x >= threshold);
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 

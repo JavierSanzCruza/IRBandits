@@ -11,7 +11,7 @@ package es.uam.eps.ir.knnbandit.main.general.foursquare;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.io.Writer;
 import es.uam.eps.ir.knnbandit.main.AuxiliarMethods;
@@ -22,7 +22,6 @@ import es.uam.eps.ir.knnbandit.partition.Partition;
 import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
 import es.uam.eps.ir.knnbandit.partition.UniformPartition;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.RecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;
@@ -32,7 +31,6 @@ import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
 import es.uam.eps.ir.knnbandit.warmup.OnlyRatingsWarmup;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.knnbandit.warmup.WarmupType;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2od;
@@ -150,7 +148,7 @@ public class WarmupValidation
         UntieRandomNumber.configure(resume, output, k);
 
         // Read the whole ratings:
-        Dataset<Long, String> dataset = Dataset.load(input, Parsers.lp, Parsers.sp, "::", weightFunction, relevance);
+        GeneralDataset<Long, String> dataset = GeneralDataset.load(input, Parsers.lp, Parsers.sp, "::", weightFunction, relevance);
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 
@@ -198,7 +196,7 @@ public class WarmupValidation
             List<Tuple2<Integer, Integer>> partTrain = train.subList(0, realVal);
 
             // Build the validation triplets and compute the number of relevant ratings.
-            Dataset<Long, String> validDataset = Dataset.load(dataset, partValid);
+            GeneralDataset<Long, String> validDataset = GeneralDataset.load(dataset, partValid);
             int notRel = validDataset.getNumRel(partTrain);
 
             Warmup warmup;

@@ -9,16 +9,20 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
+import es.uam.eps.ir.knnbandit.utils.Rating;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * A general interface for defining interactive recommendation loops.
  * @param <U> type of the users.
  * @param <I> type of the items.
  */
-public interface RecommendationLoopInterface<U,I>
+public interface RecommendationLoop<U,I>
 {
     /**
      * Initializes all the necessary structures and metrics for the interactive recommendation loop.
@@ -37,7 +41,7 @@ public interface RecommendationLoopInterface<U,I>
      * @return a triplet indicating: the selected user, the item id, and the payoff of the recommendation if the algorithm
      * is able to generate a recommendation, null otherwise.
      */
-    Tuple3<U,I,Double> nextIteration();
+    Tuple2<U,I> nextIteration();
 
     /**
      * Obtains the result of a recommendation for the recommendation loop.
@@ -49,13 +53,30 @@ public interface RecommendationLoopInterface<U,I>
      * Updates the algorithms and metrics after receiving a metric
      * @param u the identifier of the user.
      * @param i the identifier of the items.
-     * @return NaN if the update was not succesful, the value of the recommendation otherwise.
      */
-    double update(U u, I i);
+    void update(U u, I i);
 
     /**
      * Checks whether a recommendation loop has ended or not.
      * @return true if the loop has ended, false otherwise.
      */
     boolean hasEnded();
+
+    /**
+     * Obtains the number of the current iteration.
+     * @return the current iteration number.
+     */
+    int getCurrentIter();
+
+    /**
+     * Obtains the current metric values.
+     * @return the current metric values if everything is OK, null otherwise.
+     */
+    Map<String, Double> getMetricValues();
+
+    /**
+     * Obtains the names of the metrics used in the loop.
+     * @return a list containing the names of the metrics used in the loop.
+     */
+    List<String> getMetrics();
 }

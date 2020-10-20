@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.mf.icf;
 
 import cern.colt.matrix.DoubleMatrix1D;
@@ -7,9 +15,14 @@ import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jooq.lambda.tuple.Tuple3;
+
+import java.util.stream.Stream;
 
 
 /**
@@ -22,8 +35,11 @@ import it.unimi.dsi.fastutil.ints.IntList;
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRecommender<U, I>
+public class GeneralizedLinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFRecommender<U, I>
 {
     private final double alpha;
 
@@ -34,7 +50,6 @@ public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRec
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
-     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
      * @param k         Number of latent factors to use
      * @param stdevP    Prior standard deviation for the user factors.
@@ -43,35 +58,9 @@ public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRec
      * @param numIter   Number of training iterations.
      * @param alpha     Parameter for indicating the importance of the UCB term.
      */
-    public GeneralizedLinearUCBPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
+    public GeneralizedLinearUCBPMFRecommenderInteractive(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
     {
-        super(uIndex, iIndex, prefData, hasRating, k, stdevP, stdevQ, stdev, numIter);
-        this.alpha = alpha;
-        this.counters = new IntArrayList();
-        for (int i = 0; i < uIndex.numUsers(); ++i)
-        {
-            this.counters.add(1);
-        }
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param k             Number of latent factors to use
-     * @param stdevP        Prior standard deviation for the user factors.
-     * @param stdevQ        Prior standard deviation for the item factors.
-     * @param stdev         Prior standard deviation for the ratings.
-     * @param notReciprocal Not reciprocal
-     * @param numIter       Number of training iterations.
-     * @param alpha         Parameter for indicating the importance of the UCB term.
-     */
-    public GeneralizedLinearUCBPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal, k, stdevP, stdevQ, stdev, numIter);
+        super(uIndex, iIndex, hasRating, k, stdevP, stdevQ, stdev, numIter);
         this.alpha = alpha;
         this.counters = new IntArrayList();
         for (int i = 0; i < uIndex.numUsers(); ++i)
@@ -81,18 +70,33 @@ public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRec
     }
 
     @Override
-    public void initializeMethod()
+    public void init()
     {
-        super.initializeMethod();
+        super.init();
         this.counters.clear();
-        uIndex.getAllUidx().forEach(uidx -> counters.add(this.trainData.numItems(uidx) + 1));
+        uIndex.getAllUidx().forEach(uidx -> counters.add(1));
     }
 
     @Override
-    public int next(int uidx)
+    public void init(Stream<FastRating> values)
     {
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+        super.init(values);
+        this.counters.clear();
+        uIndex.getAllUidx().forEach(uidx -> counters.add(this.retrievedData.numItems(uidx) + 1));
+    }
+
+    /*@Override
+    public void init(FastPreferenceData<U,I> trainData)
+    {
+        super.init(trainData);
+        this.counters.clear();
+        uIndex.getAllUidx().forEach(uidx -> counters.add(this.retrievedData.numItems(uidx) + 1));
+    }*/
+    
+    @Override
+    public int next(int uidx, IntList availability)
+    {
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
@@ -103,7 +107,7 @@ public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRec
         double utemp = Math.log(this.counters.get(uidx));
         double max = Double.NEGATIVE_INFINITY;
         IntList top = new IntArrayList();
-        for (int iidx : list)
+        for (int iidx : availability)
         {
             DoubleMatrix1D qi = this.Q.viewRow(iidx);
             DoubleMatrix1D aux = new DenseDoubleMatrix1D(this.k);
@@ -149,7 +153,7 @@ public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRec
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
     {
         // Update the counter by 1
         this.counters.set(uidx, this.counters.get(uidx) + 1);
@@ -180,5 +184,7 @@ public class GeneralizedLinearUCBPMFBanditRecommender<U, I> extends PMFBanditRec
 
         this.P.viewRow(uidx).assign(c);
         this.stdevP[uidx] = sigmaI;
+
+        this.retrievedData.updateRating(uidx, iidx, value);
     }
 }

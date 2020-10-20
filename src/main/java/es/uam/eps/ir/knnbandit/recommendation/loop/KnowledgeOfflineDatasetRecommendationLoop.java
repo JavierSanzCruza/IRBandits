@@ -1,22 +1,13 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.DatasetWithKnowledge;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
-import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Interactive recomm
@@ -74,8 +65,9 @@ public class KnowledgeOfflineDatasetRecommendationLoop<U,I> extends GeneralOffli
             this.recommender.update(uidx, iidx, value);
         }
 
+        double finalValue = value;
         // Update the metric values:
-        this.metrics.forEach((name, metric) -> metric.update(uidx, iidx, value));
+        this.metrics.forEach((name, metric) -> metric.update(uidx, iidx, finalValue));
         this.endCondition.update(uidx, iidx, value);
         ++this.iteration;
 

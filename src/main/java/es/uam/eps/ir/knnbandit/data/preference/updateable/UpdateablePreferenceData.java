@@ -22,5 +22,7 @@ import es.uam.eps.ir.ranksys.core.preference.PreferenceData;
  */
 public interface UpdateablePreferenceData<U, I> extends PreferenceData<U, I>, Updateable<U, I>
 {
+    double updatedValue(double newValue, double oldValue);
 
+    void clear();
 }

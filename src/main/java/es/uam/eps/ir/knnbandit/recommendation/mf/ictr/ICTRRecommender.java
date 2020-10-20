@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.mf.ictr;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -6,6 +14,7 @@ import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.mf.Particle;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ictr.particles.ICTRParticle;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ictr.particles.ICTRParticleFactory;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
@@ -15,6 +24,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 /**
  * Implementation of the Interactive Collaborative Topic Regression (ICTR) model.
@@ -23,6 +33,9 @@ import java.util.Random;
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
 {
@@ -54,38 +67,14 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
      *
      * @param uIndex       User index.
      * @param iIndex       Item index.
-     * @param prefData     Preference data.
      * @param hasRating    True if we must ignore unknown items when updating.
      * @param K            Number of latent factors to use.
      * @param numParticles Number of particles to use.
      * @param factory      A factory for the particles.
      */
-    public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int K, int numParticles, ICTRParticleFactory<U, I> factory)
+    public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int K, int numParticles, ICTRParticleFactory<U, I> factory)
     {
-        super(uIndex, iIndex, prefData, hasRating);
-        this.K = K;
-        this.numParticles = numParticles;
-        this.particleWeight = new DoubleArrayList();
-        this.particles = new ArrayList<>();
-        this.ictrrng = new Random();
-        this.factory = factory;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param notReciprocal True if reciprocal users can be recommended, false otherwise.
-     * @param K             Number of latent factors to use.
-     * @param numParticles  Number of particles to use.
-     * @param factory       A factory for the particles.
-     */
-    public ICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int K, int numParticles, ICTRParticleFactory<U,I> factory)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
+        super(uIndex, iIndex, hasRating);
         this.K = K;
         this.numParticles = numParticles;
         this.particleWeight = new DoubleArrayList();
@@ -95,7 +84,7 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
     }
 
     @Override
-    protected void initializeMethod()
+    public void init()
     {
         this.particleWeight.clear();
         this.particles.clear();
@@ -110,11 +99,16 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
     }
 
     @Override
-    public int next(int uidx)
+    public void init(Stream<FastRating> values)
     {
-        // First, we obtain the list of available items.
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+        this.init();
+        values.forEach(t -> particles.forEach(particle -> particle.update(t.uidx(), t.iidx(),t.value())));
+    }
+
+    @Override
+    public int next(int uidx, IntList availability)
+    {
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
@@ -122,7 +116,7 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
         // Then, for each item:
         double max = Double.NEGATIVE_INFINITY;
         IntList top = new IntArrayList();
-        for (int iidx : list)
+        for (int iidx : availability)
         {
             double val = this.getEstimatedReward(uidx, iidx);
 
@@ -164,7 +158,7 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
     protected abstract double getEstimatedReward(int uidx, int iidx);
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
     {
         // Update the methods.
         double sum = 0.0;

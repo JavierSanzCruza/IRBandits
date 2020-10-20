@@ -13,6 +13,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.ItemBanditRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
@@ -21,8 +22,9 @@ import es.uam.eps.ir.knnbandit.recommendation.bandits.item.*;
 import es.uam.eps.ir.knnbandit.recommendation.basic.AvgRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.basic.PopularityRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.basic.RandomRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.clusters.CLUB;
-import es.uam.eps.ir.knnbandit.recommendation.clusters.CLUBERdos;
+import es.uam.eps.ir.knnbandit.recommendation.clusters.club.CLUBComplete;
+import es.uam.eps.ir.knnbandit.recommendation.clusters.club.CLUBERdos;
+import es.uam.eps.ir.knnbandit.recommendation.clusters.cofiba.COFIBAErdos;
 import es.uam.eps.ir.knnbandit.recommendation.knn.item.InteractiveItemBasedKNN;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.VectorCosineSimilarity;
@@ -31,13 +33,15 @@ import es.uam.eps.ir.knnbandit.recommendation.knn.user.CollaborativeGreedy;
 import es.uam.eps.ir.knnbandit.recommendation.knn.user.InteractiveUserBasedKNN;
 import es.uam.eps.ir.knnbandit.recommendation.mf.InteractiveMF;
 import es.uam.eps.ir.knnbandit.recommendation.mf.PZTFactorizer;
-import es.uam.eps.ir.knnbandit.recommendation.mf.icf.EpsilonGreedyPMFBanditRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.mf.icf.GeneralizedLinearUCBPMFBanditRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.mf.icf.LinearUCBPMFBanditRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.mf.icf.ThompsonSamplingPMFBanditRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.mf.icf.EpsilonGreedyInteractivePMFRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.mf.icf.GeneralizedLinearUCBPMFRecommenderInteractive;
+import es.uam.eps.ir.knnbandit.recommendation.mf.icf.LinearUCBPMFRecommenderInteractive;
+import es.uam.eps.ir.knnbandit.recommendation.mf.icf.ThompsonSamplingInteractivePMFRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.ParticleThompsonSamplingMF;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.particles.PTSMFParticleFactory;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.particles.PTSMParticleFactories;
+import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
+import es.uam.eps.ir.ranksys.fast.index.FastUserIndex;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import es.uam.eps.ir.ranksys.mf.Factorizer;
 import es.uam.eps.ir.ranksys.mf.als.HKVFactorizer;
@@ -65,7 +69,7 @@ public class AlgorithmSelector<U, I>
     /**
      * A map of recommenders to apply.
      */
-    private final Map<String, InteractiveRecommender<U, I>> recs;
+    private final Map<String, InteractiveRecommenderSupplier<U, I>> recs;
     /**
      * A cursor for reading the line configuration.
      */
@@ -133,40 +137,12 @@ public class AlgorithmSelector<U, I>
     /**
      * Configures the experiment for traditional item-to-people recommendation, from a full cold start perspective.
      *
-     * @param uIndex    User index.
-     * @param iIndex    Item index.
-     * @param prefData  Preference data.
      * @param threshold Relevance threshold
      */
-    public void configure(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, double threshold)
+    public void configure(double threshold)
     {
-        this.uIndex = uIndex;
-        this.iIndex = iIndex;
-        this.prefData = prefData;
         this.notReciprocal = false;
         this.contactRec = false;
-        this.threshold = threshold;
-        this.dataUse = KnowledgeDataUse.ALL;
-        this.knowledgeData = null;
-        this.configured = true;
-    }
-
-    /**
-     * Configures the experiment for people-to-people recommendation, from a full cold start perspective.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param threshold     Relevance threshold
-     * @param notReciprocal True if we have to avoid recommending reciprocal items.
-     */
-    public void configure(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, double threshold, boolean notReciprocal)
-    {
-        this.uIndex = uIndex;
-        this.iIndex = iIndex;
-        this.prefData = prefData;
-        this.notReciprocal = notReciprocal;
-        this.contactRec = true;
         this.threshold = threshold;
         this.dataUse = KnowledgeDataUse.ALL;
         this.knowledgeData = null;
@@ -183,14 +159,10 @@ public class AlgorithmSelector<U, I>
      */
     public void configure(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, double threshold, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, KnowledgeDataUse dataUse)
     {
-        this.uIndex = uIndex;
-        this.iIndex = iIndex;
-        this.prefData = prefData;
         this.notReciprocal = false;
         this.contactRec = false;
         this.threshold = threshold;
         this.dataUse = dataUse;
-        this.knowledgeData = knowledgeData;
         this.configured = true;
     }
 
@@ -201,7 +173,7 @@ public class AlgorithmSelector<U, I>
      * @return an interactive recommender.
      * @throws es.uam.eps.ir.knnbandit.selector.UnconfiguredException if the experiment is not configured.
      */
-    public InteractiveRecommender<U, I> getAlgorithm(String algorithm) throws UnconfiguredException
+    public InteractiveRecommenderSupplier<U, I> getAlgorithm(String algorithm) throws UnconfiguredException
     {
         if (!this.configured)
         {
@@ -217,7 +189,7 @@ public class AlgorithmSelector<U, I>
             {
                 case AlgorithmIdentifiers.RANDOM: // Random recommendation.
                 {
-                    return new RandomRecommender<>(uIndex, iIndex, true);
+                    return RandomRecommender::new;
                 }
                 case AlgorithmIdentifiers.AVG: // Average rating recommendation.
                 {
@@ -231,17 +203,17 @@ public class AlgorithmSelector<U, I>
                         hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                     }
 
-                    return new AvgRecommender<>(uIndex, iIndex, hasRating);
+                    return (userIndex, itemIndex) -> new AvgRecommender<>(userIndex, itemIndex, hasRating);
                 }
                 case AlgorithmIdentifiers.POP: // Popularity recommendation.
                 {
                     cursor++;
-                    return new PopularityRecommender<>(uIndex, iIndex, threshold);
+                    return (userIndex, itemIndex) -> new PopularityRecommender<>(userIndex, itemIndex, threshold);
                 }
                 case AlgorithmIdentifiers.ITEMBANDIT: // Non-personalized bandits.
                 {
                     cursor++;
-                    ItemBandit<U, I> itemBandit = this.getItemBandit(fullAlgorithm.subList(1, split.length), prefData.numItems());
+                    BanditSupplier<U, I> itemBandit = this.getItemBandit(fullAlgorithm.subList(1, split.length));
                     if (itemBandit == null)
                     {
                         break;
@@ -258,7 +230,11 @@ public class AlgorithmSelector<U, I>
                         cursor++;
                     }
 
-                    return new ItemBanditRecommender<>(uIndex, iIndex, hasRating, itemBandit, valFunc);
+                    return (userIndex, itemIndex) ->
+                    {
+                        ItemBandit<U,I> bandit = itemBandit.apply(itemIndex.numItems());
+                        return new ItemBanditRecommender<>(userIndex, itemIndex, hasRating, bandit, valFunc);
+                    };
                 }
                 case AlgorithmIdentifiers.USERBASEDKNN: // User-based kNN.
                 {
@@ -286,7 +262,7 @@ public class AlgorithmSelector<U, I>
                         cursor += 2;
                     }
 
-                    return new InteractiveUserBasedKNN<>(uIndex, iIndex, hasRating, ignoreZeroes, k, sim);
+                    return (uIndex, iIndex) -> new InteractiveUserBasedKNN<>(uIndex, iIndex, hasRating, ignoreZeroes, k, sim);
                 }
                 case AlgorithmIdentifiers.ITEMBASEDKNN: // User-based kNN.
                 {
@@ -315,14 +291,7 @@ public class AlgorithmSelector<U, I>
                         cursor += 2;
                     }
 
-                    if (this.contactRec)
-                    {
-                        return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, notReciprocal, userK, itemK, sim);
-                    }
-                    else
-                    {
-                        return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, userK, itemK, sim);
-                    }
+                    return (uIndex, iIndex) -> new InteractiveItemBasedKNN<>(uIndex, iIndex, hasRating, ignoreZeroes, userK, itemK, sim);
                 }
                 case AlgorithmIdentifiers.BANDITKNN:
                 {
@@ -360,14 +329,7 @@ public class AlgorithmSelector<U, I>
                                 cursor += 2;
                             }
 
-                            if (this.contactRec)
-                            {
-                                return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, notReciprocal, k, sim);
-                            }
-                            else
-                            {
-                                return new InteractiveUserBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, k, sim);
-                            }
+                            return (uIndex, iIndex) -> new InteractiveUserBasedKNN<>(uIndex, iIndex, hasRating, ignoreZeroes, k, sim);
                         }
                         case KNNBanditIdentifiers.ITEM:
                         {
@@ -400,14 +362,7 @@ public class AlgorithmSelector<U, I>
                                 cursor += 2;
                             }
 
-                            if (this.contactRec)
-                            {
-                                return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, notReciprocal, userK, itemK, sim);
-                            }
-                            else
-                            {
-                                return new InteractiveItemBasedKNN<>(uIndex, iIndex, prefData, hasRating, ignoreZeroes, userK, itemK, sim);
-                            }
+                            return (uIndex, iIndex) -> new InteractiveItemBasedKNN<>(uIndex, iIndex, hasRating, ignoreZeroes, userK, itemK, sim);
                         }
                         default:
                         {
@@ -436,14 +391,7 @@ public class AlgorithmSelector<U, I>
                         cursor++;
                     }
 
-                    if (this.contactRec)
-                    {
-                        return new InteractiveMF<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, factorizer);
-                    }
-                    else
-                    {
-                        return new InteractiveMF<>(uIndex, iIndex, prefData, hasRating, k, factorizer);
-                    }
+                    return (uIndex, iIndex) -> new InteractiveMF<>(uIndex, iIndex, hasRating, k, factorizer);
                 }
                 case AlgorithmIdentifiers.PMFBANDIT:
                 {
@@ -478,15 +426,7 @@ public class AlgorithmSelector<U, I>
                         cursor++;
                     }
 
-
-                    if (this.contactRec)
-                    {
-                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, hasRating, notReciprocal, numP, factory);
-                    }
-                    else
-                    {
-                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, hasRating, numP, factory);
-                    }
+                    return (uIndex, iIndex) -> new ParticleThompsonSamplingMF<>(uIndex, iIndex, hasRating, numP, factory);
                 }
                 case AlgorithmIdentifiers.BAYESIANPTS:
                 {
@@ -510,15 +450,7 @@ public class AlgorithmSelector<U, I>
                         cursor++;
                     }
 
-
-                    if (this.contactRec)
-                    {
-                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, hasRating, notReciprocal, numP, factory);
-                    }
-                    else
-                    {
-                        return new ParticleThompsonSamplingMF<>(uIndex, iIndex, prefData, hasRating, numP, factory);
-                    }
+                    return (uIndex, iIndex) -> new ParticleThompsonSamplingMF<>(uIndex, iIndex, hasRating, numP, factory);
                 }
                 case AlgorithmIdentifiers.COLLABGREEDY:
                 {
@@ -537,14 +469,7 @@ public class AlgorithmSelector<U, I>
                         cursor++;
                     }
 
-                    if(this.contactRec)
-                    {
-                        return new CollaborativeGreedy<>(uIndex, iIndex, prefData, hasRating, notReciprocal, threshold, alpha);
-                    }
-                    else
-                    {
-                        return new CollaborativeGreedy<>(uIndex, iIndex, prefData, hasRating, threshold, alpha);
-                    }
+                    return (uIndex, iIndex) -> new CollaborativeGreedy<>(uIndex, iIndex, hasRating, threshold, alpha);
                 }
                 case AlgorithmIdentifiers.CLUB:
                 {
@@ -563,14 +488,7 @@ public class AlgorithmSelector<U, I>
                         cursor++;
                     }
 
-                    if(this.contactRec)
-                    {
-                        return new CLUB<>(uIndex, iIndex, prefData, hasRating, notReciprocal, alpha1, alpha2);
-                    }
-                    else
-                    {
-                        return new CLUB<>(uIndex, iIndex, prefData, hasRating, alpha1, alpha2);
-                    }
+                    return (uIndex, iIndex) -> new CLUBComplete<>(uIndex, iIndex, hasRating, alpha1, alpha2);
                 }
                 case AlgorithmIdentifiers.CLUBERDOS:
                 {
@@ -588,15 +506,25 @@ public class AlgorithmSelector<U, I>
                         hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
                         cursor++;
                     }
+                    return (uIndex, iIndex) -> new CLUBERdos<>(uIndex, iIndex, hasRating, alpha1, alpha2);
+                }
+                case AlgorithmIdentifiers.COFIBA:
+                {
+                    cursor++;
+                    double alpha1 = Parsers.dp.parse(fullAlgorithm.get(cursor));
+                    double alpha2 = Parsers.dp.parse(fullAlgorithm.get(cursor+1));
+                    cursor+=2;
 
-                    if(this.contactRec)
+                    if(fullAlgorithm.size() == cursor)
                     {
-                        return new CLUBERdos<>(uIndex, iIndex, prefData, hasRating, notReciprocal, alpha1, alpha2);
+                        hasRating = true;
                     }
                     else
                     {
-                        return new CLUBERdos<>(uIndex, iIndex, prefData, hasRating, alpha1, alpha2);
+                        hasRating = fullAlgorithm.get(cursor).equalsIgnoreCase("ignore");
+                        cursor++;
                     }
+                    return (uIndex, iIndex) -> new COFIBAErdos<>(uIndex, iIndex, hasRating, alpha1, alpha2);
                 }
                 default:
                 {
@@ -622,7 +550,7 @@ public class AlgorithmSelector<U, I>
             throw new UnconfiguredException("AlgorithmSelector");
         }
 
-        InteractiveRecommender<U, I> rec = this.getAlgorithm(algorithm);
+        InteractiveRecommenderSupplier<U, I> rec = this.getAlgorithm(algorithm);
         if (rec != null)
         {
             this.recs.put(algorithm, rec);
@@ -659,7 +587,7 @@ public class AlgorithmSelector<U, I>
      *
      * @return the selection of recommenders.
      */
-    public Map<String, InteractiveRecommender<U, I>> getRecs()
+    public Map<String, InteractiveRecommenderSupplier<U, I>> getRecs()
     {
         return this.recs;
     }
@@ -668,46 +596,45 @@ public class AlgorithmSelector<U, I>
      * Get an item bandit.
      *
      * @param split    A list containing the configuration.
-     * @param numItems The number of items in the system.
      * @return the corresponding item bandit if everything is ok, null otherwise.
      */
-    private ItemBandit<U, I> getItemBandit(List<String> split, int numItems)
+    private BanditSupplier<U, I> getItemBandit(List<String> split)
     {
-        ItemBandit<U, I> ib;
+        BanditSupplier<U, I> ib;
         switch (split.get(0))
         {
             case ItemBanditIdentifiers.EGREEDY:
                 double epsilon = Parsers.dp.parse(split.get(1));
                 cursor += 2;
                 EpsilonGreedyUpdateFunction updateFunc = this.getUpdateFunction(split.subList(2, split.size()));
-                ib = new EpsilonGreedyItemBandit<>(epsilon, numItems, updateFunc);
+                ib = (numItems) -> new EpsilonGreedyItemBandit<>(epsilon, numItems, updateFunc);
                 break;
             case ItemBanditIdentifiers.UCB1:
-                ib = new UCB1ItemBandit<>(numItems);
+                ib = UCB1ItemBandit::new;
                 cursor++;
                 break;
             case ItemBanditIdentifiers.UCB1TUNED:
-                ib = new UCB1TunedItemBandit<>(numItems);
+                ib = UCB1TunedItemBandit::new;
                 cursor++;
                 break;
             case ItemBanditIdentifiers.THOMPSON:
                 double alpha = Parsers.dp.parse(split.get(1));
                 double beta = Parsers.dp.parse(split.get(2));
-                ib = new ThompsonSamplingItemBandit<>(numItems, alpha, beta);
+                ib = (numItems) -> new ThompsonSamplingItemBandit<>(numItems, alpha, beta);
                 cursor += 3;
                 break;
             case ItemBanditIdentifiers.DELAYTHOMPSON:
                 alpha = Parsers.dp.parse(split.get(1));
                 beta = Parsers.dp.parse(split.get(2));
                 int delay = Parsers.ip.parse(split.get(3));
-                ib = new DelayedThompsonSamplingItemBandit<>(numItems, alpha, beta, delay);
+                ib = (numItems) -> new DelayedThompsonSamplingItemBandit<>(numItems, alpha, beta, delay);
                 cursor += 4;
                 break;
             case ItemBanditIdentifiers.ETGREEDY:
                 alpha = Parsers.dp.parse(split.get(1));
                 cursor += 2;
                 updateFunc = this.getUpdateFunction(split.subList(2, split.size()));
-                ib = new EpsilonTGreedyItemBandit<>(alpha, numItems, updateFunc);
+                ib = (numItems) -> new EpsilonTGreedyItemBandit<>(alpha, numItems, updateFunc);
                 break;
             default:
                 cursor++;
@@ -797,7 +724,7 @@ public class AlgorithmSelector<U, I>
      * @param numIter the number of iterations.
      * @return the algorithm if everything is fine, null otherwise.
      */
-    private InteractiveRecommender<U, I> getPMFBanditAlgorithm(List<String> split, int k, double lambdaP, double lambdaQ, double stdev, int numIter)
+    private InteractiveRecommenderSupplier<U, I> getPMFBanditAlgorithm(List<String> split, int k, double lambdaP, double lambdaQ, double stdev, int numIter)
     {
         cursor++;
 
@@ -816,14 +743,8 @@ public class AlgorithmSelector<U, I>
                     hasRating = split.get(2).equalsIgnoreCase("ignore");
                     cursor++;
                 }
-                if (this.contactRec)
-                {
-                    return new EpsilonGreedyPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
-                }
-                else
-                {
-                    return new EpsilonGreedyPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
-                }
+
+                return (uIndex, iIndex) -> new EpsilonGreedyInteractivePMFRecommender<>(uIndex, iIndex, hasRating, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
             case PMFBanditIdentifiers.UCB:
                 double alpha = Parsers.dp.parse(split.get(1));
                 cursor++;
@@ -836,14 +757,9 @@ public class AlgorithmSelector<U, I>
                     hasRating = split.get(2).equalsIgnoreCase("ignore");
                     cursor++;
                 }
-                if (this.contactRec)
-                {
-                    return new LinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter, alpha);
-                }
-                else
-                {
-                    return new LinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, k, lambdaP, lambdaQ, stdev, numIter, alpha);
-                }
+
+                return (uIndex, iIndex) -> new LinearUCBPMFRecommenderInteractive<>(uIndex, iIndex, hasRating, k, lambdaP, lambdaQ, stdev, numIter, alpha);
+
             case PMFBanditIdentifiers.GENERALIZEDUCB:
                 alpha = Parsers.dp.parse(split.get(1));
                 cursor++;
@@ -856,14 +772,9 @@ public class AlgorithmSelector<U, I>
                     hasRating = split.get(2).equalsIgnoreCase("ignore");
                     cursor++;
                 }
-                if (this.contactRec)
-                {
-                    return new GeneralizedLinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter, alpha);
-                }
-                else
-                {
-                    return new GeneralizedLinearUCBPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, k, lambdaP, lambdaQ, stdev, numIter, alpha);
-                }
+
+                return (uIndex, iIndex) -> new GeneralizedLinearUCBPMFRecommenderInteractive<>(uIndex, iIndex, hasRating, k, lambdaP, lambdaQ, stdev, numIter, alpha);
+
             case PMFBanditIdentifiers.THOMPSON:
                 if (split.size() == 1)
                 {
@@ -874,14 +785,8 @@ public class AlgorithmSelector<U, I>
                     hasRating = split.get(2).equalsIgnoreCase("ignore");
                     cursor++;
                 }
-                if (this.contactRec)
-                {
-                    return new ThompsonSamplingPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, notReciprocal, k, lambdaP, lambdaQ, stdev, numIter);
-                }
-                else
-                {
-                    return new ThompsonSamplingPMFBanditRecommender<>(uIndex, iIndex, prefData, hasRating, k, lambdaP, lambdaQ, stdev, numIter);
-                }
+
+                return (uIndex, iIndex) -> new ThompsonSamplingInteractivePMFRecommender<>(uIndex, iIndex, hasRating, k, lambdaP, lambdaQ, stdev, numIter);
             default:
                 return null;
         }

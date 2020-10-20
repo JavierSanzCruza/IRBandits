@@ -11,14 +11,13 @@ package es.uam.eps.ir.knnbandit.main.general.foursquare;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.io.Writer;
 import es.uam.eps.ir.knnbandit.main.AuxiliarMethods;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.RecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;
@@ -136,7 +135,7 @@ public class Recommendation
         UntieRandomNumber.configure(resume, output, k);
 
         // Read the whole ratings:
-        Dataset<Long, String> dataset = Dataset.load(input, Parsers.lp, Parsers.sp, "::", weightFunction, relevance);
+        GeneralDataset<Long, String> dataset = GeneralDataset.load(input, Parsers.lp, Parsers.sp, "::", weightFunction, relevance);
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 

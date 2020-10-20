@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -5,6 +13,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.mf.Particle;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.particles.PTSMFParticleFactory;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -12,6 +21,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 /**
  * Particle Thompson Sampling algorithm.
@@ -20,6 +30,9 @@ import java.util.Random;
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, I>
 {
@@ -45,34 +58,13 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
      *
      * @param uIndex       user index.
      * @param iIndex       item index.
-     * @param prefData     preference data.
      * @param hasRating    true if the algorithm must not be updated when the rating is unknown, false otherwise.
      * @param numParticles the number of particles.
      * @param factory      the particle factory.
      */
-    public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int numParticles, PTSMFParticleFactory<U, I> factory)
+    public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int numParticles, PTSMFParticleFactory<U, I> factory)
     {
-        super(uIndex, iIndex, prefData, hasRating);
-        this.factory = factory;
-        this.particleList = new ArrayList<>();
-        this.ptsrng = new Random();
-        this.numParticles = numParticles;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        user index.
-     * @param iIndex        item index.
-     * @param prefData      preference data.
-     * @param hasRating     true if the algorithm must not be updated when the rating is unknown, false otherwise.
-     * @param notReciprocal true if reciprocal relations are not recommended, false otherwise.
-     * @param numParticles  the number of particles.
-     * @param factory       the particle factory.
-     */
-    public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int numParticles, PTSMFParticleFactory<U, I> factory)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
+        super(uIndex, iIndex, hasRating);
         this.factory = factory;
         this.particleList = new ArrayList<>();
         this.ptsrng = new Random();
@@ -80,28 +72,34 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
     }
 
     @Override
-    protected void initializeMethod()
+    public void init()
     {
-        for (int b = 0; b < numParticles; ++b)
+        for(int b = 0; b < numParticles; ++b)
         {
-            Particle<U, I> particle = factory.create(this.uIndex, this.iIndex);
-            this.uIndex.getAllUidx().forEach(uidx ->
-                 this.trainData.getUidxPreferences(uidx).forEach(pref ->
-                 {
-                     int iidx = pref.v1;
-                     double val = pref.v2;
-                     particle.update(uidx, iidx, val);
-                 }));
+            Particle<U,I> particle = factory.create(uIndex, iIndex);
             particleList.add(particle);
         }
     }
 
     @Override
-    public int next(int uidx)
+    public void init(Stream<FastRating> values)
+    {
+        this.init();
+        values.forEach(t ->
+        {
+           for(Particle<U,I> particle : particleList)
+           {
+               particle.update(t.uidx(),t.iidx(),t.value());
+           }
+        });
+
+    }
+
+    @Override
+    public int next(int uidx, IntList availability)
     {
         // First, we obtain the list of available items.
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
@@ -113,7 +111,7 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
         // Then, using that particle, for each item:
         double max = Double.NEGATIVE_INFINITY;
         IntList top = new IntArrayList();
-        for (int iidx : list)
+        for (int iidx : availability)
         {
             double val = current.getEstimatedReward(uidx, iidx);
 
@@ -147,7 +145,7 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
 
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
     {
         // Reweighting: for each particle, we recalculate the weights:
         double[] weights = new double[this.numParticles];

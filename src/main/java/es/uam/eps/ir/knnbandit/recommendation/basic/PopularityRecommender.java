@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.basic;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import org.jooq.lambda.tuple.Tuple3;
 
@@ -36,12 +36,11 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
-     * @param hasRating True if we must ignore unknown items when updating.
      * @param threshold Relevance threshold
      */
-    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, double threshold)
+    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, double threshold)
     {
-        super(uIndex, iIndex, hasRating);
+        super(uIndex, iIndex, true);
         this.threshold = threshold;
     }
 
@@ -52,17 +51,10 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
     }
 
     @Override
-    public void init(Stream<Tuple3<Integer, Integer, Double>> values)
+    public void init(Stream<FastRating> values)
     {
         this.init();
-        values.filter(triplet -> triplet.v3 >= threshold).forEach(triplet -> ++this.values[triplet.v2]);
-    }
-
-    @Override
-    public void init(FastPreferenceData<U,I> prefData)
-    {
-        this.init();
-        prefData.getIidxWithPreferences().forEach(iidx -> this.values[iidx] = prefData.getIidxPreferences(iidx).filter(pref -> pref.v2 >= threshold).count());
+        values.filter(triplet -> triplet.value() >= threshold).forEach(triplet -> ++this.values[triplet.iidx()]);
     }
 
     @Override

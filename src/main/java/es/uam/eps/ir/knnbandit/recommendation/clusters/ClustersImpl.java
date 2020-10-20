@@ -123,7 +123,17 @@ public class ClustersImpl<E> implements Clusters<E>
             return Stream.empty();
         }
     }
-    
+
+    @Override
+    public boolean containsElement(E elem, int cluster)
+    {
+        if(cluster >= 0 && cluster < this.getNumClusters() && this.containsElem(elem))
+        {
+            return elemCluster.get(elem) == cluster;
+        }
+        return false;
+    }
+
     @Override
     public void addCluster()
     {

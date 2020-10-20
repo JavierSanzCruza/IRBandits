@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.mf.icf;
 
 import cern.colt.matrix.DoubleMatrix1D;
@@ -5,16 +13,21 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.EigenvalueDecomposition;
+import cern.colt.matrix.linalg.LUDecompositionQuick;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 /**
  * Interactive contact recommendation algorithm based on the combination of probabilistic
@@ -26,8 +39,11 @@ import java.util.Random;
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecommender<U, I>
+public class ThompsonSamplingInteractivePMFRecommender<U, I> extends InteractivePMFRecommender<U, I>
 {
     /**
      * Sampled vector from the item distribution.
@@ -51,7 +67,6 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
-     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
      * @param k         Number of latent factors to use
      * @param stdevP    Prior standard deviation for the user factors.
@@ -59,28 +74,9 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
      * @param stdev     Prior standard deviation for the ratings.
      * @param numIter   Number of training iterations.
      */
-    public ThompsonSamplingPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter)
+    public ThompsonSamplingInteractivePMFRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter)
     {
-        super(uIndex, iIndex, prefData, hasRating, k, stdevP, stdevQ, stdev, numIter);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param k             Number of latent factors to use
-     * @param stdevP        Prior standard deviation for the user factors.
-     * @param stdevQ        Prior standard deviation for the item factors.
-     * @param stdev         Prior standard deviation for the ratings.
-     * @param notReciprocal Not reciprocal
-     * @param numIter       Number of training iterations.
-     */
-    public ThompsonSamplingPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int k, double stdevP, double stdevQ, double stdev, int numIter)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal, k, stdevP, stdevQ, stdev, numIter);
+        super(uIndex, iIndex, hasRating, k, stdevP, stdevQ, stdev, numIter);
     }
 
     /**
@@ -102,22 +98,39 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
         DoubleMatrix2D D = eigen.getD();
 
         // Find the square root of L
-        /*for(int i = 0; i < k; ++i)
+        for(int i = 0; i < k; ++i)
         {
             D.setQuick(i,i,Math.sqrt(D.getQuick(i,i)));
-        }*
-         */
+        }
 
         // Multiply both matrices
-        //DoubleMatrix2D L = ALG.mult(V,D);
+        DoubleMatrix2D L = ALG.mult(V,D);
         return new Pair<>(V, D);
     }
 
     @Override
-    public void initializeMethod()
+    public void init()
     {
-        super.initializeMethod();
+        super.init();
+        this.auxInit();
+    }
 
+    @Override
+    public void init(Stream<FastRating> values)
+    {
+        super.init(values);
+        this.auxInit();
+    }
+
+    /*@Override
+    public void init(FastPreferenceData<U,I> trainData)
+    {
+        super.init(trainData);
+        this.auxInit();
+    }*/
+
+    private void auxInit()
+    {
         userDecomposed = new DoubleMatrix2D[this.numUsers()];
         userEigenvalues = new DoubleMatrix2D[this.numUsers()];
         for (int uidx = 0; uidx < this.numUsers(); ++uidx)
@@ -140,10 +153,9 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
     }
 
     @Override
-    public int next(int uidx)
+    public int next(int uidx, IntList availability)
     {
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
@@ -157,7 +169,7 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
         IntList top = new IntArrayList();
         List<DoubleMatrix1D> itemVectors = new ArrayList<>();
 
-        for (int iidx : list)
+        for (int iidx : availability)
         {
             DoubleMatrix1D originalQi = this.Q.viewRow(iidx);
             // First, we sample an item vector, using a Multivariate Gaussian distribution
@@ -200,7 +212,7 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
     {
         if (this.lastqi != null)
         {
@@ -209,17 +221,14 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
             ALG.multOuter(this.lastqi, this.lastqi, aux);
 
             // First, update the values for the A and b matrices for user u
-            As[uidx].assign(aux, (x, y) -> x + y);
+            As[uidx].assign(aux, Double::sum);
             bs[uidx].assign(this.lastqi, (x, y) -> x + value * y);
 
             // Then, find A^-1 b and A^-1 sigma^2
 
             ALG.inverse(As[uidx]);
             DenseDoubleMatrix1D c = new DenseDoubleMatrix1D(this.k);
-
-
-            /*LUDecompositionQuick lu = new LUDecompositionQuick(0);
-            DenseDoubleMatrix1D c = new DenseDoubleMatrix1D(this.k);
+            LUDecompositionQuick lu = new LUDecompositionQuick(0);
             c.assign(bs[uidx]);
 
             lu.decompose(As[uidx]);
@@ -240,8 +249,10 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
             this.userDecomposed[uidx] = pair.v1();
             this.userEigenvalues[uidx] = pair.v2();
 
-            this.lastqi = null;*/
+            this.lastqi = null;
         }
+
+        this.retrievedData.updateRating(uidx, iidx, value);
     }
 
     /**
@@ -264,7 +275,7 @@ public class ThompsonSamplingPMFBanditRecommender<U, I> extends PMFBanditRecomme
 
         DoubleMatrix1D res = ALG.mult(eigenvector, dense);
         eigenvector.zMult(dense, dense);
-        res.assign(mean, (x, y) -> x + y);
+        res.assign(mean, Double::sum);
         return res;
     }
 }

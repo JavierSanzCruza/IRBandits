@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2015 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.mf;
 
@@ -125,13 +125,11 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
 
         if (!usesZeroes)
         {
-            data.getUidxWithPreferences().parallel().forEach(uidx ->
-                                                                     prepareRR1(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
+            data.getUidxWithPreferences().parallel().forEach(uidx -> prepareRR1(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
         }
         else
         {
-            data.getUidxWithPreferences().parallel().forEach(uidx ->
-                                                                     prepareRR1Zeroes(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
+            data.getUidxWithPreferences().parallel().forEach(uidx -> prepareRR1Zeroes(1, p.viewRow(uidx), gt, q, data.numItems(uidx), data.getUidxPreferences(uidx), confidence, lambda));
         }
     }
 
@@ -173,13 +171,13 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
         }
         int[] j = {K};
         prefs.forEach(iv ->
-                      {
-                          q.viewRow(iv.v1).toArray(x[j[0]]);
-                          double Cui = confidence.applyAsDouble(iv.v2);
-                          y[j[0]] = (Cui * iv.v2) / (Cui - 1);
-                          c[j[0]] = Cui - 1;
-                          j[0]++;
-                      });
+        {
+            q.viewRow(iv.v1).toArray(x[j[0]]);
+            double Cui = confidence.applyAsDouble(iv.v2);
+            y[j[0]] = (Cui * iv.v2) / (Cui - 1);
+            c[j[0]] = Cui - 1;
+            j[0]++;
+        });
 
         doRR1(L, w, x, y, c, lambda);
     }
@@ -199,16 +197,16 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
         }
         int[] j = {K};
         prefs.forEach(iv ->
-                      {
-                          q.viewRow(iv.v1).toArray(x[j[0]]);
-                          q.viewRow(iv.v1).toArray(x[j[0] + N]);
-                          double Cui = confidence.applyAsDouble(iv.v2);
-                          y[j[0]] = 0;
-                          c[j[0]] = -1;
-                          y[j[0] + N] = iv.v2;
-                          c[j[0] + N] = Cui;
-                          j[0]++;
-                      });
+        {
+            q.viewRow(iv.v1).toArray(x[j[0]]);
+            q.viewRow(iv.v1).toArray(x[j[0] + N]);
+            double Cui = confidence.applyAsDouble(iv.v2);
+            y[j[0]] = 0;
+            c[j[0]] = -1;
+            y[j[0] + N] = iv.v2;
+            c[j[0] + N] = Cui;
+            j[0]++;
+        });
 
         doRR1(L, w, x, y, c, lambda);
     }
@@ -257,25 +255,23 @@ public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
     @Override
     public double error(DenseDoubleMatrix2D p, DenseDoubleMatrix2D q, FastPreferenceData<U, I> data)
     {
-        // TODO: add regularization, unify with HKVFactorizer's error
-
         return data.getUidxWithPreferences().parallel().mapToDouble(uidx ->
-                                                                    {
-                                                                        DoubleMatrix1D pu = p.viewRow(uidx);
-                                                                        DoubleMatrix1D su = q.zMult(pu, null);
+        {
+            DoubleMatrix1D pu = p.viewRow(uidx);
+            DoubleMatrix1D su = q.zMult(pu, null);
 
-                                                                        double err1 = data.getUidxPreferences(uidx).mapToDouble(iv ->
-                                                                                                                                {
-                                                                                                                                    double rui = iv.v2;
-                                                                                                                                    double sui = su.getQuick(iv.v1);
-                                                                                                                                    double cui = confidence.applyAsDouble(rui);
-                                                                                                                                    return cui * (rui - sui) * (rui - sui) - confidence.applyAsDouble(0) * sui * sui;
-                                                                                                                                }).sum();
+            double err1 = data.getUidxPreferences(uidx).mapToDouble(iv ->
+            {
+                double rui = iv.v2;
+                double sui = su.getQuick(iv.v1);
+                double cui = confidence.applyAsDouble(rui);
+                return cui * (rui - sui) * (rui - sui) - confidence.applyAsDouble(0) * sui * sui;
+            }).sum();
 
-                                                                        double err2 = confidence.applyAsDouble(0) * su.assign(x -> x * x).zSum();
+            double err2 = confidence.applyAsDouble(0) * su.assign(x -> x * x).zSum();
 
-                                                                        return (err1 + err2) / data.numItems();
-                                                                    }).sum() / data.numUsers();
+            return (err1 + err2) / data.numItems();
+        }).sum() / data.numUsers();
 
     }
 

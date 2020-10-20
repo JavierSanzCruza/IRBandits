@@ -6,15 +6,13 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdatea
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,11 +86,14 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends OfflineDatasetRe
             }
         });
 
+        List<FastRating> fastRatings = new ArrayList<>();
+
         // Then, the already retrieved ratings.
         warmup.getFullTraining().forEach(tuple ->
         {
-            int uidx = tuple.v1;
-            int vidx = tuple.v2;
+            int uidx = tuple.uidx();
+            int vidx = tuple.iidx();
+            fastRatings.add(tuple);
 
             if(dataset.getPrefData().numItems(uidx) > 0 && dataset.getPrefData().numUsers(vidx) > 0)
             {
@@ -102,6 +103,7 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends OfflineDatasetRe
                 if(!((ContactDataset<U>) this.dataset).isDirected())
                 {
                     retrievedData.updateRating(vidx, uidx, value);
+                    fastRatings.add(new FastRating(vidx, uidx, value));
                 }
                 else if(pref.isPresent() && this.notReciprocal)
                 {
@@ -110,19 +112,22 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends OfflineDatasetRe
                         pref = dataset.getPrefData().getPreference(vidx, uidx);
                         value = pref.map(idxPref -> idxPref.v2).orElse(0.0);
                         retrievedData.updateRating(vidx, uidx, value);
+                        fastRatings.add(new FastRating(vidx, uidx, value));
                     }
                 }
             }
         });
 
         // Initialize the recommender data.
-        this.recommender.init(retrievedData);
+        this.recommender.init(fastRatings.stream());
         // Initialize the metrics
         this.metrics.forEach((name, metric) -> metric.initialize(warmup.getFullTraining(), false));
         this.numUsers = this.userList.size();
         this.endCondition.init();
         this.rng = new Random(rngSeed);
     }
+
+
 
     @Override
     public double fastUpdate(int uidx, int vidx)
@@ -178,7 +183,8 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends OfflineDatasetRe
         }
 
         // Update the metric values:
-        this.metrics.forEach((name, metric) -> metric.update(uidx, vidx, value));
+        double finalValue = value;
+        this.metrics.forEach((name, metric) -> metric.update(uidx, vidx, finalValue));
         this.endCondition.update(uidx, vidx, value);
         ++this.iteration;
 

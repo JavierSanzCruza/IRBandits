@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.basic;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import org.jooq.lambda.tuple.Tuple3;
 
@@ -57,26 +57,15 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
     }
 
     @Override
-    public void init(Stream<Tuple3<Integer, Integer, Double>> values)
+    public void init(Stream<FastRating> values)
     {
         this.init();
         values.forEach(triplet ->
         {
-            int iidx = triplet.v2;
+            int iidx = triplet.iidx();
             double oldvalue = this.values[iidx];
-            this.values[iidx] = oldvalue + (triplet.v3 - oldvalue) / (numTimes[iidx] + 1.0);
+            this.values[iidx] = oldvalue + (triplet.value() - oldvalue) / (numTimes[iidx] + 1.0);
             this.numTimes[iidx] += 1.0;
-        });
-    }
-
-    @Override
-    public void init(FastPreferenceData<U, I> prefData)
-    {
-        this.init();
-        prefData.getIidxWithPreferences().forEach(iidx ->
-        {
-            this.values[iidx] = prefData.getIidxPreferences(iidx).mapToDouble(pref -> pref.v2).average().getAsDouble();
-            this.numTimes[iidx] = prefData.numUsers(iidx);
         });
     }
 

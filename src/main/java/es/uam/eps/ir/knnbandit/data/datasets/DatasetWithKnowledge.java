@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.data.datasets;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -8,7 +16,6 @@ import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUser
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
-import org.jooq.lambda.tuple.Tuple3;
 import org.jooq.lambda.tuple.Tuple4;
 import org.ranksys.formats.parsing.Parser;
 import org.ranksys.formats.parsing.Parsers;
@@ -21,9 +28,27 @@ import java.util.*;
 import java.util.function.DoublePredicate;
 import java.util.function.DoubleUnaryOperator;
 
-public class DatasetWithKnowledge<U, I> extends Dataset<U, I>
+
+/**
+ * A dataset containing additional information on whether the users
+ * knew the items before they rated them.
+ * Example: cm100k
+ *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
+public class DatasetWithKnowledge<U, I> extends GeneralDataset<U, I>
 {
+    /**
+     * Preference data with knowledge information about whether the users knew about the items before the rating.
+     */
     protected final SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData;
+    /**
+     * Number of relevant (and known) ratings.
+     */
     protected final int numRelKnown;
 
     /**
@@ -42,26 +67,44 @@ public class DatasetWithKnowledge<U, I> extends Dataset<U, I>
         this.numRelKnown = numRelKnown;
     }
 
+    /**
+     * Obtains the data previously known by the users.
+     * @return the previously known ratings.
+     */
     public SimpleFastPreferenceData<U, I> getKnownPrefData()
     {
         return (SimpleFastPreferenceData<U, I>) this.knowledgeData.getKnownPreferenceData();
     }
-
+    /**
+     * Obtains the data unknown by the users before the rating.
+     * @return the previously unknown ratings.
+     */
     public SimpleFastPreferenceData<U, I> getUnknownPrefData()
     {
         return (SimpleFastPreferenceData<U, I>) this.knowledgeData.getUnknownPreferenceData();
     }
 
+    /**
+     * Obtains the whole data.
+     * @return the whole data.
+     */
     public SimpleFastUserKnowledgePreferenceData<U, I> getKnowledgeData()
     {
         return this.knowledgeData;
     }
 
+    /**
+     * Obtains the number of relevant and known ratings.
+     * @return the number of relevant and known ratings.
+     */
     public int getNumRelKnown()
     {
         return this.numRelKnown;
     }
-
+    /**
+     * Obtains the number of relevant and unknown ratings.
+     * @return the number of relevant and unknown ratings.
+     */
     public int getNumRelUnknown()
     {
         return this.numRel - this.numRelKnown;
@@ -147,6 +190,14 @@ public class DatasetWithKnowledge<U, I> extends Dataset<U, I>
         return new DatasetWithKnowledge<>(uIndex, iIndex, knowledgeData, numrel, numrelknown, relevance);
     }
 
+    /**
+     * Loads a dataset from another dataset.
+     * @param dataset the original dataset.
+     * @param list a list of (user,item) interactions.
+     * @param <U> type of the users.
+     * @param <I> type of the items.
+     * @return the new dataset.
+     */
     public static <U, I> DatasetWithKnowledge<U, I> load(DatasetWithKnowledge<U, I> dataset, List<Tuple2<Integer, Integer>> list)
     {
         List<Tuple4<U, I, Double, Boolean>> quartets = new ArrayList<>();

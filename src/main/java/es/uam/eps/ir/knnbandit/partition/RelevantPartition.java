@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.partition;
 
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
@@ -9,9 +17,20 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.DoublePredicate;
 
+/**
+ * Partitions the data acording to the relevant ratings.
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
 public class RelevantPartition implements Partition
 {
+    /**
+     * Preference data containing the rating information.
+     */
     private final FastPointWisePreferenceData<?, ?> prefData;
+    /**
+     * PRedicate for confirming the relevance of the ratings.
+     */
     private final DoublePredicate relevanceChecker;
 
     /**
@@ -33,10 +52,10 @@ public class RelevantPartition implements Partition
 
         // Count the total number of relevant pairs
         int numRel = trainingData.stream().mapToInt(tuple ->
-                                                    {
-                                                        Optional<? extends IdxPref> optional = prefData.getPreference(tuple.v1, tuple.v2);
-                                                        return (optional.isPresent() && relevanceChecker.test(optional.get().v2)) ? 1 : 0;
-                                                    }).sum();
+        {
+            Optional<? extends IdxPref> optional = prefData.getPreference(tuple.v1, tuple.v2);
+            return (optional.isPresent() && relevanceChecker.test(optional.get().v2)) ? 1 : 0;
+        }).sum();
 
         int nextPoint = numRel / numParts;
         int counter = 1;
@@ -69,10 +88,10 @@ public class RelevantPartition implements Partition
 
         // Count the total number of relevant pairs
         int numRel = trainingData.stream().mapToInt(tuple ->
-                                                    {
-                                                        Optional<? extends IdxPref> optional = prefData.getPreference(tuple.v1, tuple.v2);
-                                                        return (optional.isPresent() && relevanceChecker.test(optional.get().v2)) ? 1 : 0;
-                                                    }).sum();
+        {
+            Optional<? extends IdxPref> optional = prefData.getPreference(tuple.v1, tuple.v2);
+            return (optional.isPresent() && relevanceChecker.test(optional.get().v2)) ? 1 : 0;
+        }).sum();
 
         Double point = percentage * numRel;
         int splitPoint = point.intValue();

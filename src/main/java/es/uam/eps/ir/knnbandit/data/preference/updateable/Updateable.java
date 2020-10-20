@@ -39,8 +39,10 @@ public interface Updateable<U, I>
      * @param u   User.
      * @param i   Item.
      * @param val Preference value.
+     *
+     * @return true if the value for the (u,i) pair has changed, false otherwise.
      */
-    void update(U u, I i, double val);
+    boolean update(U u, I i, double val);
 
     /**
      * Updates the preference data given a set of preferences to delete.

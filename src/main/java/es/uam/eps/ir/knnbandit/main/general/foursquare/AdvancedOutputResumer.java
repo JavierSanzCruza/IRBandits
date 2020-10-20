@@ -9,7 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.main.general.foursquare;
 
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex;
 import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
@@ -56,7 +56,7 @@ public class AdvancedOutputResumer
         String timePoints = args[3];
 
         // First, read the dataset.
-        Dataset<Long, String> dataset = Dataset.load(data, Parsers.lp, Parsers.sp, "::", (double x) -> x, (double x) -> x >= threshold);
+        GeneralDataset<Long, String> dataset = GeneralDataset.load(data, Parsers.lp, Parsers.sp, "::", (double x) -> x, (double x) -> x >= threshold);
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 
@@ -87,7 +87,7 @@ public class AdvancedOutputResumer
      * @param list      the number of iterations to measure.
      * @param recursive the recursive values.
      */
-    private static void readDirectory(File directory, IntList list, boolean recursive, Dataset<Long, String> dataset) throws IOException
+    private static void readDirectory(File directory, IntList list, boolean recursive, GeneralDataset<Long, String> dataset) throws IOException
     {
         long a = System.currentTimeMillis();
         System.out.println("Entered directory" + directory);
@@ -185,7 +185,7 @@ public class AdvancedOutputResumer
         System.out.println("Exited directory " + directory + " (" + (b - a) + " ms.)");
     }
 
-    private static Map<String, Map<Integer, Double>> readFile(File f, IntList list, Dataset<Long,String> dataset) throws IOException
+    private static Map<String, Map<Integer, Double>> readFile(File f, IntList list, GeneralDataset<Long,String> dataset) throws IOException
     {
         int numItems = dataset.numItems();
         Map<String, Map<Integer, Double>> res = new HashMap<>();

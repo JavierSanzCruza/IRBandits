@@ -1,19 +1,24 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.item;
 
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.FastUpdateablePreferenceData;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.TransposedUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
+import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -22,6 +27,8 @@ import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.stream.Stream;
 
 /**
  * Abstract version of an interactive item-based kNN algorithm
@@ -58,6 +65,10 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
      * Shuffled list of users.
      */
     private final IntList itemList;
+    /**
+     * Preference data.
+     */
+    protected final AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData;
 
     private final boolean ignoreZeros;
 
@@ -66,19 +77,18 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
      *
      * @param uIndex      User index.
      * @param iIndex      Item index.
-     * @param prefData    Preference data.
      * @param hasRating   True if we must ignore unknown items when updating.
      * @param ignoreZeros True if we ignore zero ratings when updating.
      * @param userK       Number of items rated by the user to pick.
      * @param itemK       Number of users rated by the item to pick.
      * @param sim         Updateable similarity
      */
-    public AbstractInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
+    public AbstractInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
     {
-        super(uIndex, iIndex, prefData, hasRating);
+        super(uIndex, iIndex, hasRating);
         this.sim = sim;
         this.userK = userK;
-        this.itemK = (itemK > 0) ? itemK : prefData.numItems();
+        this.itemK = (itemK > 0) ? itemK : iIndex.numItems();
         this.itemList = new IntArrayList();
         uIndex.getAllUidx().forEach(itemList::add);
         this.comp = (Tuple2id x, Tuple2id y) ->
@@ -91,68 +101,52 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
             return value;
         };
         this.ignoreZeros = ignoreZeros;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param ignoreZeros   True if we ignore zero ratings when updating.
-     * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise.
-     * @param userK         Number of items rated by the user to pick.
-     * @param itemK         Number of users rated by the item to pick.
-     * @param sim           Updateable similarity
-     */
-    public AbstractInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, boolean notReciprocal, int userK, int itemK, UpdateableSimilarity sim)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
-        this.sim = sim;
-        this.userK = userK;
-        this.itemK = (itemK > 0) ? itemK : prefData.numItems();
-        this.itemList = new IntArrayList();
-        iIndex.getAllIidx().forEach(itemList::add);
-        this.comp = (Tuple2id x, Tuple2id y) ->
-        {
-            int value = (int) Math.signum(x.v2 - y.v2);
-            if (value == 0)
-            {
-                return itemList.indexOf(x.v1) - itemList.indexOf(y.v1);
-            }
-            return value;
-        };
-        this.ignoreZeros = ignoreZeros;
+        this.retrievedData = retrievedData;
     }
 
     @Override
-    protected void initializeMethod()
+    public void init()
     {
-        this.sim.initialize(new TransposedUpdateablePreferenceData<>(this.trainData));
+        this.sim.initialize();
+        this.retrievedData.clear();
     }
 
-    @Override
-    public int next(int uidx)
+    /*@Override
+    public void init(FastPreferenceData<U,I> prefData)
     {
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+        this.retrievedData.clear();
+        prefData.getUidxWithPreferences().forEach(uidx -> prefData.getUidxPreferences(uidx).forEach(i -> retrievedData.updateRating(uidx, i.v1, i.v2)));
+        this.sim.initialize(new TransposedUpdateablePreferenceData<>(retrievedData));
+    }*/
+
+    @Override
+    public void init(Stream<FastRating> values)
+    {
+        this.retrievedData.clear();
+        values.forEach(triplet -> this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), triplet.value()));
+        this.sim.initialize(new TransposedUpdateablePreferenceData<>(retrievedData));
+    }
+
+
+    @Override
+    public int next(int uidx, IntList availability)
+    {
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
 
-        // Shuffle the order of users.
+        // Shuffle the order of the items.
         Collections.shuffle(itemList, neighborUntie);
-
         PriorityQueue<Tuple2id> firstHeap = new PriorityQueue<>(this.numItems(), comp);
 
         if (this.userK == 0)
         {
-            this.trainData.getUidxPreferences(uidx).filter(iv -> !ignoreZeros || iv.v2 > 0).forEach(firstHeap::add);
+            this.retrievedData.getUidxPreferences(uidx).filter(iv -> !ignoreZeros || iv.v2 > 0).forEach(firstHeap::add);
         }
         else
         {
-            this.trainData.getUidxPreferences(uidx).forEach(iv ->
+            this.retrievedData.getUidxPreferences(uidx).forEach(iv ->
             {
                 if (!this.ignoreZeros || iv.v2 > 0.0)
                 {
@@ -171,8 +165,8 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
 
         if (firstHeap.isEmpty())  // If the user has not rated any item, return an item at random.
         {
-            int idx = rng.nextInt(list.size());
-            return list.get(idx);
+            int idx = rng.nextInt(availability.size());
+            return availability.get(idx);
         }
 
         Int2DoubleOpenHashMap map = new Int2DoubleOpenHashMap();
@@ -185,7 +179,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
             PriorityQueue<Tuple2id> heap = new PriorityQueue<>(itemK, comp);
             this.sim.similarElems(jidx).forEach(jv ->
             {
-                if (list.contains(jv.v1))
+                if (availability.contains(jv.v1))
                 {
                     if (heap.size() == itemK)
                     {
@@ -212,7 +206,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
         for (int iidx : map.keySet())
         {
             double val = map.get(iidx);
-            if (!list.contains(iidx))
+            if (!availability.contains(iidx))
             {
                 continue;
             }
@@ -232,7 +226,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
         int topSize = top.size();
         if (top.isEmpty())
         {
-            return list.get(rng.nextInt(list.size()));
+            return availability.get(rng.nextInt(availability.size()));
         }
         else if (topSize == 1)
         {
@@ -251,8 +245,47 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
     protected abstract double score(int vidx, double rating);
 
     @Override
-    public void updateMethod(List<Tuple3<Integer, Integer, Double>> train)
+    public void update(int uidx, int iidx, double value)
     {
-        this.sim.initialize(new TransposedUpdateablePreferenceData<>(this.trainData));
+        boolean hasRating = false;
+        double oldValue = 0;
+
+        if(this.retrievedData.numItems(uidx) > 0 && this.retrievedData.numUsers(iidx) > 0)
+        {
+            Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
+            hasRating = opt.isPresent();
+            if(hasRating)
+            {
+                oldValue = opt.get().v2();
+            }
+        }
+
+        if(!hasRating)
+        {
+            this.retrievedData.getUidxPreferences(uidx).forEach(jidx -> this.sim.update(iidx, jidx.v1, uidx, value, jidx.v2));
+            this.sim.updateNorm(iidx, value);
+            this.retrievedData.updateRating(uidx, iidx, value);
+        }
+        else
+        {
+            if(this.retrievedData.updateRating(uidx, iidx, value))
+            {
+                Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
+                if(opt.isPresent())
+                {
+                    double newValue = opt.get().v2;
+
+                    this.sim.updateNormDel(iidx, oldValue);
+                    this.sim.updateNorm(iidx, newValue);
+
+                    double finalOldValue = oldValue;
+                    this.retrievedData.getUidxPreferences(uidx).filter(jidx -> jidx.v1 != iidx).forEach(jidx ->
+                    {
+                        this.sim.updateDel(iidx, jidx.v1, uidx, finalOldValue, jidx.v2);
+                        this.sim.update(iidx, jidx.v1, uidx, newValue, jidx.v2);
+                    });
+                }
+            }
+        }
     }
 }

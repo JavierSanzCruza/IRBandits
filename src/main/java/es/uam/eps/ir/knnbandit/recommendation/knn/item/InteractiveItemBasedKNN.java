@@ -1,18 +1,23 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.item;
 
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jooq.lambda.tuple.Tuple3;
+
+import java.util.stream.Stream;
 
 /**
  * Interactive version of user-based kNN algorithm.
@@ -29,41 +34,23 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
      *
      * @param uIndex      User index.
      * @param iIndex      Item index.
-     * @param prefData    Preference data.
      * @param hasRating   True if we must ignore unknown items when updating.
      * @param ignoreZeros True if we ignore zero ratings when updating.
      * @param userK       Number of users to select.
      * @param itemK       Number of items to take as neighbors
      * @param sim         Updateable similarity
      */
-    public InteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
+    public InteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
     {
-        super(uIndex, iIndex, prefData, hasRating, ignoreZeros, userK, itemK, sim);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex    User index.
-     * @param iIndex    Item index.
-     * @param prefData  Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param userK     Number of neighbors to use.
-     * @param itemK     Number of items to take as neighbors
-     * @param sim       Updateable similarity
-     */
-    public InteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, boolean notReciprocal, int userK, int itemK, UpdateableSimilarity sim)
-    {
-        super(uIndex, iIndex, prefData, hasRating, ignoreZeros, notReciprocal, userK, itemK, sim);
+        super(uIndex, iIndex, hasRating, ignoreZeros, userK, itemK, sim, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
     {
-        this.trainData.getUidxPreferences(uidx).forEach(jidx ->
-                                                        {
-                                                            this.sim.update(iidx, jidx.v1, uidx, value, jidx.v2);
-                                                        });
+        this.sim.updateNorm(iidx, value);
+        this.retrievedData.getUidxPreferences(uidx).forEach(jidx -> this.sim.update(iidx, jidx.v1, uidx, value, jidx.v2));
+        this.retrievedData.updateRating(uidx, iidx, value);
     }
 
     @Override

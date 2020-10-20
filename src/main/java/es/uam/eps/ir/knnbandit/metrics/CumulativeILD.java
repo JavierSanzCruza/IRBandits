@@ -1,5 +1,14 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.metrics;
 
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
 import es.uam.eps.ir.ranksys.novdiv.distance.FeatureItemDistanceModel;
 import it.unimi.dsi.fastutil.ints.*;
@@ -16,6 +25,9 @@ import java.util.List;
  *
  * @param <U> the type of the users.
  * @param <I> the type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class CumulativeILD<U, I, F, V> implements CumulativeMetric<U, I>
 {
@@ -89,7 +101,7 @@ public class CumulativeILD<U, I, F, V> implements CumulativeMetric<U, I>
     }
 
     @Override
-    public void initialize(List<Tuple2<Integer, Integer>> train, boolean notReciprocal)
+    public void initialize(List<FastRating> train, boolean notReciprocal)
     {
 
     }
@@ -105,7 +117,7 @@ public class CumulativeILD<U, I, F, V> implements CumulativeMetric<U, I>
     }
 
     @Override
-    public void update(int uidx, int iidx)
+    public void update(int uidx, int iidx, double value)
     {
         // Check that the input is OK.
         if (uidx < 0 || uidx >= numUsers || iidx < 0 || iidx >= numItems)

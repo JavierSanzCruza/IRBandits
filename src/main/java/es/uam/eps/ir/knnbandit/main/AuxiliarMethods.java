@@ -1,6 +1,9 @@
 package es.uam.eps.ir.knnbandit.main;
 
-import es.uam.eps.ir.knnbandit.recommendation.RecommendationLoop;
+import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
+import es.uam.eps.ir.knnbandit.recommendation.loop.RecommendationLoop;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import es.uam.eps.ir.knnbandit.utils.Rating;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.formats.parsing.Parsers;
@@ -29,10 +32,10 @@ public class AuxiliarMethods
      * @return a list containing the retrieved (uidx, iidx, time) triplets.
      * @throws IOException if something fails while reading the file.
      */
-    public static List<Tuple3<Integer, Integer, Long>> retrievePreviousIterations(String filename) throws IOException
+    public static List<Tuple3<Integer,Integer,Long>> retrievePreviousIterations(String filename) throws IOException
     {
         // Initialize the list
-        List<Tuple3<Integer, Integer, Long>> recovered = new ArrayList<>();
+        List<Tuple3<Integer,Integer,Long>> recovered = new ArrayList<>();
 
         File f = new File(filename);
         if (f.exists() && !f.isDirectory()) // if the file exists, then recover the triplets:
@@ -83,30 +86,31 @@ public class AuxiliarMethods
      * @return a map containing the values of the metrics in certain time points.
      * @throws IOException if something fails while writing.
      */
-    public static <U, I> Map<String, List<Double>> updateWithPrevious(RecommendationLoop<U, I> loop, List<Tuple3<Integer, Integer, Long>> recovered, Writer writer, int interval) throws IOException
+    public static <U, I> Map<String, List<Double>> updateWithPrevious(FastRecommendationLoop<U, I> loop, List<Tuple3<Integer,Integer,Long>> recovered, Writer writer, int interval) throws IOException
     {
-        Set<String> metricNames = loop.getMetricsNames();
+        List<String> metricNames = loop.getMetrics();
         Map<String, List<Double>> metricValues = new HashMap<>();
 
-        for (String name : metricNames)
+        for(String name : metricNames)
         {
             metricValues.put(name, new ArrayList<>());
         }
 
-        for (Tuple3<Integer, Integer, Long> triplet : recovered)
+        for(Tuple3<Integer,Integer,Long> triplet : recovered)
         {
-            int uidx = triplet.v1;
-            int iidx = triplet.v2;
-            loop.update(new Tuple2<>(triplet.v1, triplet.v2));
-            int iter = loop.getCurrentIteration();
-            long time = triplet.v3;
-            Map<String, Double> metricVals = loop.getMetrics();
+            int uidx = triplet.v1();
+            int iidx = triplet.v2();
+            long time = triplet.v3();
 
+            loop.fastUpdate(uidx, iidx);
+            int iter = loop.getCurrentIter();
+
+            Map<String, Double> metricVals = loop.getMetricValues();
             writer.writeLine(iter, uidx, iidx, metricVals, time);
 
-            if (iter % interval == 0)
+            if(iter % interval == 0)
             {
-                for (String name : metricNames)
+                for(String name : metricNames)
                 {
                     double value = metricVals.get(name);
                     metricValues.get(name).add(value);
@@ -128,24 +132,24 @@ public class AuxiliarMethods
      * @param <I>          type of the items.
      * @return the number of iterations for finishing the loop.
      */
-    public static <U, I> int executeRemaining(RecommendationLoop<U, I> loop, Writer writer, int interval, Map<String, List<Double>> metricValues) throws IOException
+    public static <U, I> int executeRemaining(FastRecommendationLoop<U, I> loop, Writer writer, int interval, Map<String, List<Double>> metricValues) throws IOException
     {
-        Set<String> metricNames = loop.getMetricsNames();
+        List<String> metricNames = loop.getMetrics();
 
         // Apply it until the end.
         while (!loop.hasEnded())
         {
             long aa = System.currentTimeMillis();
-            Tuple2<Integer, Integer> tuple = loop.nextIteration();
+            FastRating rating = loop.fastNextIteration();
             long bb = System.currentTimeMillis();
 
-            if(tuple == null) break; // Everything has finished
+            if(rating == null) break; // Everything has finished
 
-            int uidx = tuple.v1;
-            int iidx = tuple.v2;
+            int uidx = rating.uidx();
+            int iidx = rating.iidx();
             long time = bb - aa;
-            int numIter = loop.getCurrentIteration();
-            Map<String, Double> metrics = loop.getMetrics();
+            int numIter = loop.getCurrentIter();
+            Map<String, Double> metrics = loop.getMetricValues();
 
             writer.writeLine(numIter, uidx, iidx, metrics, time);
 
@@ -160,10 +164,10 @@ public class AuxiliarMethods
         }
 
         // Store the value of the last iteration.
-        int numIter = loop.getCurrentIteration();
+        int numIter = loop.getCurrentIter();
         if (numIter % interval != 0)
         {
-            Map<String, Double> metrics = loop.getMetrics();
+            Map<String, Double> metrics = loop.getMetricValues();
             for (String name : metricNames)
             {
                 double value = metrics.get(name);

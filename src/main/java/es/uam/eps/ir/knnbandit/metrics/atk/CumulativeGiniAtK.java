@@ -1,7 +1,15 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.metrics.atk;
 
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex;
-import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
 
@@ -10,6 +18,9 @@ import java.util.List;
  *
  * @param <U> the type of the users.
  * @param <I> the type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class CumulativeGiniAtK<U, I> extends CumulativeMetricAtK<U, I>
 {
@@ -31,7 +42,7 @@ public class CumulativeGiniAtK<U, I> extends CumulativeMetricAtK<U, I>
     }
 
     @Override
-    public void initialize(List<Tuple2<Integer, Integer>> train, boolean notReciprocal)
+    public void initialize(List<FastRating> train, boolean notReciprocal)
     {
 
     }

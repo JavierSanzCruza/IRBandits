@@ -1,19 +1,16 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import es.uam.eps.ir.knnbandit.utils.Rating;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jooq.lambda.tuple.Tuple2;
-import org.jooq.lambda.tuple.Tuple3;
 
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Abstract class for determinin
@@ -25,7 +22,7 @@ public abstract class OfflineDatasetRecommendationLoop<U,I> implements FastRecom
     /**
      * A complete dataset, containing all the necessary data.
      */
-    protected final Dataset<U,I> dataset;
+    protected final GeneralDataset<U,I> dataset;
     /**
      * The interactive recommendation algorithm we are using in this loop
      */
@@ -70,13 +67,18 @@ public abstract class OfflineDatasetRecommendationLoop<U,I> implements FastRecom
     protected int iteration;
 
     /**
+     * The names of the metrics.
+     */
+    protected final List<String> metricNames;
+
+    /**
      * Constructor.
      * @param dataset the dataset containing all the information.
      * @param recommender the interactive recommendation algorithm.
      * @param metrics the set of metrics we want to study.
      * @param endCondition the condition that establishes whether the loop has finished or not.
      */
-    public OfflineDatasetRecommendationLoop(Dataset<U,I> dataset, InteractiveRecommender<U,I> recommender, Map<String, CumulativeMetric<U,I>>metrics, EndCondition endCondition)
+    public OfflineDatasetRecommendationLoop(GeneralDataset<U,I> dataset, InteractiveRecommender<U,I> recommender, Map<String, CumulativeMetric<U,I>>metrics, EndCondition endCondition)
     {
         // Initialize the dataset and the already retrieved data.
         this.dataset = dataset;
@@ -96,7 +98,12 @@ public abstract class OfflineDatasetRecommendationLoop<U,I> implements FastRecom
         this.rng = new Random(rngSeed);
 
         this.availability = new Int2ObjectOpenHashMap<>();
+        this.metricNames = new ArrayList<>(metrics.keySet());
+        Collections.sort(metricNames);
     }
+
+
+   // public OfflineDatasetRecommendationLoop(Dataset<U,I> dataset, InteractiveRecommender<U,I> recommender, Map<String, CumulativeMetric<U,I>> metrics, EndCondition endCondition, int rngSeed)
 
     @Override
     public Pair<Integer> fastNextRecommendation()
@@ -154,22 +161,22 @@ public abstract class OfflineDatasetRecommendationLoop<U,I> implements FastRecom
     }
 
     @Override
-    public Tuple3<Integer, Integer, Double> fastNextIteration()
+    public FastRating fastNextIteration()
     {
         Pair<Integer> rec = this.fastNextRecommendation();
         if(rec == null) return null;
 
         double value = this.fastUpdate(rec.v1(), rec.v2());
         if(Double.isNaN(value)) return null;
-        return new Tuple3<>(rec.v1(), rec.v2(), value);
+        return new FastRating(rec.v1(), rec.v2(), value);
     }
 
     @Override
-    public Tuple3<U, I, Double> nextIteration()
+    public Rating nextIteration()
     {
-        Tuple3<Integer, Integer, Double> next =  this.fastNextIteration();
+        FastRating next =  this.fastNextIteration();
         if(next == null) return null;
-        return new Tuple3<>(dataset.getUserIndex().uidx2user(next.v1), dataset.getItemIndex().iidx2item(next.v2), next.v3);
+        return new Rating<>(dataset.getUserIndex().uidx2user(next.uidx()), dataset.getItemIndex().iidx2item(next.iidx()), next.value());
     }
 
     @Override
@@ -178,4 +185,23 @@ public abstract class OfflineDatasetRecommendationLoop<U,I> implements FastRecom
         return this.fastUpdate(this.dataset.getUserIndex().user2uidx(u), this.dataset.getItemIndex().item2iidx(i));
     }
 
+    @Override
+    public int getCurrentIter()
+    {
+        return this.iteration;
+    }
+
+    @Override
+    public Map<String, Double> getMetricValues()
+    {
+        Map<String, Double> values = new HashMap<>();
+        this.metrics.forEach((name, metric) -> values.put(name, metric.compute()));
+        return values;
+    }
+
+    @Override
+    public List<String> getMetrics()
+    {
+        return this.metricNames;
+    }
 }

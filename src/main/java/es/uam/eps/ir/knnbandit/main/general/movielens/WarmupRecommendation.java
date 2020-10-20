@@ -11,10 +11,11 @@ package es.uam.eps.ir.knnbandit.main.general.movielens;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
-import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.io.Writer;
 import es.uam.eps.ir.knnbandit.main.AuxiliarMethods;
+import es.uam.eps.ir.knnbandit.recommendation.loop.GeneralOfflineDatasetRecommendationLoop;
 import es.uam.eps.ir.knnbandit.warmup.FullWarmup;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -23,7 +24,6 @@ import es.uam.eps.ir.knnbandit.partition.Partition;
 import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
 import es.uam.eps.ir.knnbandit.partition.UniformPartition;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.RecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;
@@ -157,7 +157,7 @@ public class WarmupRecommendation
         UntieRandomNumber.configure(resume, output, k);
 
         // Read the whole ratings:
-        Dataset<Long, Long> dataset = Dataset.load(input, Parsers.lp, Parsers.lp, "::", weightFunction, relevance);
+        GeneralDataset<Long, Long> dataset = GeneralDataset.load(input, Parsers.lp, Parsers.lp, "::", weightFunction, relevance);
         System.out.println(dataset.toString());
 
 
@@ -170,7 +170,7 @@ public class WarmupRecommendation
 
         // Initialize the metrics to compute.
         Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
-        metrics.put("recall", () -> new CumulativeRecall<>(dataset.getPrefData(), dataset.getNumRel(), 0.5));
+        metrics.put("recall", () -> new CumulativeRecall<>(dataset.getNumRel(), 0.5));
         metrics.put("gini", () -> new CumulativeGini<>(dataset.numItems()));
         List<String> metricNames = new ArrayList<>(metrics.keySet());
 
@@ -258,8 +258,8 @@ public class WarmupRecommendation
                     int rngSeed = rngSeedGen.nextSeed();
 
                     // Create the recommendation loop:
-                    RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(dataset.getUserIndex(), dataset.getItemIndex(), dataset.getPrefData(), rec, localMetrics, endcond, rngSeed, false);
-                    loop.init(warmup, false);
+                    GeneralOfflineDatasetRecommendationLoop<Long, Long> loop = new GeneralOfflineDatasetRecommendationLoop<>(dataset, rec, metrics, endcond);
+                    loop.init(warmup);
                     long bbb = System.nanoTime();
                     System.out.println("Algorithm " + name + " for part " + (currentPart + 1) + " /" + numParts + " has been initialized (" + (bbb - aaa) / 1000000.0 + " ms.)");
 

@@ -291,9 +291,9 @@ public class TransposedUpdateablePreferenceData<I, U> implements FastUpdateableP
     }
 
     @Override
-    public void update(I u, U i, double val)
+    public boolean update(I u, U i, double val)
     {
-        this.d.update(i, u, val);
+        return this.d.update(i, u, val);
     }
 
     @Override
@@ -315,14 +315,20 @@ public class TransposedUpdateablePreferenceData<I, U> implements FastUpdateableP
     }
 
     @Override
-    public void updateRating(int uidx, int iidx, double rating)
+    public boolean updateRating(int uidx, int iidx, double rating)
     {
-        this.d.updateRating(iidx, uidx, rating);
+        return this.d.updateRating(iidx, uidx, rating);
     }
 
     @Override
     public void updateDelete(int uidx, int iidx)
     {
         this.d.updateDelete(iidx, uidx);
+    }
+
+    @Override
+    public double updatedValue(double newValue, double oldValue)
+    {
+        return this.d.updatedValue(newValue, oldValue);
     }
 }

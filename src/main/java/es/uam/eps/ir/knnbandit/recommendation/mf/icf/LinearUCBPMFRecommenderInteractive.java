@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.mf.icf;
 
 import cern.colt.matrix.DoubleMatrix1D;
@@ -7,7 +15,6 @@ import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
@@ -22,8 +29,11 @@ import it.unimi.dsi.fastutil.ints.IntList;
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class LinearUCBPMFBanditRecommender<U, I> extends PMFBanditRecommender<U, I>
+public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFRecommender<U, I>
 {
     private final double alpha;
 
@@ -32,7 +42,6 @@ public class LinearUCBPMFBanditRecommender<U, I> extends PMFBanditRecommender<U,
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
-     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
      * @param k         Number of latent factors to use
      * @param stdevP    Prior standard deviation for the user factors.
@@ -41,39 +50,16 @@ public class LinearUCBPMFBanditRecommender<U, I> extends PMFBanditRecommender<U,
      * @param numIter   Number of training iterations.
      * @param alpha     Parameter for indicating the importance of the UCB term.
      */
-    public LinearUCBPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
+    public LinearUCBPMFRecommenderInteractive(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
     {
-        super(uIndex, iIndex, prefData, hasRating, k, stdevP, stdevQ, stdev, numIter);
+        super(uIndex, iIndex, hasRating, k, stdevP, stdevQ, stdev, numIter);
         this.alpha = alpha;
     }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param k             Number of latent factors to use
-     * @param stdevP        Prior standard deviation for the user factors.
-     * @param stdevQ        Prior standard deviation for the item factors.
-     * @param stdev         Prior standard deviation for the ratings.
-     * @param notReciprocal Not reciprocal
-     * @param numIter       Number of training iterations.
-     * @param alpha         Parameter for indicating the importance of the UCB term.
-     */
-    public LinearUCBPMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal, k, stdevP, stdevQ, stdev, numIter);
-        this.alpha = alpha;
-    }
-
 
     @Override
-    public int next(int uidx)
+    public int next(int uidx, IntList availability)
     {
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
@@ -83,7 +69,7 @@ public class LinearUCBPMFBanditRecommender<U, I> extends PMFBanditRecommender<U,
 
         double max = Double.NEGATIVE_INFINITY;
         IntList top = new IntArrayList();
-        for (int iidx : list)
+        for (int iidx : availability)
         {
             DoubleMatrix1D qi = this.Q.viewRow(iidx);
             DoubleMatrix1D aux = new DenseDoubleMatrix1D(this.k);
@@ -126,7 +112,7 @@ public class LinearUCBPMFBanditRecommender<U, I> extends PMFBanditRecommender<U,
 
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
     {
         DoubleMatrix1D qi = this.Q.viewRow(iidx);
         DenseDoubleMatrix2D aux = new DenseDoubleMatrix2D(this.k, this.k);
@@ -156,6 +142,7 @@ public class LinearUCBPMFBanditRecommender<U, I> extends PMFBanditRecommender<U,
         this.P.viewRow(uidx).assign(extraMatrix.viewColumn(k));
         this.stdevP[uidx] = ALG.subMatrix(extraMatrix, 0, k - 1, 0, k - 1);
 
+        this.retrievedData.updateRating(uidx, iidx, value);
         /*DenseDoubleMatrix2D sigmaI = new DenseDoubleMatrix2D(this.k, this.k);
         for (int i = 0; i < k; ++i)
         {

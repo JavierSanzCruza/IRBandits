@@ -6,10 +6,19 @@ import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AdditiveRatingFastUpdateablePreferenceData;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.FastUpdateablePreferenceData;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jooq.lambda.tuple.Tuple3;
+
+import java.util.stream.Stream;
 
 /**
  * Interactive contact recommendation algorithm based on the combination of probabilistic
@@ -20,7 +29,7 @@ import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
  * @param <U> Type of the users.
  * @param <I> Type of the items.
  */
-public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<U, I>
+public abstract class InteractivePMFRecommender<U, I> extends InteractiveRecommender<U, I>
 {
     /**
      * An algebra to perform matrix operations.
@@ -71,13 +80,17 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
      * Standard deviation matrix for the item factors.
      */
     protected DoubleMatrix2D[] stdevQ;
+    /**
+     * The current rating matrix.
+     */
+    protected FastUpdateablePreferenceData<U,I> retrievedData;
+
 
     /**
      * Constructor.
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
-     * @param prefData  Preference data.
      * @param hasRating True if we must ignore unknown items when updating.
      * @param k         Number of latent factors to use
      * @param stdevP    Prior standard deviation for the user factors.
@@ -85,9 +98,9 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
      * @param stdev     Prior standard deviation for the ratings.
      * @param numIter   Number of training iterations.
      */
-    public PMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter)
+    public InteractivePMFRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter)
     {
-        super(uIndex, iIndex, prefData, hasRating);
+        super(uIndex, iIndex, hasRating);
 
         this.stdev = stdev;
         this.lambdaP = stdevP / stdev;
@@ -97,60 +110,31 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
 
         this.k = k;
 
-        //this.P = new DenseDoubleMatrix2D(uIndex.numUsers(), k);
-        //this.Q = new DenseDoubleMatrix2D(iIndex.numItems(), k);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param k             Number of latent factors to use
-     * @param stdevP        Prior standard deviation for the user factors.
-     * @param stdevQ        Prior standard deviation for the item factors.
-     * @param stdev         Prior standard deviation for the ratings.
-     * @param notReciprocal Not reciprocal
-     * @param numIter       Number of training iterations.
-     */
-    public PMFBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int k, double stdevP, double stdevQ, double stdev, int numIter)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
-
-        this.stdev = stdev * stdev;
-        this.lambdaP = stdevP * stdevP / this.stdev;
-        this.lambdaQ = stdevQ * stdevQ / this.stdev;
-
-        this.numIter = numIter;
-
-        this.k = k;
+        this.retrievedData = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
 
         //this.P = new DenseDoubleMatrix2D(uIndex.numUsers(), k);
         //this.Q = new DenseDoubleMatrix2D(iIndex.numItems(), k);
     }
-    // First, we factorize the data. The algorithm evolves as follows: first, we evaluate over
-
 
     @Override
-    protected void initializeMethod()
+    public void init()
     {
-        // First, we initialize the matrices
+        // First, we initialize the values.
         this.P = new DenseDoubleMatrix2D(uIndex.numUsers(), k);
 
-        // It is enough to initialize the Q matrix with random values.
+        // Then, we initialize the Q matrix with random values.
         this.Q = new DenseDoubleMatrix2D(iIndex.numItems(), k);
-        this.Q.assign(x -> Math.sqrt(1.0 / k) * Math.random());
+        this.Q.assign(x -> Math.sqrt(1.0 / k) + Math.random());
 
-        // Then, we declare the standard deviation matrices for the users.
+        // Then, we declare standard deviation matrices for the users.
         this.stdevP = new DenseDoubleMatrix2D[uIndex.numUsers()];
         for (int i = 0; i < numUsers(); ++i)
         {
             stdevP[i] = new DenseDoubleMatrix2D(k, k);
-            for (int j = 0; j < k; j++)
+            for (int j = 0; j < k; ++j)
             {
                 stdevP[i].setQuick(j, j, this.lambdaP / this.stdev);
+
             }
         }
 
@@ -165,7 +149,18 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
             }
         }
 
-        if (this.trainData.numPreferences() > 0)
+        this.retrievedData.clear();
+        this.set_min_P();
+        this.set_min_Q();
+    }
+
+
+    @Override
+    public void init(Stream<FastRating> values)
+    {
+        this.init();
+        values.forEach(t -> this.retrievedData.updateRating(t.uidx(), t.iidx(), t.value()));
+        if(this.retrievedData.numPreferences() > 0)
         {
             // We finally apply ALS for training the algorithm.
             for (int i = 0; i < this.numIter; ++i)
@@ -174,12 +169,23 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
                 set_min_Q();
             }
         }
-        else // Initialize the matrices...
-        {
-            set_min_P();
-            set_min_Q();
-        }
     }
+
+    /*@Override
+    public void init(FastPreferenceData<U, I> prefData)
+    {
+        this.init();
+        prefData.getUidxWithPreferences().forEach(uidx -> prefData.getUidxPreferences(uidx).forEach(i -> this.retrievedData.updateRating(uidx, i.v1, i.v2)));
+        if(this.retrievedData.numPreferences() > 0)
+        {
+            // We finally apply ALS for training the algorithm.
+            for (int i = 0; i < this.numIter; ++i)
+            {
+                set_min_P();
+                set_min_Q();
+            }
+        }
+    }*/
 
     /**
      * Fixing the item feature vectors, train the user feature vectors using alternate
@@ -189,7 +195,7 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
     {
         // First, find q_i * q_i^t
         DenseDoubleMatrix2D[] A2P = new DenseDoubleMatrix2D[this.numItems()];
-        this.trainData.getIidxWithPreferences().parallel().forEach(iidx ->
+        this.retrievedData.getIidxWithPreferences().parallel().forEach(iidx ->
         {
             A2P[iidx] = new DenseDoubleMatrix2D(this.k, this.k);
             DoubleMatrix1D qi = this.Q.viewRow(iidx);
@@ -199,7 +205,7 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
         DenseDoubleMatrix2D[] As = new DenseDoubleMatrix2D[this.numUsers()];
         DenseDoubleMatrix1D[] bs = new DenseDoubleMatrix1D[this.numUsers()];
 
-        this.trainData.getAllUidx().parallel().forEach(uidx ->
+        this.retrievedData.getAllUidx().parallel().forEach(uidx ->
        {
            // For user u, find the A and b matrices.
            DenseDoubleMatrix2D A = new DenseDoubleMatrix2D(this.k, this.k);
@@ -212,9 +218,9 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
 
            // If no information is found, A = lambdaP*I, b = 0.
            // Otherwise... A = lambdaP*I + sum_i q_i q_i^T
-           if (this.trainData.numItems(uidx) > 0)
+           if (this.retrievedData.numItems(uidx) > 0)
            {
-               this.trainData.getUidxPreferences(uidx).forEach(iv ->
+               this.retrievedData.getUidxPreferences(uidx).forEach(iv ->
                {
                    int iidx = iv.v1;
                    double rui = iv.v2;
@@ -251,18 +257,22 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
         this.bs = bs;
     }
 
+    /**
+     * Fixing the user feature vectors, train the item feature vectors using alternate
+     * least squares (ALS).
+     */
     protected final void set_min_Q()
     {
         // First, find p_u * p_u^t
-        DenseDoubleMatrix2D[] A2P = new DenseDoubleMatrix2D[this.numUsers()];
-        prefData.getUidxWithPreferences().parallel().forEach(uidx ->
+        DenseDoubleMatrix2D[] A2Q = new DenseDoubleMatrix2D[this.numUsers()];
+        retrievedData.getUidxWithPreferences().parallel().forEach(uidx ->
         {
-            A2P[uidx] = new DenseDoubleMatrix2D(k, k);
+            A2Q[uidx] = new DenseDoubleMatrix2D(k, k);
             DoubleMatrix1D pu = P.viewRow(uidx);
-            ALG.multOuter(pu, pu, A2P[uidx]);
+            ALG.multOuter(pu, pu, A2Q[uidx]);
         });
 
-        trainData.getAllIidx().parallel().forEach(iidx ->
+        retrievedData.getAllIidx().parallel().forEach(iidx ->
         {
             // For user u, find the A and b matrices.
             DenseDoubleMatrix2D A = new DenseDoubleMatrix2D(this.k, this.k);
@@ -275,14 +285,14 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
 
             // If no information is found, A = lambdaP*I, b = 0.
             // Otherwise... A = lambdaP*I + sum_i q_i q_i^T
-            if (trainData.numUsers(iidx) > 0)
+            if (retrievedData.numUsers(iidx) > 0)
             {
-                trainData.getIidxPreferences(iidx).forEach(iv ->
+                retrievedData.getIidxPreferences(iidx).forEach(iv ->
                 {
                     int uidx = iv.v1;
                     double rui = iv.v2;
 
-                    A.assign(A2P[uidx], Double::sum);
+                    A.assign(A2Q[uidx], Double::sum);
                     b.assign(P.viewRow(uidx), (x, y) -> x + rui * y);
                 });
             }
@@ -303,5 +313,11 @@ public abstract class PMFBanditRecommender<U, I> extends InteractiveRecommender<
             lu.solve(sigmaI);
             stdevQ[iidx] = sigmaI;
         });
+    }
+
+    @Override
+    public int next(int uidx, IntList available)
+    {
+        return 0;
     }
 }

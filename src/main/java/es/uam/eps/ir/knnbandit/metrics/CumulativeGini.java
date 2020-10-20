@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.metrics;
 
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -40,7 +40,7 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
     }
 
     @Override
-    public void initialize(List<Tuple2<Integer, Integer>> train, boolean notReciprocal)
+    public void initialize(List<FastRating> train, boolean notReciprocal)
     {
         this.reset();
     }
@@ -52,7 +52,7 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
     }
 
     @Override
-    public void update(int uidx, int iidx) {this.gini.updateFrequency(iidx);}
+    public void update(int uidx, int iidx, double value) {this.gini.updateFrequency(iidx);}
 
     @Override
     public void reset()
