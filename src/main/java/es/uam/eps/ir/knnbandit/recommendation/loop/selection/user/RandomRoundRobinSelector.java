@@ -21,11 +21,24 @@ public class RandomRoundRobinSelector extends FastUserSelector
      * The current user to recommend items to
      */
     private int index;
-
+    /**
+     * The number of users in the list in the previous iteration.
+     */
     private int lastNumUsers;
+    /**
+     * The previous index value. It is used for determining whether to reshuffle or not.
+     */
     private int previousIndex;
+
+    /**
+     * True if the index has to be reshuffled, false otherwise
+     */
     private boolean reshuffle;
 
+    /**
+     * Constructor.
+     * @param rngSeed the seed for the random number generator.
+     */
     public RandomRoundRobinSelector(int rngSeed)
     {
         super(rngSeed);

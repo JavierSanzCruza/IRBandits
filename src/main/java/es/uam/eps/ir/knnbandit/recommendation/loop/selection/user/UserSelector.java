@@ -16,7 +16,22 @@ package es.uam.eps.ir.knnbandit.recommendation.loop.selection.user;
  */
 public interface UserSelector
 {
+    /**
+     * Selects the index of the user list for the next user.
+     * @param numUsers the number of users.
+     * @param lastRemovedIndex the index of the last removed user in the list.
+     * @return the next index if possible, -1 otherwise.
+     */
     int next(int numUsers, int lastRemovedIndex);
+
+    /**
+     * Indicates if the list of target users has to be randomly shuffled.
+     * @return true if it has to be, false otherwise.
+     */
     boolean reshuffle();
+
+    /**
+     * Initializes the values for the user selection strategy to work.
+     */
     void init();
 }

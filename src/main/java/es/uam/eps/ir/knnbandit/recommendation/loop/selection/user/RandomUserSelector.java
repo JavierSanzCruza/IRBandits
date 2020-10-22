@@ -17,6 +17,10 @@ package es.uam.eps.ir.knnbandit.recommendation.loop.selection.user;
 public class RandomUserSelector extends FastUserSelector
 {
 
+    /**
+     * Constructor.
+     * @param rngSeed a random seed
+     */
     public RandomUserSelector(int rngSeed)
     {
         super(rngSeed);

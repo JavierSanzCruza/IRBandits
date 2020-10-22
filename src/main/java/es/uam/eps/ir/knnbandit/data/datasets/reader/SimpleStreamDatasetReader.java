@@ -6,7 +6,7 @@ import org.ranksys.formats.parsing.Parsers;
 import java.util.Collection;
 import java.util.HashSet;
 
-public abstract class SimpleStreamDatasetReader<U,I> extends StreamDatasetReader<U,I>
+public class SimpleStreamDatasetReader<U,I> extends StreamDatasetReader<U,I>
 {
     public SimpleStreamDatasetReader(String file, Parser<U> uParser, Parser<I> iParser, String separator)
     {
@@ -15,9 +15,14 @@ public abstract class SimpleStreamDatasetReader<U,I> extends StreamDatasetReader
 
     protected LogRegister<U,I> processRegister(String line)
     {
-        LogRegister<U,I> register = processRegister(line);
+        LogRegister<U,I> register;
         // Process the register:
         String[] split = line.split(separator);
+        if(split.length < 3)
+        {
+            return null;
+        }
+
         U u = uParser.parse(split[0]);
         I i = iParser.parse(split[1]);
         double value = Parsers.dp.parse(split[2]);

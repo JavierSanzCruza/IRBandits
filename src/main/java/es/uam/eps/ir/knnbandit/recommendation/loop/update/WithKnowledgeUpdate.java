@@ -9,7 +9,9 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop.update;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.datasets.DatasetWithKnowledge;
 import es.uam.eps.ir.knnbandit.data.datasets.OfflineDataset;
+import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.loop.selection.Selection;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
@@ -20,23 +22,40 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * General recommendation update. It assumes that, if we do receive the (uidx, iidx) value,
- * we take its payoff, and use it for updating both recommenders and metrics.
+ * Class that allows the selection of a subset of ratings depending
+ * on whether the users knew the items or not before the recommendation
+ * was done.
  *
  * @param <U> type of the users.
  * @param <I> type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class GeneralUpdate<U,I> implements UpdateStrategy<U,I>
+public class WithKnowledgeUpdate<U,I> implements UpdateStrategy<U,I>
 {
     /**
-     * The offline dataset.
+     * A dataset containing the information we are considering.
      */
     private OfflineDataset<U,I> dataset;
+    /**
+     * The selection of ratings we are going to use.
+     */
+    private final KnowledgeDataUse dataUse;
+
+    /**
+     * Constructor.
+     * @param dataUse a selection of the subset of ratings we are going to use.
+     */
+    public WithKnowledgeUpdate(KnowledgeDataUse dataUse)
+    {
+        this.dataUse = dataUse;
+    }
 
     @Override
     public void init(Dataset<U, I> dataset)
     {
-        this.dataset = ((OfflineDataset<U,I>) dataset);
+        this.dataset = ((DatasetWithKnowledge<U,I>) dataset).getDataset(dataUse);
     }
 
     @Override

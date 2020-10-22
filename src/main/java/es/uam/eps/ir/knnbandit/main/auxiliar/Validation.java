@@ -1,22 +1,13 @@
-/*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
- */
-package es.uam.eps.ir.knnbandit.main.contact;
+package es.uam.eps.ir.knnbandit.main.auxiliar;
 
-import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
-import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
-import es.uam.eps.ir.knnbandit.io.Writer;
-import es.uam.eps.ir.knnbandit.main.AuxiliarMethods;
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.main.Executor;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
+import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
+import es.uam.eps.ir.knnbandit.recommendation.loop.GeneralOfflineDatasetRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;
@@ -24,7 +15,6 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.end.PercentagePositiveRatings
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
 import org.jooq.lambda.tuple.Tuple2;
-import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
@@ -32,14 +22,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-/**
- * Class for executing contact recommender systems in simulated interactive loops (with training)
- *
- * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
- * @author Pablo Castells (pablo.castells@uam.es)
- */
-public class Validation
+public abstract class Validation<U,I>
 {
+
     /**
      * @param args Execution arguments
      *             <ol>
@@ -48,28 +33,27 @@ public class Validation
      *                  <li><b>Output:</b> Folder in which to store the output</li>
      *                  <li><b>Num. Iter:</b> Number of iterations for the validation. 0 if we want to run out of recommendable items</li>
      *                  <li><b>Resume:</b> True if we want to resume previous executions, false to overwrite them</li>
-     *                  <li><b>Directed:</b>True if the graph is directed, false otherwise</li>
-     *                  <li><b>Not reciprocal:</b>True if we want to recommend reciprocal edges, false otherwise</li>
+     *                  <li><b>Threshold:</b> Relevance threshold</li>
+     *                  <li><b>Use ratings:</b>True if we want to take the true rating value, false if we want to binarize them</li>
      *             </ol>
      *             Also, as optional arguments, we have one:
      *             <ol>
      *                  <li><b>-k value :</b> The number of times each individual approach has to be executed (by default: 1)</li>
      *             </ol>
      */
-    public static void main(String[] args) throws IOException, UnconfiguredException
+    public void validate(String algorithms, String ) throws IOException, UnconfiguredException
     {
         if (args.length < 7)
         {
             System.err.println("ERROR: Invalid arguments");
             System.err.println("Usage:");
-            System.err.println("Compulsory arguments:");
             System.err.println("\tAlgorithms: recommender systems list");
             System.err.println("\tInput: preference data input");
             System.err.println("\tOutput: folder in which to store the output");
             System.err.println("\tNum. Iter.: number of iterations. 0 if we want to run until we run out of recommendable items");
             System.err.println("\tresume: true if we want to resume previous executions, false if we want to overwrite");
-            System.err.println("\tDirected: true if the graph is directed, false otherwise");
-            System.err.println("\tNot Reciprocal: true if we want to recommend reciprocal edges, false otherwise");
+            System.err.println("\tthreshold: true if the graph is directed, false otherwise");
+            System.err.println("\tuse ratings: true if we want to recommend reciprocal edges, false otherwise");
             System.err.println("Optional arguments:");
             System.err.println("\t-k value : The number of times each individual approach has to be executed (by default: 1)");
             return;
@@ -89,8 +73,8 @@ public class Validation
         boolean resume = args[4].equalsIgnoreCase("true");
 
         // General recommendation specific arguments
-        boolean directed = args[5].equalsIgnoreCase("true");
-        boolean notReciprocal = args[6].equalsIgnoreCase("true");
+        double threshold = Parsers.dp.parse(args[5]);
+        boolean useRatings = args[6].equalsIgnoreCase("true");
 
         int auxK = 1;
 
@@ -107,29 +91,26 @@ public class Validation
 
         System.out.println("Read parameters");
 
-        // Configure the random number generator for ties.
-        UntieRandomNumber.configure(resume, output, k);
+        Dataset<U,I> dataset = datasetSelector.readDataset();
+        Map<String, Supplier<CumulativeMetric<U,I>>> metrics = new HashMap<>();
+        metrics.put("recall", () -> new CumulativeRecall<>(dataset))
 
-        // Read the whole ratings:
-        ContactDataset<Long> dataset = ContactDataset.load(input, directed, Parsers.lp, "\t");
-        System.out.println("Read the whole data");
-        System.out.println(dataset.toString());
 
 
         int interval = Integer.MAX_VALUE;
 
         // Initialize the metrics to compute.
-        Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
-        metrics.put("recall", () -> new CumulativeRecall<>(dataset.getPrefData(), dataset.getNumRel(notReciprocal), 0.5));
+        Map<String, Supplier<CumulativeMetric<Long, String>>> metrics = new HashMap<>();
+        metrics.put("recall", () -> new CumulativeRecall<>(dataset.getNumRel(), 0.5));
         List<String> metricNames = new ArrayList<>(metrics.keySet());
 
         // Select the algorithms
         // Select the algorithms
         long a = System.currentTimeMillis();
-        AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
-        algorithmSelector.configure(dataset.getUserIndex(), dataset.getItemIndex(), dataset.getPrefData(), 0.5, notReciprocal);
+        AlgorithmSelector<Long, String> algorithmSelector = new AlgorithmSelector<>();
+        algorithmSelector.configure(realThreshold);
         algorithmSelector.addFile(algorithms);
-        Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
+        Map<String, InteractiveRecommenderSupplier<Long, String>> recs = algorithmSelector.getRecs();
         long b = System.currentTimeMillis();
 
         System.out.println("Recommenders prepared (" + (b - a) + " ms.)");
@@ -153,11 +134,11 @@ public class Validation
         recs.entrySet().parallelStream().forEach((entry) ->
         {
             String name = entry.getKey();
-            InteractiveRecommender<Long, Long> rec = entry.getValue();
+            InteractiveRecommenderSupplier<Long, String> rec = entry.getValue();
 
             UntieRandomNumberReader rngSeedGen = new UntieRandomNumberReader();
             // And the metrics
-            Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
+            Map<String, CumulativeMetric<Long, String>> localMetrics = new HashMap<>();
             metricNames.forEach(metricName -> localMetrics.put(metricName, metrics.get(metricName).get()));
 
             // Configure and initialize the recommendation loop:
@@ -173,57 +154,33 @@ public class Validation
             for (int i = 0; i < k; ++i)
             {
                 int rngSeed = rngSeedGen.nextSeed();
-
-                // Create the recommendation loop:
-                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(dataset.getUserIndex(), dataset.getItemIndex(), dataset.getPrefData(), rec, localMetrics, endcond, rngSeed, notReciprocal);
-                loop.init(true);
                 long bbb = System.nanoTime();
-                System.out.println("Algorithm " + name + " has been initialized (" + (bbb - aaa) / 1000000.0 + " ms.)");
-
-                Map<String, List<Double>> metricValues = new HashMap<>();
-                metricNames.forEach(metricName -> metricValues.put(metricName, new ArrayList<>()));
-
-                try
+                System.out.println("Algorithm " + name + " (" + i + ") " + " starting (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                // Create the recommendation loop: in this case, a general offline dataset loop
+                FastRecommendationLoop<Long, String> loop = new GeneralOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endcond, rngSeed);
+                Executor<Long, String> executor = new Executor<>();
+                String fileName = outputFolder + name + "_" + i + ".txt";
+                int currentIter = executor.executeWithoutWarmup(loop, fileName, resume, interval);
+                if(currentIter > 0)
                 {
-                    List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
-                    String fileName = outputFolder + name + "_" + i + ".txt";
-                    if (resume)
+                    Map<String, Double> metricValues = loop.getMetricValues();
+                    for (String metric : metricNames)
                     {
-                        list = AuxiliarMethods.retrievePreviousIterations(fileName);
-                    }
-
-                    Writer writer = new Writer(outputFolder + name + "_" + i + ".txt", metricNames);
-                    writer.writeHeader();
-                    if (resume && !list.isEmpty())
-                    {
-                        metricValues.putAll(AuxiliarMethods.updateWithPrevious(loop, list, writer, interval));
-                    }
-
-                    int currentIter = AuxiliarMethods.executeRemaining(loop, writer, interval, metricValues);
-                    maxIter = maxIter + (currentIter - maxIter) / (i + 1.0);
-                    writer.close();
-                }
-                catch (IOException ioe)
-                {
-                    System.err.println("ERROR: Some error occurred when executing algorithm " + name + " (" + i + ") ");
-                }
-
-                for (String metric : metricNames)
-                {
-                    List<Double> values = metricValues.get(metric);
-                    int auxSize = values.size();
-                    if (i == 0)
-                    {
-                        averagedLastIteration.put(metric, values.get(auxSize - 1));
-                    }
-                    else
-                    {
-                        double lastIter = averagedLastIteration.get(metric);
-                        double newValue = lastIter + (values.get(auxSize - 1) - lastIter) / (i + 1.0);
-                        averagedLastIteration.put(metric, newValue);
+                        double value = metricValues.get(metric);
+                        if (i == 0)
+                        {
+                            averagedLastIteration.put(metric, value);
+                        }
+                        else
+                        {
+                            double lastIter = averagedLastIteration.get(metric);
+                            double newValue = lastIter + (value - lastIter) / (i + 1.0);
+                            averagedLastIteration.put(metric, newValue);
+                        }
                     }
                 }
 
+                bbb = System.nanoTime();
                 System.out.println("Algorithm " + name + " (" + i + ") " + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
             }
 
@@ -257,4 +214,8 @@ public class Validation
             }
         }
     }
+
+    protected abstract Dataset<U,I> getDataset();
+    protected abstract FastRecommendationLoop<U, I> getRecommendationLoop(InteractiveRecommenderSupplier<U,I> rec, EndCondition endCond, int rngSeed);
+    protected abstract Map<String, Supplier<CumulativeMetric<U,I>>> getMetrics();
 }

@@ -298,4 +298,16 @@ public class GeneralOfflineDataset<U,I> implements OfflineDataset<U,I>
         SimpleFastPreferenceData<U, I> prefData = SimpleFastPreferenceData.load(triplets.stream(), userIndex, itemIndex);
         return new GeneralOfflineDataset<>(userIndex, itemIndex, prefData, numrel, dataset.relevance);
     }
+
+    @Override
+    public int addItem(I i)
+    {
+        return 0;
+    }
+
+    @Override
+    public int addUser(U u)
+    {
+        return 0;
+    }
 }

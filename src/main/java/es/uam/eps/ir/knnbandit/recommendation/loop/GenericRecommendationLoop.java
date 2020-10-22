@@ -33,13 +33,37 @@ import java.util.*;
  */
 public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,I>
 {
+    /**
+     * A selection mechanism for deciding the next target user and candidate item set.
+     */
     private final Selection<U,I> selection;
+    /**
+     * The interactive recommender for the loop.
+     */
     private final InteractiveRecommender<U,I> recommender;
+    /**
+     * The dataset including the necessary information.
+     */
     private final Dataset<U,I> dataset;
+    /**
+     * Determines whether the loop has finished or not.
+     */
     private final EndCondition endCond;
+    /**
+     * Establishes the values we have to use for updating the recommender/metrics/etc.
+     */
     private final UpdateStrategy<U,I> update;
+    /**
+     * The metrics to compute.
+     */
     private final Map<String, CumulativeMetric<U,I>> metrics;
+    /**
+     * The number of iterations.
+     */
     private int numIter;
+    /**
+     * True if the loop has ended, false otherwise.
+     */
     private boolean hasEnded;
 
     /**

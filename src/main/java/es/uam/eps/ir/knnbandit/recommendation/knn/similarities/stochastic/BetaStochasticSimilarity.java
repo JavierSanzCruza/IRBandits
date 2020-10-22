@@ -93,9 +93,7 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
                 auxMap.defaultReturnValue(0.0);
 
                 trainData.getIidxPreferences(iidx.v1).filter(vidx -> vidx.v2 > 0.0).forEach(vidx ->
-                {
-                    ((Int2DoubleOpenHashMap) this.sims.get(uidx)).addTo(vidx.v1,iidx.v2*vidx.v2);
-                });
+                    ((Int2DoubleOpenHashMap) this.sims.get(uidx)).addTo(vidx.v1,iidx.v2*vidx.v2));
 
                 return iidx.v2;
             }).sum();
@@ -277,7 +275,4 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
             }
         }
     }
-
-
-
 }

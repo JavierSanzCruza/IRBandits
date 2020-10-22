@@ -9,18 +9,20 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
-import es.uam.eps.ir.knnbandit.data.datasets.GeneralOfflineDataset;
+import es.uam.eps.ir.knnbandit.data.datasets.DatasetWithKnowledge;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
+import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.selection.NonSequentialSelection;
 import es.uam.eps.ir.knnbandit.recommendation.loop.selection.user.RandomUserSelector;
-import es.uam.eps.ir.knnbandit.recommendation.loop.update.GeneralUpdate;
+import es.uam.eps.ir.knnbandit.recommendation.loop.update.WithKnowledgeUpdate;
 
 import java.util.Map;
 
 /**
- * An interactive recommendation loop for non sequential, general domain datasets.
+ * An interactive recommendation loop for non sequential, general domain datasets with information
+ * about whether the user knew the items before he provided them a rating.
  * Each iteration, randomly selects a user and recommends an item that she has not rated (been recommended)
  * before.
  *
@@ -30,7 +32,7 @@ import java.util.Map;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class GeneralOfflineDatasetRecommendationLoop<U,I> extends GenericRecommendationLoop<U,I>
+public class OfflineDatasetWithKnowledgeRecommendationLoop<U,I> extends GenericRecommendationLoop<U,I>
 {
     /**
      * Constructor.
@@ -39,10 +41,11 @@ public class GeneralOfflineDatasetRecommendationLoop<U,I> extends GenericRecomme
      * @param recommender  the interactive recommendation algorithm.
      * @param metrics      the set of metrics we want to study.
      * @param endCondition the condition that establishes whether the loop has finished or not.
-     * @param rngSeed      a random number generator seed.
+     * @param dataUse      a selection of the subset of the ratings we shall use for updates.
+     * @param rngSeed      a seed for a random number generator
      */
-    public GeneralOfflineDatasetRecommendationLoop(GeneralOfflineDataset<U, I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, int rngSeed)
+    public OfflineDatasetWithKnowledgeRecommendationLoop(DatasetWithKnowledge<U, I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, KnowledgeDataUse dataUse, int rngSeed)
     {
-        super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed)), recommender, new GeneralUpdate<>(), endCondition, metrics);
+        super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed)), recommender, new WithKnowledgeUpdate<>(dataUse), endCondition, metrics);
     }
 }

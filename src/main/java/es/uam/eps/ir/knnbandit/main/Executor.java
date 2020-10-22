@@ -3,6 +3,7 @@ package es.uam.eps.ir.knnbandit.main;
 import es.uam.eps.ir.knnbandit.io.Writer;
 import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.utils.Pair;
+import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.formats.parsing.Parsers;
 
@@ -13,12 +14,89 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Auxiliar methods for executing bandit algorithms.
+ * Executes a recommendation loop, and writes its values into a file:
+ *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class AuxiliarMethods
+public class Executor<U,I>
 {
+    /**
+     * Executes the full recommendation loop for a single algorithm.
+     * @param loop the recommendation loop.
+     * @param file the file in which we want to store everything.
+     * @param resume true if we want to resume previous executions, false otherwise.
+     * @param interval the pace at which we want to write the previous execution values.
+     * @return the final number of iterations.
+     */
+    public int executeWithoutWarmup(FastRecommendationLoop<U,I> loop, String file, boolean resume, int interval)
+    {
+        // Initialize it:
+        loop.init();
+        return execute(loop, file, resume, interval);
+    }
+
+    /**
+     * Executes the full recommendation loop for a single algorithm.
+     * @param loop the recommendation loop.
+     * @param file the file in which we want to store everything.
+     * @param resume true if we want to resume previous executions, false otherwise.
+     * @param interval the pace at which we want to write the previous execution values.
+     * @return the final number of iterations.
+     */
+    public int executeWithWarmup(FastRecommendationLoop<U,I> loop, String file, boolean resume, int interval, Warmup warmup)
+    {
+        // Initialize it:
+        loop.init(warmup);
+        return execute(loop, file, resume, interval);
+    }
+
+    /**
+     * Executes the full recommendation loop for a single algorithm.
+     * @param loop the recommendation loop.
+     * @param file the file in which we want to store everything.
+     * @param resume true if we want to resume previous executions, false otherwise.
+     * @param interval the pace at which we want to write the previous execution values.
+     * @return the final number of iterations.
+     */
+    private int execute(FastRecommendationLoop<U, I> loop, String file, boolean resume, int interval)
+    {
+        Map<String, List<Double>> metricValues = new HashMap<>();
+        loop.getMetrics().forEach(metricName -> metricValues.put(metricName, new ArrayList<>()));
+
+        try
+        {
+            // Step 1: retrieve the previously computed iterations for this algorithm:
+            List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
+            if (resume)
+            {
+                list = this.retrievePreviousIterations(file +  ".txt");
+            }
+
+            Writer writer = new Writer(file, loop.getMetrics());
+            writer.writeHeader();
+
+            // Step 2: if there are any, we update the loop with such values.
+            if (resume && !list.isEmpty())
+            {
+                metricValues.putAll(this.updateWithPrevious(loop, list, writer, interval));
+            }
+
+            // Step 3: until the loop ends, we
+            int currentIter = this.executeRemaining(loop, writer, interval, metricValues);
+            writer.close();
+            return currentIter;
+        }
+        catch (IOException ioe)
+        {
+            System.err.println("ERROR: Some error occurred when executing algorithm " + file);
+            return -1;
+        }
+    }
+
     /**
      * Retrieves previous iterations of an execution.
      *
@@ -26,7 +104,7 @@ public class AuxiliarMethods
      * @return a list containing the retrieved (uidx, iidx, time) triplets.
      * @throws IOException if something fails while reading the file.
      */
-    public static List<Tuple3<Integer,Integer,Long>> retrievePreviousIterations(String filename) throws IOException
+    public List<Tuple3<Integer,Integer,Long>> retrievePreviousIterations(String filename) throws IOException
     {
         // Initialize the list
         List<Tuple3<Integer,Integer,Long>> recovered = new ArrayList<>();
@@ -80,7 +158,7 @@ public class AuxiliarMethods
      * @return a map containing the values of the metrics in certain time points.
      * @throws IOException if something fails while writing.
      */
-    public static <U, I> Map<String, List<Double>> updateWithPrevious(FastRecommendationLoop<U, I> loop, List<Tuple3<Integer,Integer,Long>> recovered, Writer writer, int interval) throws IOException
+    public Map<String, List<Double>> updateWithPrevious(FastRecommendationLoop<U, I> loop, List<Tuple3<Integer,Integer,Long>> recovered, Writer writer, int interval) throws IOException
     {
         List<String> metricNames = loop.getMetrics();
         Map<String, List<Double>> metricValues = new HashMap<>();
@@ -126,7 +204,7 @@ public class AuxiliarMethods
      * @param <I>          type of the items.
      * @return the number of iterations for finishing the loop.
      */
-    public static <U, I> int executeRemaining(FastRecommendationLoop<U, I> loop, Writer writer, int interval, Map<String, List<Double>> metricValues) throws IOException
+    public int executeRemaining(FastRecommendationLoop<U, I> loop, Writer writer, int interval, Map<String, List<Double>> metricValues) throws IOException
     {
         List<String> metricNames = loop.getMetrics();
 

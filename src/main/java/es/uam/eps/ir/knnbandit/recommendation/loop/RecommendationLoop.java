@@ -9,10 +9,8 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
-import es.uam.eps.ir.knnbandit.utils.Rating;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import org.jooq.lambda.tuple.Tuple2;
-import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +19,9 @@ import java.util.Map;
  * A general interface for defining interactive recommendation loops.
  * @param <U> type of the users.
  * @param <I> type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public interface RecommendationLoop<U,I>
 {

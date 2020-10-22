@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
+ * Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
  * de Madrid, http://ir.ii.uam.es.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -11,12 +11,13 @@ package es.uam.eps.ir.knnbandit.main.general.movielens;
 
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
-import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
-import es.uam.eps.ir.knnbandit.io.Writer;
-import es.uam.eps.ir.knnbandit.main.AuxiliarMethods;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralOfflineDataset;
+import es.uam.eps.ir.knnbandit.main.Executor;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
+import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
+import es.uam.eps.ir.knnbandit.recommendation.loop.GeneralOfflineDatasetRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NoLimitsEndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.NumIterEndCondition;
@@ -24,7 +25,6 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.end.PercentagePositiveRatings
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
 import org.jooq.lambda.tuple.Tuple2;
-import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
@@ -117,28 +117,26 @@ public class Validation
         UntieRandomNumber.configure(resume, output, k);
 
         // Read the whole ratings:
-        GeneralDataset<Long, Long> dataset = GeneralDataset.load(input, Parsers.lp, Parsers.lp, "::", weightFunction, relevance);
+        GeneralOfflineDataset<Long, Long> dataset = GeneralOfflineDataset.load(input, Parsers.lp, Parsers.lp, "::", weightFunction, relevance);
         System.out.println("Read the whole data");
         System.out.println(dataset.toString());
 
-
-        int interval = Integer.MAX_VALUE;
-
-        // Initialize the metrics to compute.
+        // Then, initialize the metrics to compute:
         Map<String, Supplier<CumulativeMetric<Long, Long>>> metrics = new HashMap<>();
-        metrics.put("recall", () -> new CumulativeRecall<>(dataset.getPrefData(), dataset.getNumRel(), 0.5));
+        metrics.put("recall", () -> new CumulativeRecall<>(dataset.getNumRel(), 0.5));
         List<String> metricNames = new ArrayList<>(metrics.keySet());
 
-        // Select the algorithms
-        // Select the algorithms
+        // Select the algorithms:
         long a = System.currentTimeMillis();
         AlgorithmSelector<Long, Long> algorithmSelector = new AlgorithmSelector<>();
-        algorithmSelector.configure(dataset.getUserIndex(), dataset.getItemIndex(), dataset.getPrefData(), realThreshold);
+        algorithmSelector.configure(realThreshold);
         algorithmSelector.addFile(algorithms);
-        Map<String, InteractiveRecommender<Long, Long>> recs = algorithmSelector.getRecs();
+        Map<String, InteractiveRecommenderSupplier<Long, Long>> recs = algorithmSelector.getRecs();
         long b = System.currentTimeMillis();
 
         System.out.println("Recommenders prepared (" + (b - a) + " ms.)");
+
+        int interval = Integer.MAX_VALUE;
 
         // If it does not exist, create the directory in which to store the recommendation.
         String outputFolder = output + File.separator;
@@ -155,22 +153,25 @@ public class Validation
         // Store the values for each algorithm.
         Map<String, Double> auxiliarValues = new ConcurrentHashMap<>();
 
-        // Run each algorithm
+        // For each recommender:
         recs.entrySet().parallelStream().forEach((entry) ->
         {
+            // Obtain its name and supplier:
             String name = entry.getKey();
-            InteractiveRecommender<Long, Long> rec = entry.getValue();
+            InteractiveRecommenderSupplier<Long, Long> rec = entry.getValue();
 
+            // Read the corresponding random number seed
             UntieRandomNumberReader rngSeedGen = new UntieRandomNumberReader();
-            // And the metrics
+            // and the particular metric values.
             Map<String, CumulativeMetric<Long, Long>> localMetrics = new HashMap<>();
             metricNames.forEach(metricName -> localMetrics.put(metricName, metrics.get(metricName).get()));
 
-            // Configure and initialize the recommendation loop:
+            // Configure the recommendation loop:
+
             System.out.println("Starting algorithm " + name);
             long aaa = System.nanoTime();
+            // end condition
             EndCondition endcond = iterationsStop ? (auxIter == 0.0 ? new NoLimitsEndCondition() : new NumIterEndCondition(numIter)) : new PercentagePositiveRatingsEndCondition(dataset.getNumRel(), auxIter, 0.5);
-
             Map<String, Double> averagedLastIteration = new HashMap<>();
             metricNames.forEach(metricName -> averagedLastIteration.put(metricName, 0.0));
 
@@ -179,56 +180,33 @@ public class Validation
             for (int i = 0; i < k; ++i)
             {
                 int rngSeed = rngSeedGen.nextSeed();
-
-                // Create the recommendation loop:
-                RecommendationLoop<Long, Long> loop = new RecommendationLoop<>(dataset.getUserIndex(), dataset.getItemIndex(), dataset.getPrefData(), rec, localMetrics, endcond, rngSeed, false);
-                loop.init(false);
                 long bbb = System.nanoTime();
-                System.out.println("Algorithm " + name + " has been initialized (" + (bbb - aaa) / 1000000.0 + " ms.)");
-                Map<String, List<Double>> metricValues = new HashMap<>();
-                metricNames.forEach(metricName -> metricValues.put(metricName, new ArrayList<>()));
-
-                try
+                System.out.println("Algorithm " + name + " (" + i + ") " + " starting (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                // Create the recommendation loop: in this case, a general offline dataset loop
+                FastRecommendationLoop<Long, Long> loop = new GeneralOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endcond, rngSeed);
+                Executor<Long, Long> executor = new Executor<>();
+                String fileName = outputFolder + name + "_" + i + ".txt";
+                int currentIter = executor.executeWithoutWarmup(loop, fileName, resume, interval);
+                if(currentIter > 0)
                 {
-                    List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
-                    String fileName = outputFolder + name + "_" + i + ".txt";
-                    if (resume)
+                    Map<String, Double> metricValues = loop.getMetricValues();
+                    for (String metric : metricNames)
                     {
-                        list = AuxiliarMethods.retrievePreviousIterations(fileName);
+                        double value = metricValues.get(metric);
+                        if (i == 0)
+                        {
+                            averagedLastIteration.put(metric, value);
+                        }
+                        else
+                        {
+                            double lastIter = averagedLastIteration.get(metric);
+                            double newValue = lastIter + (value - lastIter) / (i + 1.0);
+                            averagedLastIteration.put(metric, newValue);
+                        }
                     }
-
-                    Writer writer = new Writer(outputFolder + name + "_" + i + ".txt", metricNames);
-                    writer.writeHeader();
-
-                    if (resume && !list.isEmpty())
-                    {
-                        metricValues.putAll(AuxiliarMethods.updateWithPrevious(loop, list, writer, interval));
-                    }
-
-                    int currentIter = AuxiliarMethods.executeRemaining(loop, writer, interval, metricValues);
-                    maxIter = maxIter + (currentIter - maxIter) / (i + 1.0);
-                    writer.close();
-                }
-                catch (IOException ioe)
-                {
-                    System.err.println("ERROR: Some error occurred when executing algorithm " + name + " (" + i + ") ");
                 }
 
-                for (String metric : metricNames)
-                {
-                    List<Double> values = metricValues.get(metric);
-                    int auxSize = values.size();
-                    if (i == 0)
-                    {
-                        averagedLastIteration.put(metric, values.get(auxSize - 1));
-                    }
-                    else
-                    {
-                        double lastIter = averagedLastIteration.get(metric);
-                        double newValue = lastIter + (values.get(auxSize - 1) - lastIter) / (i + 1.0);
-                        averagedLastIteration.put(metric, newValue);
-                    }
-                }
+                bbb = System.nanoTime();
                 System.out.println("Algorithm " + name + " (" + i + ") " + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
             }
 

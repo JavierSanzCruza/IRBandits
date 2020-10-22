@@ -11,19 +11,26 @@ package es.uam.eps.ir.knnbandit.recommendation.loop.selection;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.StreamDataset;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.io.IOException;
 
 /**
- * Target user / candidate item selection mechanism for non-sequential offline datasets,
- * i.e. for the cases where the order of the ratings in the dataset is not important.
+ * Target user / candidate item selection mechanism for sequential offline datasets,
+ * i.e. for the cases where the order of the ratings in the dataset is important
+ * (the next user in the log is selected, and only the available items are pooled).
+ *
+ * @param <U> type of the users
+ * @param <I> type of the items
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class SequentialSelection<U,I> implements Selection<U,I>
 {
+    /**
+     * The stream dataset.
+     */
     protected StreamDataset<U,I> dataset;
 
     /**
@@ -67,9 +74,8 @@ public class SequentialSelection<U,I> implements Selection<U,I>
             this.dataset = (StreamDataset<U, I>) dataset;
             this.dataset.restart();
         }
-        catch(IOException ioe)
+        catch(IOException ignored)
         {
-            return;
         }
     }
 

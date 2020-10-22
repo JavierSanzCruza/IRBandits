@@ -14,6 +14,7 @@ import es.uam.eps.ir.ranksys.core.preference.IdPref;
 import es.uam.eps.ir.ranksys.core.preference.PreferenceData;
 import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
 import es.uam.eps.ir.ranksys.fast.index.FastUserIndex;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.function.Function5;
@@ -110,16 +111,16 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
         this.numKnown = numKnown;
 
         uidxKnownList.parallelStream()
-                .filter(l -> l != null)
+                .filter(Objects::nonNull)
                 .forEach(l -> l.sort(comparingInt(IdxPref::v1)));
         iidxKnownList.parallelStream()
-                .filter(l -> l != null)
+                .filter(Objects::nonNull)
                 .forEach(l -> l.sort(comparingInt(IdxPref::v1)));
         uidxUnknownList.parallelStream()
-                .filter(l -> l != null)
+                .filter(Objects::nonNull)
                 .forEach(l -> l.sort(comparingInt(IdxPref::v1)));
         iidxUnknownList.parallelStream()
-                .filter(l -> l != null)
+                .filter(Objects::nonNull)
                 .forEach(l -> l.sort(comparingInt(IdxPref::v1)));
     }
 
@@ -252,7 +253,7 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
     {
         Stream<IdxPref> known = this.getUidxKnownPreferences(uidx);
         Stream<IdxPref> unknown = this.getUidxUnknownPreferences(uidx);
-        return OrderedListCombiner.mergeLists(known, unknown, (o1, o2) -> (o1.v1 - o2.v1), (x, y) -> y).stream();
+        return OrderedListCombiner.mergeLists(known, unknown, comparingInt(o -> o.v1), (x, y) -> y).stream();
     }
 
     @Override
@@ -260,7 +261,7 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
     {
         Stream<IdxPref> known = this.getIidxKnownPreferences(iidx);
         Stream<IdxPref> unknown = this.getIidxUnknownPreferences(iidx);
-        return OrderedListCombiner.mergeLists(known, unknown, (o1, o2) -> (o1.v1 - o2.v1), (x, y) -> y).stream();
+        return OrderedListCombiner.mergeLists(known, unknown, comparingInt(o -> o.v1), (x, y) -> y).stream();
     }
 
     @Override
@@ -318,7 +319,7 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
         {
             Optional<? extends IdxPref> pref = getPreference(user2uidx(u), item2iidx(i));
 
-            return pref.map(uPrefFun::apply);
+            return pref.map(uPrefFun);
         }
         else
         {
@@ -334,7 +335,7 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
         {
             return Optional.empty();
         }
-        Comparator<IdxPref> comp = (x, y) -> x.v1 - y.v1;
+        Comparator<IdxPref> comp = comparingInt(x -> x.v1);
         int position = Collections.binarySearch(uList, new IdxPref(iidx, 1.0), comp);
 
         if (position >= 0)
@@ -353,7 +354,7 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
         {
             return Optional.empty();
         }
-        Comparator<IdxPref> comp = (x, y) -> x.v1 - y.v1;
+        Comparator<IdxPref> comp = comparingInt(x -> x.v1);
         int position = Collections.binarySearch(uList, new IdxPref(iidx, 1.0), comp);
 
         if (position >= 0)
@@ -371,7 +372,7 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
         {
             Optional<? extends IdxPref> pref = getKnownPreference(user2uidx(u), item2iidx(i));
 
-            return pref.map(uPrefFun::apply);
+            return pref.map(uPrefFun);
         }
         else
         {
@@ -386,7 +387,7 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
         {
             Optional<? extends IdxPref> pref = getUnknownPreference(user2uidx(u), item2iidx(i));
 
-            return pref.map(uPrefFun::apply);
+            return pref.map(uPrefFun);
         }
         else
         {
@@ -521,7 +522,7 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
     }
 
     @Override
-    public PreferenceData<U, I> getKnownPreferenceData()
+    public FastPreferenceData<U, I> getKnownPreferenceData()
     {
         List<Tuple3<U, I, Double>> triplets = new ArrayList<>();
         this.getAllUidx().forEach(uidx ->
@@ -541,7 +542,7 @@ public class SimpleFastUserKnowledgePreferenceData<U, I> extends StreamsAbstract
     }
 
     @Override
-    public PreferenceData<U, I> getUnknownPreferenceData()
+    public FastPreferenceData<U, I> getUnknownPreferenceData()
     {
         List<Tuple3<U, I, Double>> triplets = new ArrayList<>();
         this.getAllUidx().forEach(uidx ->

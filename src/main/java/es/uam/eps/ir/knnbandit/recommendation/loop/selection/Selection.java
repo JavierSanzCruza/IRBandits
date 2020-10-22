@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.loop.selection;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
@@ -7,6 +15,9 @@ import it.unimi.dsi.fastutil.ints.IntList;
 /**
  * Interface for classes that select the target and candidate items for the interactive recommendation
  * dataset.
+ *
+ * @param <U> type of the users
+ * @param <I> type of the items
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
@@ -47,6 +58,12 @@ public interface Selection<U,I>
      */
     void init(Dataset<U,I> dataset, Warmup warmup);
 
+    /**
+     * Indicates whether an item can be recommended to a user in future times.
+     * @param uidx the identifier of the user.
+     * @param iidx the identifier of the item.
+     * @return true if iidx can be recommended to uidx, false otherwise
+     */
     boolean isAvailable(int uidx, int iidx);
 
 

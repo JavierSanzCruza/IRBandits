@@ -12,6 +12,9 @@ package es.uam.eps.ir.knnbandit.recommendation.loop.selection.user;
  * Selects the next user in a round robin way: each user must be selected once
  * after they have been recommended an item, and the order is fixed from
  * the beginning (it is randomized once)
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class RoundRobinSelector extends FastUserSelector
 {
@@ -20,6 +23,9 @@ public class RoundRobinSelector extends FastUserSelector
      */
     private int index;
 
+    /**
+     * The last number of users
+     */
     private int lastNumUsers;
 
     @Override
@@ -27,6 +33,7 @@ public class RoundRobinSelector extends FastUserSelector
     {
         super.init();
         this.index = 0;
+        this.lastNumUsers = 0;
     }
 
     @Override
@@ -50,6 +57,7 @@ public class RoundRobinSelector extends FastUserSelector
             index = (index+1)%numUsers;
         }
 
+        this.lastNumUsers = numUsers;
         return index;
     }
 

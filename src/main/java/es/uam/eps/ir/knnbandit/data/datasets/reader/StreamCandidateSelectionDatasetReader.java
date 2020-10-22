@@ -3,16 +3,10 @@ package es.uam.eps.ir.knnbandit.data.datasets.reader;
 import org.ranksys.formats.parsing.Parser;
 import org.ranksys.formats.parsing.Parsers;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 
-public abstract class StreamCandidateSelectionDatasetReader<U,I> extends StreamDatasetReader<U,I>
+public class StreamCandidateSelectionDatasetReader<U,I> extends StreamDatasetReader<U,I>
 {
     public StreamCandidateSelectionDatasetReader(String file, Parser<U> uParser, Parser<I> iParser, String separator)
     {
@@ -21,9 +15,15 @@ public abstract class StreamCandidateSelectionDatasetReader<U,I> extends StreamD
 
     protected LogRegister<U,I> processRegister(String line)
     {
-        LogRegister<U,I> register = processRegister(line);
+        LogRegister<U,I> register;
+
         // Process the register:
         String[] split = line.split(separator);
+        if(split.length < 3)
+        {
+            return null;
+        }
+
         U u = uParser.parse(split[0]);
         I i = iParser.parse(split[1]);
         double value = Parsers.dp.parse(split[2]);

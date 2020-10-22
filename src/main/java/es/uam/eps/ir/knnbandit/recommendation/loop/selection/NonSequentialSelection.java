@@ -10,8 +10,8 @@ package es.uam.eps.ir.knnbandit.recommendation.loop.selection;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.GeneralOfflineDataset;
-import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.knnbandit.recommendation.loop.selection.user.UserSelector;
+import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import it.unimi.dsi.fastutil.ints.*;
 
 import java.util.Collections;
@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 /**
  * Target user / candidate item selection mechanism for non-sequential offline datasets,
  * i.e. for the cases where the order of the ratings in the dataset is not important.
+ *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)

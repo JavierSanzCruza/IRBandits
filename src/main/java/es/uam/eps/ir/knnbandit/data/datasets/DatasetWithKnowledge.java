@@ -13,6 +13,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
+import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
@@ -40,7 +41,7 @@ import java.util.function.DoubleUnaryOperator;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class DatasetWithKnowledge<U, I> extends GeneralDataset<U, I>
+public class DatasetWithKnowledge<U, I> extends GeneralOfflineDataset<U, I>
 {
     /**
      * Preference data with knowledge information about whether the users knew about the items before the rating.
@@ -68,10 +69,45 @@ public class DatasetWithKnowledge<U, I> extends GeneralDataset<U, I>
     }
 
     /**
+     * Obtains a reduced dataset containing only the set of rating given by users to items they did know before
+     * the recommendation.
+     * @return the reduced dataset.
+     */
+    public OfflineDataset<U,I> getKnownDataset()
+    {
+        return new GeneralOfflineDataset<>(this.userIndex, this.itemIndex, this.getKnownPrefData(), this.getNumRelKnown(), this.relevance);
+    }
+
+    /**
+     * Obtains a reduced dataset containing only the set of rating given by users to items they did not know before
+     * the recommendation.
+     * @return the reduced dataset.
+     */
+    public OfflineDataset<U,I> getUnknownDataset()
+    {
+        return new GeneralOfflineDataset<>(this.userIndex, this.itemIndex, this.getUnknownPrefData(), this.getNumRelUnknown(), this.relevance);
+    }
+
+    /**
+     * Obtains a reduced dataset depending on the use we are going to make of the data.
+     * @param dataUse the selection of the dataset.
+     * @return the reduced dataset
+     */
+    public OfflineDataset<U,I> getDataset(KnowledgeDataUse dataUse)
+    {
+        switch (dataUse)
+        {
+            case ONLYKNOWN: return this.getKnownDataset();
+            case ONLYUNKNOWN: return this.getUnknownDataset();
+            default: return this;
+        }
+    }
+
+    /**
      * Obtains the data previously known by the users.
      * @return the previously known ratings.
      */
-    public SimpleFastPreferenceData<U, I> getKnownPrefData()
+    private SimpleFastPreferenceData<U, I> getKnownPrefData()
     {
         return (SimpleFastPreferenceData<U, I>) this.knowledgeData.getKnownPreferenceData();
     }
@@ -79,18 +115,9 @@ public class DatasetWithKnowledge<U, I> extends GeneralDataset<U, I>
      * Obtains the data unknown by the users before the rating.
      * @return the previously unknown ratings.
      */
-    public SimpleFastPreferenceData<U, I> getUnknownPrefData()
+    private SimpleFastPreferenceData<U, I> getUnknownPrefData()
     {
         return (SimpleFastPreferenceData<U, I>) this.knowledgeData.getUnknownPreferenceData();
-    }
-
-    /**
-     * Obtains the whole data.
-     * @return the whole data.
-     */
-    public SimpleFastUserKnowledgePreferenceData<U, I> getKnowledgeData()
-    {
-        return this.knowledgeData;
     }
 
     /**
@@ -201,10 +228,10 @@ public class DatasetWithKnowledge<U, I> extends GeneralDataset<U, I>
     public static <U, I> DatasetWithKnowledge<U, I> load(DatasetWithKnowledge<U, I> dataset, List<Tuple2<Integer, Integer>> list)
     {
         List<Tuple4<U, I, Double, Boolean>> quartets = new ArrayList<>();
-        FastUpdateableUserIndex<U> userIndex = dataset.getUserIndex();
-        FastUpdateableItemIndex<I> itemIndex = dataset.getItemIndex();
+        FastUpdateableUserIndex<U> userIndex = dataset.userIndex;
+        FastUpdateableItemIndex<I> itemIndex = dataset.itemIndex;
 
-        SimpleFastUserKnowledgePreferenceData<U, I> datasetKnowledgeData = dataset.getKnowledgeData();
+        SimpleFastUserKnowledgePreferenceData<U, I> datasetKnowledgeData = dataset.knowledgeData;
 
         int numrel = 0;
         int numrelknown = 0;

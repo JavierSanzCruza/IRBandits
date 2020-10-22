@@ -11,7 +11,8 @@ package es.uam.eps.ir.knnbandit.recommendation.loop.selection;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.GeneralOfflineDataset;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.util.Collections;
 import java.util.Random;
@@ -26,6 +27,9 @@ import java.util.Random;
  * <p>
  *     <b>Reference: </b> C. Gentile, S. Li, G. Zapella. Online clustering of bandits. 29th conference on Neural Information Processing Systems (NeurIPS 2015). Montréal, Canada (2015).
  * </p>
+ *
+ * @param <U> type of the users
+ * @param <I> type of the items
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)

@@ -18,8 +18,13 @@ import java.io.IOException;
 import java.util.Random;
 
 /**
- * Target user / candidate item selection mechanism for non-sequential offline datasets,
- * i.e. for the cases where the order of the ratings in the dataset is not important.
+ * Target user / candidate item selection mechanism for sequential offline datasets,
+ * i.e. for the cases where the order of the ratings in the dataset is important
+ * (the next user in the log is selected). It only takes as candidate items the
+ * featured item in the log, and a random selection of other items.
+ *
+ * @param <U> type of the users
+ * @param <I> type of the items
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
@@ -126,9 +131,8 @@ public class SequentialLimitedCandidatePoolSelection<U,I> implements Selection<U
             this.allItems = new IntArrayList();
             dataset.getAllIidx().forEach(allItems::add);
         }
-        catch(IOException ioe)
+        catch(IOException ignored)
         {
-            return;
         }
     }
 
