@@ -26,7 +26,10 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.json.JSONArray;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -241,7 +244,7 @@ public abstract class WarmupRecommendation<U,I>
                     System.out.println("Algorithm " + name + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
                 });
             }
-            catch(UnconfiguredException | IOException ioe)
+            catch(UnconfiguredException ioe)
             {
                 System.err.println("ERROR: Something occurred while reading the algorithm list");
             }

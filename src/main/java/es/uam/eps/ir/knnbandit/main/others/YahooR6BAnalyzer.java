@@ -7,14 +7,15 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastU
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.core.preference.IdPref;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
-import java.util.*;
+import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class YahooR6BAnalyzer
 {
@@ -22,68 +23,73 @@ public class YahooR6BAnalyzer
     {
         String input = args[0];
 
-        ZipFile file = new ZipFile(input);
-        Enumeration<? extends ZipEntry> entries = file.entries();
+        GzipCompressorInputStream gzipIn = new GzipCompressorInputStream(new FileInputStream(input));
+        TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn);
 
         FastUpdateableUserIndex<String> uIndex = new SimpleFastUpdateableUserIndex<>();
         FastUpdateableItemIndex<String> iIndex = new SimpleFastUpdateableItemIndex<>();
         AdditiveRatingFastUpdateablePreferenceData<String, String> numTimes = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         AdditiveRatingFastUpdateablePreferenceData<String, String> numPos = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
 
-        while(entries.hasMoreElements())
+        TarArchiveEntry entry;
+        while((entry = (TarArchiveEntry) tarIn.getNextEntry()) != null)
         {
-            ZipEntry entry = entries.nextElement();
-            GZIPInputStream inputStream = new GZIPInputStream(file.getInputStream(entry));
-            try(BufferedReader br = new BufferedReader(new InputStreamReader(inputStream)))
+            String name = entry.getName();
+            System.out.println(name);
+            if(!name.equals("README.txt"))
             {
-                br.lines().forEach(line ->
+                BufferedReader br = new BufferedReader(new InputStreamReader(new GZIPInputStream(tarIn)));
                 {
-                    String[] split = line.split("\\s+");
-                    String item = split[1];
-                    numTimes.addItem(item);
-                    numPos.addItem(item);
-                    double rating = Parsers.dp.parse(split[2]);
-                    boolean isCurrentUser = false;
-                    boolean isEmptyUser = true;
-                    char[] user = new char[135];
-                    for(int i = 3; i < split.length; ++i)
+                    br.lines().forEach(line ->
                     {
-                        if(split[i].equals( "|user"))
-                        {
-                            isCurrentUser = true;
-                        }
-                        else if(split[i].startsWith("|"))
-                        {
-                            isCurrentUser = false;
-                            String itemId = split[i].substring(1);
-                            numTimes.addItem(item);
-                            numPos.addItem(item);
-                        }
+                        String[] split = line.split("\\s+");
+                        String item = split[1];
+                        numTimes.addItem(item);
+                        numPos.addItem(item);
+                        double rating = Parsers.dp.parse(split[2]);
+                        boolean isCurrentUser = false;
+                        boolean isEmptyUser = true;
+                        char[] user = new char[135];
 
-                        if(isCurrentUser)
+                        for(int i = 0; i < 134; ++i) user[i] = '0';
+
+                        for (int i = 3; i < split.length; ++i)
                         {
-                            int index = Parsers.ip.parse(split[i]);
-                            if(index > 1)
+                            if (split[i].equals("|user"))
                             {
-                                isEmptyUser = false;
-                                user[index-2] = '1';
+                                isCurrentUser = true;
+                            }
+                            else if (split[i].startsWith("|"))
+                            {
+                                isCurrentUser = false;
+                                String itemId = split[i].substring(1);
+                                numTimes.addItem(itemId);
+                                numPos.addItem(itemId);
+                            }
+                            else if (isCurrentUser)
+                            {
+                                int index = Parsers.ip.parse(split[i]);
+                                if (index > 1)
+                                {
+                                    isEmptyUser = false;
+                                    user[index - 2] = '1';
+                                }
                             }
                         }
-                    }
 
-                    if(!isEmptyUser)
-                    {
-                        String userId = new String(user);
-                        numTimes.addUser(userId);
-                        numPos.addUser(userId);
+                        if (!isEmptyUser)
+                        {
+                            String userId = new String(user);
+                            numTimes.addUser(userId);
+                            numPos.addUser(userId);
 
-                        numTimes.update(userId, item, 1.0);
-                        numPos.update(userId, item, rating);
-                    }
+                            numTimes.update(userId, item, 1.0);
+                            numPos.update(userId, item, rating);
+                        }
 
-                });
+                    });
+                }
             }
-
         }
 
         // now, print everything:
@@ -96,13 +102,13 @@ public class YahooR6BAnalyzer
             {
                 try
                 {
-                    bw.write(user);
+                    bw.write(user + "\n");
                     bwUserData.write(user);
                     if(numTimes.numItems(user) > 0)
                     {
                         Pair<Double> pair1 = numTimes.getUserPreferences(user).map(pref -> new Pair<>(pref.v2, pref.v2 - 1)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));
                         Pair<Double> pair2 = numPos.getUserPreferences(user).map(pref -> new Pair<>(pref.v2, pref.v2 > 1 ? pref.v2 - 1 : 0)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));
-                        bw.write("\t" + pair1.v1() + "\t" + pair2.v1() + "\t" + pair1.v2() + "\t" + pair2.v2());
+                        bw.write("\t" + pair1.v1() + "\t" + pair2.v1() + "\t" + pair1.v2() + "\t" + pair2.v2() + "\n");
                     }
                     else
                     {
@@ -126,13 +132,13 @@ public class YahooR6BAnalyzer
             {
                 try
                 {
-                    bw.write(item);
+                    bw.write(item + "\n");
                     bwUserData.write(item);
-                    if(numTimes.numItems(item) > 0)
+                    if(numTimes.numUsers(item) > 0)
                     {
                         Pair<Double> pair1 = numTimes.getItemPreferences(item).map(pref -> new Pair<>(pref.v2, pref.v2 - 1)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));
                         Pair<Double> pair2 = numPos.getItemPreferences(item).map(pref -> new Pair<>(pref.v2, pref.v2 > 1 ? pref.v2 - 1 : 0)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));
-                        bw.write("\t" + pair1.v1() + "\t" + pair2.v1() + "\t" + pair1.v2() + "\t" + pair2.v2());
+                        bw.write("\t" + pair1.v1() + "\t" + pair2.v1() + "\t" + pair1.v2() + "\t" + pair2.v2() + "\n");
                     }
                     else
                     {
@@ -149,7 +155,7 @@ public class YahooR6BAnalyzer
         // STEP 3: the ratings file
         try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[1] + "ratings.txt"))))
         {
-            bw.write("userId\titemId\tnumPos\tnumTimes\n");
+            bw.write("userId\titemId\tnumPos\tnumTimes\tCTR\n");
             numTimes.getUsersWithPreferences().forEach(user ->
                 numTimes.getUserPreferences(user).forEach(item ->
                 {
@@ -159,11 +165,11 @@ public class YahooR6BAnalyzer
                         Optional<? extends IdPref<String>> opt = numPos.getPreference(user, i);
                         if (opt.isPresent())
                         {
-                            bw.write(user + "\t" + i + "\t" + opt.get() + "\t" + item.v2());
+                            bw.write(user + "\t" + i + "\t" + opt.get() + "\t" + item.v2() + "\t" + (opt.get().v2/item.v2()) + "\n");
                         }
                         else
                         {
-                            bw.write(user + "\t" + i + "\t" + 0.0 + "\t" + item.v2());
+                            bw.write(user + "\t" + i + "\t" + 0.0 + "\t" + item.v2() + "\t" + 0 + "\n");
 
                         }
                     }
