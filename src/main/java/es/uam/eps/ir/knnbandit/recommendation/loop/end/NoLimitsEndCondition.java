@@ -8,6 +8,8 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop.end;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+
 /**
  * End condition specifying that the loop has no end.
  *
@@ -17,7 +19,7 @@ package es.uam.eps.ir.knnbandit.recommendation.loop.end;
 public class NoLimitsEndCondition implements EndCondition
 {
     @Override
-    public void init()
+    public void init(Dataset<?,?> dataset)
     {
 
     }

@@ -31,6 +31,8 @@ public interface CumulativeMetric<U, I>
 
     /**
      * Initializes the values without training data.
+     *
+     * @param dataset   the dataset containing the information.
      */
     void initialize(Dataset<U,I> dataset);
 
@@ -38,6 +40,7 @@ public interface CumulativeMetric<U, I>
     /**
      * Initializes the values
      *
+     * @param dataset       the dataset.
      * @param train         training data.
      */
     void initialize(Dataset<U,I> dataset, List<FastRating> train);

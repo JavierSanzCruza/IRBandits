@@ -331,4 +331,10 @@ public class TransposedUpdateablePreferenceData<I, U> implements FastUpdateableP
     {
         return this.d.updatedValue(newValue, oldValue);
     }
+
+    @Override
+    public void clear()
+    {
+        this.d.clear();
+    }
 }

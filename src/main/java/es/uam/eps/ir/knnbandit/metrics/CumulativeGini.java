@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.metrics;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
 import org.jooq.lambda.tuple.Tuple2;
@@ -27,22 +28,26 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
     /**
      * The updateable Gini index to compute all the operations.
      */
-    private final GiniIndex2 gini;
+    private GiniIndex2 gini;
 
     /**
      * Constructor.
      *
-     * @param numItems The number of items.
      */
-    public CumulativeGini(int numItems)
+    public CumulativeGini()
     {
-        gini = new GiniIndex2(numItems);
     }
 
     @Override
-    public void initialize(List<FastRating> train, boolean notReciprocal)
+    public void initialize(Dataset<U, I> dataset)
     {
-        this.reset();
+        this.gini = new GiniIndex2(dataset.numItems());
+    }
+
+    @Override
+    public void initialize(Dataset<U, I> dataset, List<FastRating> train)
+    {
+        this.initialize(dataset);
     }
 
     @Override

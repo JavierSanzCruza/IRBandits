@@ -9,7 +9,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop.selection;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.data.datasets.GeneralOfflineDataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -63,7 +63,7 @@ public class LimitedCandidatePoolSelection<U,I> implements Selection<U,I>
     /**
      * The dataset.
      */
-    private GeneralOfflineDataset<U,I> dataset;
+    private GeneralDataset<U,I> dataset;
     /**
      * The item list.
      */
@@ -125,7 +125,7 @@ public class LimitedCandidatePoolSelection<U,I> implements Selection<U,I>
     @Override
     public void init(Dataset<U, I> dataset)
     {
-        this.dataset = ((GeneralOfflineDataset<U,I>) dataset);
+        this.dataset = ((GeneralDataset<U,I>) dataset);
         this.userList.clear();
         this.allItems.clear();
         this.rng = new Random(rngSeed);

@@ -38,11 +38,10 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends GenericRecommend
      * @param recommender   the interactive recommendation algorithm.
      * @param metrics       the set of metrics we want to study.
      * @param endCondition  the condition that establishes whether the loop has finished or not.
-     * @param notReciprocal true if we do not want to recommend reciprocal edges to existing ones, false otherwise.
      * @param rngSeed       a random number generator seed.
      */
-    public ContactOfflineDatasetRecommendationLoop(ContactDataset<U> dataset, InteractiveRecommenderSupplier<U, U> recommender, Map<String, CumulativeMetric<U, U>> metrics, EndCondition endCondition, boolean notReciprocal, int rngSeed)
+    public ContactOfflineDatasetRecommendationLoop(ContactDataset<U> dataset, InteractiveRecommenderSupplier<U, U> recommender, Map<String, CumulativeMetric<U, U>> metrics, EndCondition endCondition, int rngSeed)
     {
-        super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed)), recommender, new ContactUpdate<>(notReciprocal), endCondition, metrics);
+        super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed)), recommender, new ContactUpdate<>(!dataset.useReciprocal()), endCondition, metrics);
     }
 }

@@ -9,8 +9,9 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop.selection;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.data.datasets.GeneralOfflineDataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.recommendation.loop.selection.user.UserSelector;
+import es.uam.eps.ir.knnbandit.warmup.OfflineWarmup;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import it.unimi.dsi.fastutil.ints.*;
 
@@ -126,7 +127,7 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
     @Override
     public void init(Dataset<U, I> dataset)
     {
-        GeneralOfflineDataset<U,I> general = ((GeneralOfflineDataset<U,I>) dataset);
+        GeneralDataset<U,I> general = ((GeneralDataset<U,I>) dataset);
         this.userList.clear();
         this.availability.clear();
         this.rng = new Random(rngSeed);
@@ -145,12 +146,12 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
     @Override
     public void init(Dataset<U, I> dataset, Warmup warmup)
     {
-        GeneralOfflineDataset<U,I> general = ((GeneralOfflineDataset<U,I>) dataset);
+        GeneralDataset<U,I> general = ((GeneralDataset<U,I>) dataset);
         this.userList.clear();
         this.availability.clear();
         this.rng = new Random(rngSeed);
 
-        List<IntList> warmupAvailability = warmup.getAvailability();
+        List<IntList> warmupAvailability = ((OfflineWarmup) warmup).getAvailability();
         general.getUidxWithPreferences().forEach(uidx ->
         {
             // First, the availability.

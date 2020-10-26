@@ -17,6 +17,7 @@ import es.uam.eps.ir.knnbandit.graph.fast.FastDirectedUnweightedGraph;
 import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedUnweightedGraph;
 import es.uam.eps.ir.knnbandit.graph.io.GraphReader;
 import es.uam.eps.ir.knnbandit.graph.io.TextGraphReader;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
@@ -34,7 +35,7 @@ import java.util.Set;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
+public class ContactDataset<U> extends GeneralDataset<U, U>
 {
     /**
      * The number of reciprocal links
@@ -46,6 +47,11 @@ public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
     private final boolean directed;
 
     /**
+     * A true value indicates that reciprocal links are counted as one link. False differentiates them.
+     */
+    private final boolean notReciprocal;
+
+    /**
      * Constructor.
      *
      * @param uIndex    User index.
@@ -54,20 +60,21 @@ public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
      * @param numEdges  Number of edges
      * @param numRecipr Number of reciprocal edges.
      */
-    protected ContactDataset(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<U> iIndex, SimpleFastPreferenceData<U, U> prefData, int numEdges, int numRecipr, boolean directed)
+    protected ContactDataset(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<U> iIndex, SimpleFastPreferenceData<U, U> prefData, int numEdges, int numRecipr, boolean directed, boolean notReciprocal)
     {
         super(uIndex, iIndex, prefData, numEdges, x -> x > 0);
         this.numRecipr = numRecipr;
         this.directed = directed;
+        this.notReciprocal = notReciprocal;
     }
 
     /**
      * Gets the number of relevant (user, user) pairs.
      *
-     * @param notReciprocal true if we do not count the reciprocal, false otherwise.
      * @return the number of relevant (user, user) pairs.
      */
-    public int getNumRel(boolean notReciprocal)
+    @Override
+    public int getNumRel()
     {
         return (notReciprocal ? this.numRel - this.numRecipr / 2 : this.numRel);
     }
@@ -81,6 +88,16 @@ public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
         return directed;
     }
 
+    /**
+     * Obtains the value determining whether we shall recommend reciprocal edges
+     * to existing ones (i.e. we take reciprocal edges separately) or not.
+     * @return true if reciprocal edges are treated separately, false otherwise.
+     */
+    public boolean useReciprocal()
+    {
+        return !notReciprocal;
+    }
+
     @Override
     public String toString()
     {
@@ -89,9 +106,9 @@ public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
                 "\nItems: " +
                 this.numItems() +
                 "\nNum. edges: " +
-                this.getNumRel(false) +
+                this.numRel +
                 "\nNum. edges (without reciprocal): " +
-                this.getNumRel(true);
+                (this.numRel - this.numRecipr / 2);
     }
 
     /**
@@ -104,7 +121,7 @@ public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
      * @param <U>       type of the users.
      * @return the contact recommendation dataset.
      */
-    public static <U> ContactDataset<U> load(String filename, boolean directed, Parser<U> uParser, String separator)
+    public static <U> ContactDataset<U> load(String filename, boolean directed, boolean notReciprocal, Parser<U> uParser, String separator)
     {
         // Read the ratings.
         Set<U> users = new HashSet<>();
@@ -124,7 +141,7 @@ public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
         FastUpdateableItemIndex<U> iIndex = SimpleFastUpdateableItemIndex.load(users.stream());
         SimpleFastPreferenceData<U, U> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
 
-        return new ContactDataset<>(uIndex, iIndex, prefData, numEdges, numRecipr, directed);
+        return new ContactDataset<>(uIndex, iIndex, prefData, numEdges, numRecipr, directed, notReciprocal);
     }
 
     /**
@@ -135,7 +152,7 @@ public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
      * @param <U> type of the users
      * @return the new contact recommendation dataset.
      */
-    public static <U> ContactDataset<U> load(ContactDataset<U> dataset, List<Tuple2<Integer, Integer>> list, boolean notReciprocal)
+    public static <U> ContactDataset<U> load(ContactDataset<U> dataset, List<Pair<Integer>> list, boolean notReciprocal)
     {
         // We build the preference data.
         List<Tuple3<U, U, Double>> validationTriplets = new ArrayList<>();
@@ -145,8 +162,8 @@ public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
 
         list.forEach(tuple ->
         {
-            int uidx = tuple.v1;
-            int iidx = tuple.v2;
+            int uidx = tuple.v1();
+            int iidx = tuple.v2();
             U u = prefData.uidx2user(uidx);
             U i = prefData.iidx2item(iidx);
 
@@ -166,10 +183,14 @@ public class ContactDataset<U> extends GeneralOfflineDataset<U, U>
         int numRecipr = graph.getAllNodes().mapToInt(graph::getMutualNodesCount).sum();
         SimpleFastPreferenceData<U, U> validData = SimpleFastPreferenceData.load(validationTriplets.stream(), dataset.userIndex, dataset.itemIndex);
 
-        return new ContactDataset<>(dataset.userIndex, dataset.itemIndex, validData, numEdges, numRecipr, dataset.isDirected());
+        return new ContactDataset<>(dataset.userIndex, dataset.itemIndex, validData, numEdges, numRecipr, dataset.isDirected(), notReciprocal);
         // Create the validation data, which will be provided as input to recommenders and metrics.
     }
 
-
+    @Override
+    public int getNumRatings()
+    {
+        return this.getNumRel();
+    }
 
 }

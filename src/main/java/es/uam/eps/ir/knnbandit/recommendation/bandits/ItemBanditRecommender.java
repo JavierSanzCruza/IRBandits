@@ -14,6 +14,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ItemBandit;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
@@ -62,17 +63,10 @@ public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
     }
 
     @Override
-    public void init(Stream<Tuple3<Integer, Integer, Double>> values)
+    public void init(Stream<FastRating> values)
     {
         this.init();
-        values.forEach(triplet -> this.itemBandit.update(triplet.v2, triplet.v3));
-    }
-
-    @Override
-    public void init(FastPreferenceData<U, I> prefData)
-    {
-        this.init();
-        prefData.getAllUidx().forEach(uidx -> prefData.getUidxPreferences(uidx).forEach(pref -> this.itemBandit.update(pref.v1, pref.v2)));
+        values.forEach(triplet -> this.itemBandit.update(triplet.iidx(), triplet.value()));
     }
 
     @Override
@@ -84,7 +78,6 @@ public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
     @Override
     public int next(int uidx, IntList availability)
     {
-        int iidx = this.itemBandit.next(uidx, availability.toIntArray(), valFunc);
-        return iidx;
+        return this.itemBandit.next(uidx, availability.toIntArray(), valFunc);
     }
 }

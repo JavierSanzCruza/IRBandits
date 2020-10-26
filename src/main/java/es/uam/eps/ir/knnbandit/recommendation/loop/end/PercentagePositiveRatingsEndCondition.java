@@ -8,6 +8,10 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop.end;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+
+import java.util.function.DoublePredicate;
+
 /**
  * End condition specifying a fixed number of positive ratings to be found.
  *
@@ -16,10 +20,11 @@ package es.uam.eps.ir.knnbandit.recommendation.loop.end;
  */
 public class PercentagePositiveRatingsEndCondition implements EndCondition
 {
+    private double percentage;
     /**
      * The total number of relevant items to retrieve.
      */
-    private final int numRel;
+    private int numRel;
     /**
      * The current number of relevant items.
      */
@@ -27,37 +32,37 @@ public class PercentagePositiveRatingsEndCondition implements EndCondition
     /**
      * The relevance threshold.
      */
-    private final double threshold;
+    private DoublePredicate threshold;
 
     /**
      * Constructor. Fixes the number of relevant items to retrieve.
      * @param numRel the number of relevant items.
-     * @param threshold the relevance threshold.
      */
-    public PercentagePositiveRatingsEndCondition(int numRel, double threshold)
+    public PercentagePositiveRatingsEndCondition(int numRel)
     {
         this.numRel = numRel;
-        this.threshold = threshold;
-        this.init();
+        this.percentage = -1;
     }
 
     /**
      * Constructor. Fixes the number of relevant items to retrieve.
-     * @param totalRel the total number of relevant items.
      * @param percentage the percentage of relevant items we want to retrieve.
-     * @param threshold the relevance threshold.
      */
-    public PercentagePositiveRatingsEndCondition(int totalRel, double percentage, double threshold)
+    public PercentagePositiveRatingsEndCondition(double percentage)
     {
-        this.numRel = ((Double) Math.ceil(totalRel * percentage)).intValue();
-        this.threshold = threshold;
-        this.init();
+        this.numRel = -1;
+        this.percentage = percentage;
     }
 
     @Override
-    public void init()
+    public void init(Dataset<?,?> dataset)
     {
+        if(percentage > 0.0)
+        {
+            this.numRel = ((Double) Math.ceil(dataset.getNumRel() * percentage)).intValue();
+        }
         this.currentRel = 0;
+        this.threshold = dataset.getRelevanceChecker();
     }
 
     @Override
@@ -69,7 +74,7 @@ public class PercentagePositiveRatingsEndCondition implements EndCondition
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        if (value >= threshold)
+        if (threshold.test(value))
         {
             this.currentRel++;
         }

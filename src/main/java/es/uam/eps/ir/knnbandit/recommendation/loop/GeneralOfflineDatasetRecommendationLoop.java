@@ -9,7 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
-import es.uam.eps.ir.knnbandit.data.datasets.GeneralOfflineDataset;
+import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
@@ -41,7 +41,7 @@ public class GeneralOfflineDatasetRecommendationLoop<U,I> extends GenericRecomme
      * @param endCondition the condition that establishes whether the loop has finished or not.
      * @param rngSeed      a random number generator seed.
      */
-    public GeneralOfflineDatasetRecommendationLoop(GeneralOfflineDataset<U, I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, int rngSeed)
+    public GeneralOfflineDatasetRecommendationLoop(GeneralDataset<U, I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, int rngSeed)
     {
         super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed)), recommender, new GeneralUpdate<>(), endCondition, metrics);
     }

@@ -8,8 +8,10 @@
  */
 package es.uam.eps.ir.knnbandit.metrics.atk;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex;
+import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
 
 import java.util.List;
 
@@ -27,24 +29,28 @@ public class CumulativeGiniAtK<U, I> extends CumulativeMetricAtK<U, I>
     /**
      * The updateable Gini index.
      */
-    private final GiniIndex gini;
+    private GiniIndex gini;
 
     /**
      * Constructor.
      *
      * @param k        the number of recommendations to consider.
-     * @param numItems the number of items in the data.
      */
-    public CumulativeGiniAtK(int k, int numItems)
+    public CumulativeGiniAtK(int k)
     {
         super(k);
-        this.gini = new GiniIndex(numItems);
     }
 
     @Override
-    public void initialize(List<FastRating> train, boolean notReciprocal)
+    public void initialize(Dataset<U,I> dataset)
     {
+        this.gini = new GiniIndex(dataset.numItems());
+    }
 
+    @Override
+    public void initialize(Dataset<U,I> dataset, List<FastRating> warmup)
+    {
+        this.gini = new GiniIndex(dataset.numItems());
     }
 
     @Override

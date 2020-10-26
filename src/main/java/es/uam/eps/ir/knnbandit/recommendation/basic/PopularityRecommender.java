@@ -14,6 +14,7 @@ import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import org.jooq.lambda.tuple.Tuple3;
 
+import java.util.function.DoublePredicate;
 import java.util.stream.Stream;
 
 /**
@@ -29,19 +30,19 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
     /**
      * Relevance threshold.
      */
-    public final double threshold;
+    public final DoublePredicate relevanceChecker;
 
     /**
      * Constructor.
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
-     * @param threshold Relevance threshold
+     * @param relevanceChecker Relevance checker
      */
-    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, double threshold)
+    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, DoublePredicate relevanceChecker)
     {
         super(uIndex, iIndex, true);
-        this.threshold = threshold;
+        this.relevanceChecker = relevanceChecker;
     }
 
     @Override
@@ -54,12 +55,12 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
     public void init(Stream<FastRating> values)
     {
         this.init();
-        values.filter(triplet -> triplet.value() >= threshold).forEach(triplet -> ++this.values[triplet.iidx()]);
+        values.filter(triplet -> relevanceChecker.test(triplet.value())).forEach(triplet -> ++this.values[triplet.iidx()]);
     }
 
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        this.values[iidx] += (value >= threshold ? 1.0 : 0.0);
+        this.values[iidx] += (relevanceChecker.test(value) ? 1.0 : 0.0);
     }
 }

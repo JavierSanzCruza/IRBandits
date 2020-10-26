@@ -1,5 +1,6 @@
 package es.uam.eps.ir.knnbandit.data.datasets;
 
+import es.uam.eps.ir.ranksys.core.preference.IdPref;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -63,5 +64,31 @@ public interface OfflineDataset<U,I> extends Dataset<U,I>
      */
     boolean isRelevant(double value);
 
+    /**
+     * Obtains the preferences of a user.
+     * @param uidx the identifier of the user.
+     * @return an stream containing the preferences of the user.
+     */
     Stream<IdxPref> getUidxPreferences(int uidx);
+
+    /**
+     * Obtains the preferences of a user.
+     * @param u the user.
+     * @return an stream containing the preferences of the user.
+     */
+    Stream<? extends IdPref<I>> getUserPreferences(U u);
+
+    /**
+     * Obtains the preferences given to a item.
+     * @param iidx the identifier of the item.
+     * @return an stream containing the preferences given to the item.
+     */
+    Stream<IdxPref> getIidxPreferences(int iidx);
+
+    /**
+     * Obtains the preferences of a user.
+     * @param i the item
+     * @return an stream containing the preferences of the user.
+     */
+    Stream<? extends IdPref<U>> getItemPreferences(I i);
 }

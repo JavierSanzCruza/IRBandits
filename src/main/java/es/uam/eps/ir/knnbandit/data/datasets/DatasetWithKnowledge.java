@@ -41,7 +41,7 @@ import java.util.function.DoubleUnaryOperator;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class DatasetWithKnowledge<U, I> extends GeneralOfflineDataset<U, I>
+public class DatasetWithKnowledge<U, I> extends GeneralDataset<U, I>
 {
     /**
      * Preference data with knowledge information about whether the users knew about the items before the rating.
@@ -75,7 +75,7 @@ public class DatasetWithKnowledge<U, I> extends GeneralOfflineDataset<U, I>
      */
     public OfflineDataset<U,I> getKnownDataset()
     {
-        return new GeneralOfflineDataset<>(this.userIndex, this.itemIndex, this.getKnownPrefData(), this.getNumRelKnown(), this.relevance);
+        return new GeneralDataset<>(this.userIndex, this.itemIndex, this.getKnownPrefData(), this.getNumRelKnown(), this.relevance);
     }
 
     /**
@@ -85,7 +85,7 @@ public class DatasetWithKnowledge<U, I> extends GeneralOfflineDataset<U, I>
      */
     public OfflineDataset<U,I> getUnknownDataset()
     {
-        return new GeneralOfflineDataset<>(this.userIndex, this.itemIndex, this.getUnknownPrefData(), this.getNumRelUnknown(), this.relevance);
+        return new GeneralDataset<>(this.userIndex, this.itemIndex, this.getUnknownPrefData(), this.getNumRelUnknown(), this.relevance);
     }
 
     /**
@@ -268,4 +268,11 @@ public class DatasetWithKnowledge<U, I> extends GeneralOfflineDataset<U, I>
         SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData = SimpleFastUserKnowledgePreferenceData.load(quartets.stream(), userIndex, itemIndex);
         return new DatasetWithKnowledge<>(userIndex, itemIndex, knowledgeData, numrel, numrelknown, dataset.relevance);
     }
+
+    @Override
+    public int getNumRatings()
+    {
+        return this.prefData.numPreferences();
+    }
+
 }

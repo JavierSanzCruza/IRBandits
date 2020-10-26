@@ -25,7 +25,8 @@ public class AlgorithmIdentifiers
     public static final String ITEMBANDIT = "itembandit";
     // User based.
     public static final String USERBASEDKNN = "ubknn";
-    public static final String BANDITKNN = "knnbandit";
+    public static final String UBBANDIT = "knnbandit-ub";
+    public static final String IBBANDIT = "knnbandit-ib";
     // Item based
     public static final String ITEMBASEDKNN = "ibknn";
     // Matrix factorization.

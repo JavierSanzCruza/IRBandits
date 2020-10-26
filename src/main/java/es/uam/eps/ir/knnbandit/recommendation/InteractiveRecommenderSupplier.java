@@ -5,7 +5,6 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
 import es.uam.eps.ir.ranksys.fast.index.FastUserIndex;
 
-@FunctionalInterface
 public interface InteractiveRecommenderSupplier<U,I>
 {
     /**
@@ -15,4 +14,6 @@ public interface InteractiveRecommenderSupplier<U,I>
      * @return an interactive recommender.
      */
     InteractiveRecommender<U,I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex);
+
+    String getName();
 }

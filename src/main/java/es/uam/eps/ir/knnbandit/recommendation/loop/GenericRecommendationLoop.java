@@ -98,7 +98,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     @Override
     public void init()
     {
-        this.endCond.init();
+        this.endCond.init(dataset);
         this.selection.init(dataset);
         this.recommender.init();
         this.metrics.forEach((name, metric) -> metric.initialize(dataset));
@@ -112,7 +112,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
         this.selection.init(dataset, warmup);
         this.update.init(dataset);
         this.recommender.init(this.update.getList(warmup).stream());
-        this.endCond.init();
+        this.endCond.init(dataset);
         this.metrics.forEach((name, metric) -> metric.initialize(dataset,warmup.getFullTraining()));
         this.numIter = 0;
         this.hasEnded = false;

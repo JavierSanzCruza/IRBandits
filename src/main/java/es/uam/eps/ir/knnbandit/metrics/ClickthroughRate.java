@@ -8,15 +8,18 @@
  */
 package es.uam.eps.ir.knnbandit.metrics;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 
 import java.util.List;
+import java.util.function.DoublePredicate;
 
 /**
  * Clickthrough rate of the system: computes the fraction of recommendations
  * which provide a positive value.
- * @param <U> type of the users.
  *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
@@ -34,15 +37,13 @@ public class ClickthroughRate<U,I> implements CumulativeMetric<U,I>
     /**
      * Relevance threshold
      */
-    private final double threshold;
+    private DoublePredicate relevance;
 
     /**
      * Constructor.
-     * @param threshold a relevance threshold.
      */
-    public ClickthroughRate(double threshold)
+    public ClickthroughRate()
     {
-        this.threshold = threshold;
         this.hits = 0.0;
         this.total = 0.0;
     }
@@ -54,16 +55,23 @@ public class ClickthroughRate<U,I> implements CumulativeMetric<U,I>
     }
 
     @Override
-    public void initialize(List<FastRating> train, boolean notReciprocal)
+    public void initialize(Dataset<U, I> dataset)
     {
+        this.relevance = dataset.getRelevanceChecker();
         this.reset();
+    }
+
+    @Override
+    public void initialize(Dataset<U,I> dataset, List<FastRating> train)
+    {
+        this.initialize(dataset);
     }
 
     @Override
     public void update(int uidx, int iidx, double value)
     {
         ++total;
-        hits += (value >= threshold) ? 1.0 : 0.0;
+        hits += relevance.test(value) ? 1.0 : 0.0;
     }
 
     @Override

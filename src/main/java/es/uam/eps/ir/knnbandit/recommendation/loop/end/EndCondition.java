@@ -8,6 +8,8 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop.end;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+
 /**
  * Interface for the classes that check whether a recommendation loop has finished or not.
  *
@@ -19,7 +21,7 @@ public interface EndCondition
     /**
      * Initializes the condition.
      */
-    void init();
+    void init(Dataset<?,?> dataset);
 
     /**
      * Checks whether the loop has ended or not.

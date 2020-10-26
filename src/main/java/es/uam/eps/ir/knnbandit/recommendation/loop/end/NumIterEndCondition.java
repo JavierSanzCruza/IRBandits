@@ -8,6 +8,8 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop.end;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+
 /**
  * End condition that establishes the maximum number of iterations to execute.
  *
@@ -33,11 +35,10 @@ public class NumIterEndCondition implements EndCondition
     public NumIterEndCondition(int numIter)
     {
         this.numIter = numIter;
-        this.init();
     }
 
     @Override
-    public void init()
+    public void init(Dataset<?,?> dataset)
     {
         actualIter = 0;
     }

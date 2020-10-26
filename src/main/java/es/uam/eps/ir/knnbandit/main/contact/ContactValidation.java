@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
+ * Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
  * de Madrid, http://ir.ii.uam.es.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -11,7 +11,7 @@ package es.uam.eps.ir.knnbandit.main.contact;
 
 import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.main.auxiliar.Validation;
+import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
@@ -34,14 +34,12 @@ public class ContactValidation<U> extends Validation<U,U>
 {
     private final ContactDataset<U> dataset;
     private final Map<String, Supplier<CumulativeMetric<U,U>>> metrics;
-    private final boolean notReciprocal;
 
     public ContactValidation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal)
     {
-        dataset = ContactDataset.load(input, directed, parser, separator);
+        dataset = ContactDataset.load(input, directed, notReciprocal, parser, separator);
         this.metrics = new HashMap<>();
-        metrics.put("recall", () -> new CumulativeRecall<>(dataset.getNumRel(!directed || notReciprocal), 0.5));
-        this.notReciprocal = notReciprocal;
+        metrics.put("recall", CumulativeRecall::new);
     }
 
 
@@ -56,7 +54,7 @@ public class ContactValidation<U> extends Validation<U,U>
     {
         Map<String, CumulativeMetric<U,U>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new ContactOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, notReciprocal, rngSeed);
+        return new ContactOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed);
     }
 
     @Override

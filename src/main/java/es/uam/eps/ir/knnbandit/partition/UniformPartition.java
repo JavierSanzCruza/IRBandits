@@ -8,6 +8,8 @@
  */
 package es.uam.eps.ir.knnbandit.partition;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.ArrayList;
@@ -22,7 +24,7 @@ import java.util.List;
 public class UniformPartition implements Partition
 {
     @Override
-    public List<Integer> split(List<Tuple2<Integer, Integer>> trainingData, int numParts)
+    public List<Integer> split(Dataset<?,?> dataset, List<Pair<Integer>> trainingData, int numParts)
     {
         List<Integer> splitPoints = new ArrayList<>();
         int size = trainingData.size();
@@ -36,7 +38,7 @@ public class UniformPartition implements Partition
     }
 
     @Override
-    public int split(List<Tuple2<Integer, Integer>> trainingData, double percentage)
+    public int split(Dataset<?,?> dataset, List<Pair<Integer>> trainingData, double percentage)
     {
         int size = trainingData.size();
         Double point = percentage * size;

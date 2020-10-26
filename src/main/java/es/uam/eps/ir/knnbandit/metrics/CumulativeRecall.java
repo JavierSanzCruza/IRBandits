@@ -9,11 +9,11 @@
 package es.uam.eps.ir.knnbandit.metrics;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.data.datasets.GeneralOfflineDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.OfflineDataset;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 
 import java.util.List;
+import java.util.function.DoublePredicate;
 
 /**
  * Cumulative implementation of global recall.
@@ -30,9 +30,9 @@ public class CumulativeRecall<U, I> implements CumulativeMetric<U, I>
      */
     private int numRel;
     /**
-     * Relevance threshold.
+     * Relevance checker.
      */
-    private double threshold;
+    private DoublePredicate relevance;
     /**
      * Number of training relevant (user,item) pairs.
      */
@@ -44,16 +44,11 @@ public class CumulativeRecall<U, I> implements CumulativeMetric<U, I>
 
     /**
      * Constructor.
-     *
-     * @param numRel    Number of relevant (user, item) pairs.
-     * @param threshold Relevance threshold.
      */
-    public CumulativeRecall(int numRel, double threshold)
+    public CumulativeRecall()
     {
-        this.numRel = numRel;
         this.current = 0.0;
         this.toRemove = 0;
-        this.threshold = threshold;
     }
 
     @Override
@@ -70,24 +65,24 @@ public class CumulativeRecall<U, I> implements CumulativeMetric<U, I>
     @Override
     public void initialize(Dataset<U,I> dataset)
     {
-        OfflineDataset<U,I> general = ((OfflineDataset<U,I>) dataset);
-        this.numRel = general.getNumRel();
+        this.numRel = dataset.getNumRel();
+        // If no information is provided, we just count the number of positive ratings discovered.
+        if(numRel == 0) numRel = 1;
         this.current = 0.0;
+        this.relevance = dataset.getRelevanceChecker();
     }
 
     @Override
     public void initialize(Dataset<U,I> dataset, List<FastRating> train)
     {
-        OfflineDataset<U,I> general = ((OfflineDataset<U,I>) dataset);
-        this.numRel = general.getNumRel();
-        this.current = 0.0;
-        this.toRemove = train.stream().mapToInt(pref -> pref.value() >= threshold ? 1 : 0).sum();
+        this.initialize(dataset);
+        this.toRemove = train.stream().filter(rating -> relevance.test(rating.value())).mapToInt(x -> 1).sum();
     }
 
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        if(value >= threshold) this.current++;
+        if(relevance.test(value)) this.current++;
     }
 
     @Override

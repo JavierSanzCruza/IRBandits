@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ * de Madrid, http://ir.ii.uam.es.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at http://mozilla.org/MPL/2.0.
+ *
+ */
 package es.uam.eps.ir.knnbandit.main;
 
 import es.uam.eps.ir.knnbandit.io.Writer;
@@ -32,7 +41,7 @@ public class Executor<U,I>
      * @param interval the pace at which we want to write the previous execution values.
      * @return the final number of iterations.
      */
-    public int executeWithoutWarmup(FastRecommendationLoop<U,I> loop, String file, boolean resume, int interval)
+    public Map<String, List<Double>> executeWithoutWarmup(FastRecommendationLoop<U,I> loop, String file, boolean resume, int interval)
     {
         // Initialize it:
         loop.init();
@@ -47,7 +56,7 @@ public class Executor<U,I>
      * @param interval the pace at which we want to write the previous execution values.
      * @return the final number of iterations.
      */
-    public int executeWithWarmup(FastRecommendationLoop<U,I> loop, String file, boolean resume, int interval, Warmup warmup)
+    public Map<String, List<Double>> executeWithWarmup(FastRecommendationLoop<U,I> loop, String file, boolean resume, int interval, Warmup warmup)
     {
         // Initialize it:
         loop.init(warmup);
@@ -62,7 +71,7 @@ public class Executor<U,I>
      * @param interval the pace at which we want to write the previous execution values.
      * @return the final number of iterations.
      */
-    private int execute(FastRecommendationLoop<U, I> loop, String file, boolean resume, int interval)
+    private Map<String, List<Double>> execute(FastRecommendationLoop<U, I> loop, String file, boolean resume, int interval)
     {
         Map<String, List<Double>> metricValues = new HashMap<>();
         loop.getMetrics().forEach(metricName -> metricValues.put(metricName, new ArrayList<>()));
@@ -88,12 +97,12 @@ public class Executor<U,I>
             // Step 3: until the loop ends, we
             int currentIter = this.executeRemaining(loop, writer, interval, metricValues);
             writer.close();
-            return currentIter;
+            return metricValues;
         }
         catch (IOException ioe)
         {
             System.err.println("ERROR: Some error occurred when executing algorithm " + file);
-            return -1;
+            return null;
         }
     }
 
@@ -153,8 +162,6 @@ public class Executor<U,I>
      * @param recovered the list of recovered (uidx, iidx, time) triplets.
      * @param writer    a writer for storing the recommendation loop in a file.
      * @param interval  the interval between different data points.
-     * @param <U>       type of the users
-     * @param <I>       type of the items.
      * @return a map containing the values of the metrics in certain time points.
      * @throws IOException if something fails while writing.
      */
@@ -200,8 +207,6 @@ public class Executor<U,I>
      * @param writer       the writer.
      * @param interval     the interval.
      * @param metricValues the list of metric values.
-     * @param <U>          type of the users.
-     * @param <I>          type of the items.
      * @return the number of iterations for finishing the loop.
      */
     public int executeRemaining(FastRecommendationLoop<U, I> loop, Writer writer, int interval, Map<String, List<Double>> metricValues) throws IOException
