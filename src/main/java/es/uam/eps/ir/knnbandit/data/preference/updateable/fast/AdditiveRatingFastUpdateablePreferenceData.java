@@ -179,6 +179,6 @@ public class AdditiveRatingFastUpdateablePreferenceData<U, I> extends AbstractSi
     @Override
     public double updatedValue(double newValue, double oldValue)
     {
-        return newValue;
+        return newValue + oldValue;
     }
 }

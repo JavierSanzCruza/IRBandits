@@ -199,7 +199,6 @@ public class AlgorithmSelector<U, I>
      * Adds a set of algorithms.
      *
      * @param array File containing the configuration of the algorithms.
-     * @throws IOException                                            if something fails while reading
      * @throws es.uam.eps.ir.knnbandit.selector.UnconfiguredException if the selector has not been configured
      */
     public void addList(JSONArray array, boolean single) throws UnconfiguredException
