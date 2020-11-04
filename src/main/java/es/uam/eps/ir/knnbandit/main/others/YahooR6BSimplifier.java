@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ * de Madrid, http://ir.ii.uam.es.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at http://mozilla.org/MPL/2.0.
+ *
+ */
 package es.uam.eps.ir.knnbandit.main.others;
 
 import es.uam.eps.ir.knnbandit.data.datasets.reader.LogRegister;
@@ -84,6 +93,8 @@ public class YahooR6BSimplifier
         }
 
         // Step 1: if userDataFile == null, then, we have to compute the statistics:
+        System.out.println("Obtaining the whole dataset statistics");
+        long a = System.currentTimeMillis();
         if(userDataFile == null)
         {
             String[] auxArgs;
@@ -99,17 +110,20 @@ public class YahooR6BSimplifier
             YahooR6BAnalyzer.main(auxArgs);
             userDataFile = outputDir + "full" + YahooR6BAnalyzer.USERDATAFILE;
         }
+        long b = System.currentTimeMillis();
+        System.out.println("Obtained the whole dataset statistics (" + (b-a) + " ms.)");
 
         // Step 2: determine the valid set of users:
+        System.out.println("Determining the valid set of users");
         FastUpdateableUserIndex<String> uIndex = new SimpleFastUpdateableUserIndex<>();
         try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(userDataFile))))
         {
-            String line;
+            String line = br.readLine();
             while((line = br.readLine()) != null)
             {
                 String[] split = line.split("\\s+");
                 String user = split[0];
-                long numRatings = Parsers.lp.parse(split[1]);
+                double numRatings = Parsers.dp.parse(split[1]);
 
                 if(numRatings >= threshold)
                 {
@@ -117,6 +131,9 @@ public class YahooR6BSimplifier
                 }
             }
         }
+        b = System.currentTimeMillis();
+        System.out.println("Determined the valid set of " + uIndex.numUsers() + " users (" + (b-a) + "ms.)");
+
 
         // Initialize the variables:
         FastUpdateableItemIndex<String> iIndex = new SimpleFastUpdateableItemIndex<>();
@@ -128,9 +145,6 @@ public class YahooR6BSimplifier
             GzipCompressorInputStream gzipIn = new GzipCompressorInputStream(new FileInputStream(input));
             TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn);
 
-
-            long a = System.currentTimeMillis();
-            long b;
             TarArchiveEntry entry;
 
             System.out.println("Starting writing the log file");
@@ -140,7 +154,7 @@ public class YahooR6BSimplifier
                 if(!name.equals("README.txt") && (files.isEmpty() || files.contains(name)))
                 {
                     b = System.currentTimeMillis();
-                    System.out.println("Processing file " + name + " (" + (b-a)/1000.0 + " ms.)");
+                    System.out.println("Processing file " + name + " (" + (b-a) + " ms.)");
                     BufferedReader br = new BufferedReader(new InputStreamReader(new GZIPInputStream(tarIn)));
                     {
                         String line;
@@ -200,11 +214,11 @@ public class YahooR6BSimplifier
                     }
 
                     b = System.currentTimeMillis();
-                    System.out.println("Finished processing file " + name + " (" + (b-a)/1000.0 + " ms.)");
+                    System.out.println("Finished processing file " + name + " (" + (b-a) + " ms.)");
                 }
             }
             b = System.currentTimeMillis();
-            System.out.println("Finished writing the log file (" + (b-a)/1000.0 + " ms.)");
+            System.out.println("Finished writing the log file (" + (b-a) + " ms.)");
         }
         catch(IOException ioe)
         {
@@ -259,7 +273,7 @@ public class YahooR6BSimplifier
             {
                 try
                 {
-                    bwUserData.write(user);
+                    bwUserData.write(user + "");
                     if(numTimes.numItems(user) > 0)
                     {
                         Pair<Double> pair1 = numTimes.getUserPreferences(user).map(pref -> new Pair<>(pref.v2, pref.v2 - 1)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));
@@ -286,7 +300,7 @@ public class YahooR6BSimplifier
             {
                 try
                 {
-                    bwItemData.write(item);
+                    bwItemData.write(item + "");
                     if(numTimes.numUsers(item) > 0)
                     {
                         Pair<Double> pair1 = numTimes.getItemPreferences(item).map(pref -> new Pair<>(pref.v2, pref.v2 - 1)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));

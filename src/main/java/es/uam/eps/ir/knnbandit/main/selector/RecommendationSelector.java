@@ -10,8 +10,11 @@
 package es.uam.eps.ir.knnbandit.main.selector;
 
 import es.uam.eps.ir.knnbandit.main.Recommendation;
+import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.main.contact.ContactRecommendation;
 import es.uam.eps.ir.knnbandit.main.general.GeneralRecommendation;
+import es.uam.eps.ir.knnbandit.main.stream.ReplayerRecommendation;
+import es.uam.eps.ir.knnbandit.main.stream.ReplayerValidation;
 import es.uam.eps.ir.knnbandit.main.withknowledge.WithKnowledgeRecommendation;
 import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
@@ -139,10 +142,15 @@ public class RecommendationSelector
                 Recommendation<Long, Long> rec = new WithKnowledgeRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse);
                 rec.recommend(algorithms, output, endCond, resume, k, interval);
                 break;
-
             }
             case STREAM:
             {
+                double threshold = Parsers.dp.parse(execArgs[5]);
+                String userIndex = execArgs[6];
+                String itemIndex = execArgs[7];
+
+                Recommendation<Integer, Integer> rec = new ReplayerRecommendation<>(input, "\t", userIndex, itemIndex, threshold, Parsers.ip, Parsers.ip);
+                rec.recommend(algorithms, output,endCond, resume, k, interval);
                 break;
             }
             default:
@@ -184,6 +192,10 @@ public class RecommendationSelector
                 builder.append("\tKnowledge: ALL if we want to use all the ratings, KNOWN if we want to use only the known ones, UNKNOWN otherwise\n");
                 break;
             case STREAM:
+                builder.append("\tThreshold: true if the graph is directed, false otherwise\n");
+                builder.append("\tUser index: file containing a relation of users\n");
+                builder.append("\tItem index: file containing a relation of items\n");
+                break;
             default:
         }
 

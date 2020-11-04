@@ -12,6 +12,7 @@ package es.uam.eps.ir.knnbandit.main.selector;
 import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.main.contact.ContactValidation;
 import es.uam.eps.ir.knnbandit.main.general.GeneralValidation;
+import es.uam.eps.ir.knnbandit.main.stream.ReplayerValidation;
 import es.uam.eps.ir.knnbandit.main.withknowledge.WithKnowledgeValidation;
 import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
@@ -63,11 +64,11 @@ public class ValidationSelector
                 lastIndex = 7;
                 break;
             case KNOWLEDGE:
+            case STREAM:
                 length = 8;
                 firstIndex = 0;
                 lastIndex = 8;
                 break;
-            case STREAM:
             default:
                 length = args.length;
                 firstIndex = 0;
@@ -144,6 +145,12 @@ public class ValidationSelector
             }
             case STREAM:
             {
+                double threshold = Parsers.dp.parse(execArgs[5]);
+                String userIndex = execArgs[6];
+                String itemIndex = execArgs[7];
+
+                Validation<Integer, Integer> valid = new ReplayerValidation<>(input, "\t", userIndex, itemIndex, threshold, Parsers.ip, Parsers.ip);
+                valid.validate(algorithms, output,endCond, resume, k);
                 break;
             }
             default:
@@ -185,6 +192,10 @@ public class ValidationSelector
                 builder.append("\tKnowledge: ALL if we want to use all the ratings, KNOWN if we want to use only the known ones, UNKNOWN otherwise\n");
                 break;
             case STREAM:
+                builder.append("\tThreshold: true if the graph is directed, false otherwise\n");
+                builder.append("\tUser index: file containing a relation of users\n");
+                builder.append("\tItem index: file containing a relation of items\n");
+                break;
             default:
         }
 
