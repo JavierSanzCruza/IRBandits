@@ -36,35 +36,35 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     /**
      * A selection mechanism for deciding the next target user and candidate item set.
      */
-    private final Selection<U,I> selection;
+    protected final Selection<U,I> selection;
     /**
      * The interactive recommender for the loop.
      */
-    private final InteractiveRecommender<U,I> recommender;
+    protected final InteractiveRecommender<U,I> recommender;
     /**
      * The dataset including the necessary information.
      */
-    private final Dataset<U,I> dataset;
+    protected final Dataset<U,I> dataset;
     /**
      * Determines whether the loop has finished or not.
      */
-    private final EndCondition endCond;
+    protected final EndCondition endCond;
     /**
      * Establishes the values we have to use for updating the recommender/metrics/etc.
      */
-    private final UpdateStrategy<U,I> update;
+    protected final UpdateStrategy<U,I> update;
     /**
      * The metrics to compute.
      */
-    private final Map<String, CumulativeMetric<U,I>> metrics;
+    protected final Map<String, CumulativeMetric<U,I>> metrics;
     /**
      * The number of iterations.
      */
-    private int numIter;
+    protected int numIter;
     /**
      * True if the loop has ended, false otherwise.
      */
-    private boolean hasEnded;
+    protected boolean hasEnded;
 
     /**
      * The names of the metrics.
@@ -98,9 +98,10 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     @Override
     public void init()
     {
-        this.endCond.init(dataset);
         this.selection.init(dataset);
+        this.update.init(dataset);
         this.recommender.init();
+        this.endCond.init(dataset);
         this.metrics.forEach((name, metric) -> metric.initialize(dataset));
         this.numIter = 0;
         this.hasEnded = false;
@@ -183,7 +184,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             metrics.forEach((name, metric) -> metric.update(value.uidx(), value.iidx(),value.value()));
             endCond.update(value.uidx(), value.iidx(),value.value());
         }
-
+        numIter++;
     }
 
     @Override

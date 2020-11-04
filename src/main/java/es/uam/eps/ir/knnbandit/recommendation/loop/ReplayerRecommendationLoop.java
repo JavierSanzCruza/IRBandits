@@ -15,7 +15,10 @@ import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.selection.SequentialSelection;
 import es.uam.eps.ir.knnbandit.recommendation.loop.update.ReplayerUpdate;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,5 +47,30 @@ public class ReplayerRecommendationLoop<U,I> extends GenericRecommendationLoop<U
     public ReplayerRecommendationLoop(StreamDataset<U,I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition)
     {
         super(dataset, new SequentialSelection<>(), recommender, new ReplayerUpdate<>(), endCondition, metrics);
+    }
+
+    @Override
+    public void fastUpdate(int uidx, int iidx)
+    {
+        Pair<List<FastRating>> updateValues = this.update.selectUpdate(uidx, iidx, this.selection);
+        // First, update the recommender:
+        List<FastRating> recValues = updateValues.v1();
+
+        // advance the loop
+        selection.update(uidx, iidx, 0.0);
+
+        for(FastRating value : recValues)
+        {
+            recommender.update(value.uidx(), value.iidx(),value.value());
+        }
+
+        // Then, update the metrics:
+        List<FastRating> metricValues = updateValues.v2();
+        for(FastRating value : metricValues)
+        {
+            metrics.forEach((name, metric) -> metric.update(value.uidx(), value.iidx(),value.value()));
+            endCond.update(value.uidx(), value.iidx(),value.value());
+        }
+        numIter++;
     }
 }

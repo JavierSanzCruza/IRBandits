@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.data.datasets;
 
 import es.uam.eps.ir.knnbandit.data.datasets.reader.LogRegister;
 import es.uam.eps.ir.knnbandit.data.datasets.reader.SimpleStreamDatasetReader;
+import es.uam.eps.ir.knnbandit.data.datasets.reader.StreamCandidateSelectionDatasetReader;
 import es.uam.eps.ir.knnbandit.data.datasets.reader.StreamDatasetReader;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
@@ -210,7 +211,7 @@ public class ReplayerStreamDataset<U,I> implements StreamDataset<U,I>
         // First, we read the user index
         FastUpdateableUserIndex<U> uIndex = SimpleFastUpdateableUserIndex.load(UsersReader.read(userIndex, uParser));
         FastUpdateableItemIndex<I> iIndex = SimpleFastUpdateableItemIndex.load(ItemsReader.read(itemIndex, iParser));
-        StreamDatasetReader<U,I> streamReader = new SimpleStreamDatasetReader<>(input, uParser, iParser, separator);
+        StreamDatasetReader<U,I> streamReader = new StreamCandidateSelectionDatasetReader<>(input, uParser, iParser, separator);
         return new ReplayerStreamDataset<>(uIndex, iIndex, streamReader, (value) -> value >= threshold);
     }
 

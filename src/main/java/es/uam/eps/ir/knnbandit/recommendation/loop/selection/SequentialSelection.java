@@ -73,6 +73,7 @@ public class SequentialSelection<U,I> implements Selection<U,I>
         {
             this.dataset = (StreamDataset<U, I>) dataset;
             this.dataset.restart();
+            this.dataset.advance();
         }
         catch(IOException ignored)
         {

@@ -9,6 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.main;
 
+import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -63,6 +64,8 @@ public abstract class Validation<U,I>
 
         System.out.println("Recommenders prepared (" + (b - a) + " ms.)");
 
+        UntieRandomNumber.configure(resume, output, k);
+
         // If it does not exist, create the directory in which to store the recommendation.
         String outputFolder = output + File.separator;
         File folder = new File(outputFolder);
@@ -78,6 +81,7 @@ public abstract class Validation<U,I>
         // Store the values for each algorithm.
         Map<String, Map<String, Double>> auxiliarValues = new ConcurrentHashMap<>();
         metrics.keySet().forEach(metric -> auxiliarValues.put(metric, new HashMap<>()));
+        auxiliarValues.put("numIter", new HashMap<>());
 
         // Run each algorithm
         recs.entrySet().parallelStream().forEach((entry) ->
@@ -104,6 +108,9 @@ public abstract class Validation<U,I>
 
                 // Create the recommendation loop: in this case, a general offline dataset loop
                 FastRecommendationLoop<U,I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
+                // Initialize the loop
+                loop.init();
+
                 // Execute the loop:
                 Executor<U, I> executor = new Executor<>();
                 String fileName = outputFolder + name + "_" + i + ".txt";

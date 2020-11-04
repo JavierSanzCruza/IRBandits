@@ -175,7 +175,7 @@ public class AlgorithmSelector<U, I>
             }
         }
 
-        JSONArray array = new JSONArray(jSon);
+        JSONArray array = new JSONArray(jSon.toString());
         int length = array.length();
         for(int i = 0; i < length; ++i)
         {
