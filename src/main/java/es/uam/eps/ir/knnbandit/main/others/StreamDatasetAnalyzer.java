@@ -10,7 +10,7 @@
 package es.uam.eps.ir.knnbandit.main.others;
 
 import es.uam.eps.ir.knnbandit.data.datasets.reader.LogRegister;
-import es.uam.eps.ir.knnbandit.data.datasets.reader.SimpleStreamDatasetReader;
+import es.uam.eps.ir.knnbandit.data.datasets.reader.StreamCandidateSelectionDatasetReader;
 import es.uam.eps.ir.knnbandit.data.datasets.reader.StreamDatasetReader;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AdditiveRatingFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -19,16 +19,11 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastU
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.core.preference.IdPref;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
-import java.util.*;
-import java.util.stream.IntStream;
+import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Given the Yahoo! R6B dataset, this obtains a subsample which might be used
@@ -100,17 +95,21 @@ public class StreamDatasetAnalyzer
 
         AdditiveRatingFastUpdateablePreferenceData<Integer, Integer> numTimes = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         AdditiveRatingFastUpdateablePreferenceData<Integer, Integer> numPos = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
-        StreamDatasetReader<Integer, Integer> streamReader = new SimpleStreamDatasetReader<>(log, Parsers.ip, Parsers.ip, "\t");
+        StreamDatasetReader<Integer, Integer> streamReader = new StreamCandidateSelectionDatasetReader<>(log, Parsers.ip, Parsers.ip, "\t");
+        streamReader.initialize();
 
         while(!streamReader.hasEnded())
         {
             LogRegister<Integer, Integer> register = streamReader.readRegister();
-            int uidx = register.getUser();
-            int iidx = register.getFeaturedItem();
-            double reward = register.getRating();
+            if(register != null)
+            {
+                int uidx = register.getUser();
+                int iidx = register.getFeaturedItem();
+                double reward = register.getRating();
 
-            numTimes.update(uidx, iidx, 1.0);
-            numPos.update(uidx, iidx, reward);
+                numTimes.update(uidx, iidx, 1.0);
+                numPos.update(uidx, iidx, reward);
+            }
         }
 
 

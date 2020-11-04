@@ -250,19 +250,21 @@ public class YahooR6BSimplifier
         AdditiveRatingFastUpdateablePreferenceData<Integer, Integer> numTimes = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), userIndex, itemIndex);
         AdditiveRatingFastUpdateablePreferenceData<Integer, Integer> numPos = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), userIndex, itemIndex);
         StreamDatasetReader<Integer, Integer> streamReader = new SimpleStreamDatasetReader<>(outputDir + "log.txt", Parsers.ip, Parsers.ip, "\t");
+        streamReader.initialize();
 
         while(!streamReader.hasEnded())
         {
             LogRegister<Integer, Integer> register = streamReader.readRegister();
-            int uidx = register.getUser();
-            int iidx = register.getFeaturedItem();
-            double reward = register.getRating();
+            if(register != null)
+            {
+                int uidx = register.getUser();
+                int iidx = register.getFeaturedItem();
+                double reward = register.getRating();
 
-            numTimes.update(uidx, iidx, 1.0);
-            numPos.update(uidx, iidx, reward);
+                numTimes.update(uidx, iidx, 1.0);
+                numPos.update(uidx, iidx, reward);
+            }
         }
-
-
 
         // Now, we print the whole statistics file.
         // STEP 1: the user index file

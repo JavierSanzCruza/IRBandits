@@ -38,7 +38,7 @@ public abstract class StreamDatasetReader<U,I>
     public LogRegister<U,I> readRegister() throws IOException
     {
         LogRegister<U,I> register = null;
-        if(finished)
+        if(!finished)
         {
             String line = br.readLine();
             if (line == null)
