@@ -108,7 +108,7 @@ public class YahooR6BAnalyzer
                     {
                         Pair<Double> pair1 = numTimes.getUserPreferences(user).map(pref -> new Pair<>(pref.v2, pref.v2 - 1)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));
                         Pair<Double> pair2 = numPos.getUserPreferences(user).map(pref -> new Pair<>(pref.v2, pref.v2 > 1 ? pref.v2 - 1 : 0)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));
-                        bw.write("\t" + pair1.v1() + "\t" + pair2.v1() + "\t" + pair1.v2() + "\t" + pair2.v2() + "\n");
+                        bwUserData.write("\t" + pair1.v1() + "\t" + pair2.v1() + "\t" + pair1.v2() + "\t" + pair2.v2() + "\n");
                     }
                     else
                     {
@@ -138,7 +138,7 @@ public class YahooR6BAnalyzer
                     {
                         Pair<Double> pair1 = numTimes.getItemPreferences(item).map(pref -> new Pair<>(pref.v2, pref.v2 - 1)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));
                         Pair<Double> pair2 = numPos.getItemPreferences(item).map(pref -> new Pair<>(pref.v2, pref.v2 > 1 ? pref.v2 - 1 : 0)).reduce(new Pair<>(0.0,0.0), (x,y) -> new Pair<>(x.v1()+y.v1(), x.v2()+y.v2()));
-                        bw.write("\t" + pair1.v1() + "\t" + pair2.v1() + "\t" + pair1.v2() + "\t" + pair2.v2() + "\n");
+                        bwUserData.write("\t" + pair1.v1() + "\t" + pair2.v1() + "\t" + pair1.v2() + "\t" + pair2.v2() + "\n");
                     }
                     else
                     {
@@ -163,9 +163,9 @@ public class YahooR6BAnalyzer
                     {
                         String i = item.v1();
                         Optional<? extends IdPref<String>> opt = numPos.getPreference(user, i);
-                        if (opt.isPresent())
+                        if (opt.isPresent() && opt.get().v2 > 0.0)
                         {
-                            bw.write(user + "\t" + i + "\t" + opt.get() + "\t" + item.v2() + "\t" + (opt.get().v2/item.v2()) + "\n");
+                            bw.write(user + "\t" + i + "\t" + opt.get().v2() + "\t" + item.v2() + "\t" + (opt.get().v2/item.v2()) + "\n");
                         }
                         else
                         {
