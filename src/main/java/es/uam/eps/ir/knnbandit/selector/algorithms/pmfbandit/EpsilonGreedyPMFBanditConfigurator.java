@@ -57,6 +57,12 @@ public class EpsilonGreedyPMFBanditConfigurator<U,I> extends AbstractAlgorithmCo
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new EpsilonGreedyInteractivePMFRecommender<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.PMFBANDIT + "-" + k + "-" + lambdaP + "-" + lambdaQ + "-" + stdev + "-" + numIter + "-" + PMFBanditIdentifiers.EGREEDY + "-" + epsilon + "-" + (ignoreUnknown ? "ignore" : "all");

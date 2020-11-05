@@ -90,9 +90,33 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
         this.retrievedData = retrievedData;
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param hasRating  True if we must ignore unknown items when updating.
+     * @param k          Number of latent factors to use.
+     * @param factorizer Factorizer for obtaining the factorized matrices.
+     */
+    public AbstractInteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, Factorizer<U, I> factorizer, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed);
+        this.factorizer = factorizer;
+        this.k = (k > 0) ? k : uIndex.numUsers();
+        Enumeration<String> loggers = LogManager.getLogManager().getLoggerNames();
+        while (loggers.hasMoreElements())
+        {
+            LogManager.getLogManager().getLogger(loggers.nextElement()).setLevel(Level.OFF);
+        }
+
+        this.retrievedData = retrievedData;
+    }
+
     @Override
     public void init()
     {
+        super.init();
         this.retrievedData.clear();
         this.factorization = factorizer.factorize(k, retrievedData);
     }
@@ -100,6 +124,7 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
     @Override
     public void init(Stream<FastRating> values)
     {
+        super.init();
         this.retrievedData.clear();
         values.forEach(triplet -> this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), triplet.value()));
         this.factorization = factorizer.factorize(k, retrievedData);

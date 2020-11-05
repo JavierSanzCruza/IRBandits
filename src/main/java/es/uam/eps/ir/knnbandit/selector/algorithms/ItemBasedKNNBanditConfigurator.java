@@ -52,6 +52,13 @@ public class ItemBasedKNNBanditConfigurator<U,I> extends AbstractAlgorithmConfig
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            UpdateableSimilarity sim = new BetaStochasticSimilarity(userIndex.numUsers(), alpha, beta);
+            return new InteractiveItemBasedKNN<>(userIndex, itemIndex, true, rngSeed,true, userK, itemK, sim);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.IBBANDIT + "-" + userK + "-" + itemK + "-" + alpha + "-" + beta;

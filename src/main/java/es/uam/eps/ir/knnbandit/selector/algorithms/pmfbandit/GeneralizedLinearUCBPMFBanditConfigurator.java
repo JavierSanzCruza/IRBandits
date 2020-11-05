@@ -54,6 +54,12 @@ public class GeneralizedLinearUCBPMFBanditConfigurator<U,I> extends AbstractAlgo
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new GeneralizedLinearUCBPMFInteractiveRecommender<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, lambdaP, lambdaQ, stdev, numIter, alpha);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.PMFBANDIT + "-" + k + "-" + lambdaP + "-" + lambdaQ + "-" + stdev + "-" + numIter + "-" + PMFBanditIdentifiers.GENERALIZEDUCB + "-" + alpha + "-" + (ignoreUnknown ? "ignore" : "all");

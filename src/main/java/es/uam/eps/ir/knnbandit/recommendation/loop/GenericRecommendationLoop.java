@@ -81,11 +81,11 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
      * @param metrics the metrics to consider
      *
      */
-    public GenericRecommendationLoop(Dataset<U,I> dataset, Selection<U,I> selection, InteractiveRecommenderSupplier<U,I> provider, UpdateStrategy<U,I> update, EndCondition endcond, Map<String, CumulativeMetric<U,I>> metrics)
+    public GenericRecommendationLoop(Dataset<U,I> dataset, Selection<U,I> selection, InteractiveRecommenderSupplier<U,I> provider, UpdateStrategy<U,I> update, EndCondition endcond, Map<String, CumulativeMetric<U,I>> metrics, int rngSeed)
     {
         this.dataset = dataset;
         this.selection = selection;
-        this.recommender = provider.apply(dataset, dataset);
+        this.recommender = provider.apply(dataset, dataset, rngSeed);
         this.endCond = endcond;
         this.metrics = metrics;
         this.numIter = 0;

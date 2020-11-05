@@ -167,7 +167,7 @@ public class ReplayerStreamDataset<U,I> implements StreamDataset<U,I>
     @Override
     public int user2uidx(U u)
     {
-        return this.uIndex.numUsers();
+        return this.uIndex.user2uidx(u);
     }
 
     @Override

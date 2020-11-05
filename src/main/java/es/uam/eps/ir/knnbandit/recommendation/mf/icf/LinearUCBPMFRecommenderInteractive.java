@@ -56,6 +56,25 @@ public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFReco
         this.alpha = alpha;
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param hasRating True if we must ignore unknown items when updating.
+     * @param k         Number of latent factors to use
+     * @param stdevP    Prior standard deviation for the user factors.
+     * @param stdevQ    Prior standard deviation for the item factors.
+     * @param stdev     Prior standard deviation for the ratings.
+     * @param numIter   Number of training iterations.
+     * @param alpha     Parameter for indicating the importance of the UCB term.
+     */
+    public LinearUCBPMFRecommenderInteractive(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed, k, stdevP, stdevQ, stdev, numIter);
+        this.alpha = alpha;
+    }
+
     @Override
     public int next(int uidx, IntList availability)
     {
@@ -119,7 +138,7 @@ public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFReco
         ALG.multOuter(qi, qi, aux);
 
         // First, update the values for the A and b matrices for user u
-        As[uidx].assign(aux, (x, y) -> x + y);
+        As[uidx].assign(aux, Double::sum);
         bs[uidx].assign(qi, (x, y) -> x + value * y);
 
         // Then, find A^-1 b and A^-1 sigma^2

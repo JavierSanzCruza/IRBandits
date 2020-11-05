@@ -123,12 +123,22 @@ public class VectorCosineSimilarity implements UpdateableSimilarity
     @Override
     public Stream<Tuple2id> similarElems(int idx)
     {
-        if(this.norm[idx] > 0.0)
+        try
         {
-            return this.num.get(idx).int2DoubleEntrySet().stream().filter(v -> v.getIntKey() != idx).map(v -> new Tuple2id(v.getIntKey(), v.getDoubleValue()/this.norm[v.getIntKey()]));
+            if (this.norm[idx] > 0.0)
+            {
+                return this.num.get(idx).int2DoubleEntrySet().stream().filter(v -> v.getIntKey() != idx).map(v -> new Tuple2id(v.getIntKey(), v.getDoubleValue() / this.norm[v.getIntKey()]));
+            }
+            return Stream.empty();
+            //return IntStream.range(0, this.numUsers).filter(i -> i != idx).mapToObj(i -> new Tuple2id(i, similarity(idx, i))).filter(x -> x.v2 > 0.0);
         }
-        return Stream.empty();
-        //return IntStream.range(0, this.numUsers).filter(i -> i != idx).mapToObj(i -> new Tuple2id(i, similarity(idx, i))).filter(x -> x.v2 > 0.0);
+        catch(NullPointerException poi)
+        {
+            double value = this.norm[idx];
+            Int2DoubleOpenHashMap map = (Int2DoubleOpenHashMap) this.num.get(idx);
+            System.err.println("Something failed");
+            return Stream.empty();
+        }
     }
 
     @Override
@@ -150,10 +160,7 @@ public class VectorCosineSimilarity implements UpdateableSimilarity
 
             this.norm[uidx] = trainData.getUidxPreferences(uidx).mapToDouble(iidx ->
             {
-                trainData.getIidxPreferences(iidx.v1).forEach(vidx ->
-                {
-                    ((Int2DoubleOpenHashMap) this.num.get(uidx)).addTo(vidx.v1,iidx.v2*vidx.v2);
-                });
+                trainData.getIidxPreferences(iidx.v1).forEach(vidx -> ((Int2DoubleOpenHashMap) this.num.get(uidx)).addTo(vidx.v1,iidx.v2*vidx.v2));
                 return iidx.v2*iidx.v2;
             }).sum();
         });

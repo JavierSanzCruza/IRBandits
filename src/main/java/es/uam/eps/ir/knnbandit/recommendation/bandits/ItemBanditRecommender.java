@@ -59,6 +59,8 @@ public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
     @Override
     public void init()
     {
+        super.init();
+
         this.itemBandit.reset();
     }
 

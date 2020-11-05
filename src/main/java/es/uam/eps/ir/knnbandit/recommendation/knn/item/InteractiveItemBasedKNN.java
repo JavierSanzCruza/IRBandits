@@ -45,6 +45,22 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
         super(uIndex, iIndex, hasRating, ignoreZeros, userK, itemK, sim, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param userK       Number of users to select.
+     * @param itemK       Number of items to take as neighbors
+     * @param sim         Updateable similarity
+     */
+    public InteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed, ignoreZeros, userK, itemK, sim, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
+    }
+
     @Override
     public void update(int uidx, int iidx, double value)
     {

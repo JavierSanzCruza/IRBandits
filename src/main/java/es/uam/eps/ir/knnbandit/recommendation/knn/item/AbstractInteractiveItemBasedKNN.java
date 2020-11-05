@@ -104,9 +104,42 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
         this.retrievedData = retrievedData;
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param userK       Number of items rated by the user to pick.
+     * @param itemK       Number of users rated by the item to pick.
+     * @param sim         Updateable similarity
+     */
+    public AbstractInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed);
+        this.sim = sim;
+        this.userK = userK;
+        this.itemK = (itemK > 0) ? itemK : iIndex.numItems();
+        this.itemList = new IntArrayList();
+        uIndex.getAllUidx().forEach(itemList::add);
+        this.comp = (Tuple2id x, Tuple2id y) ->
+        {
+            int value = (int) Math.signum(x.v2 - y.v2);
+            if (value == 0)
+            {
+                return itemList.indexOf(x.v1) - itemList.indexOf(y.v1);
+            }
+            return value;
+        };
+        this.ignoreZeros = ignoreZeros;
+        this.retrievedData = retrievedData;
+    }
+
     @Override
     public void init()
     {
+        super.init();
         this.sim.initialize();
         this.retrievedData.clear();
     }

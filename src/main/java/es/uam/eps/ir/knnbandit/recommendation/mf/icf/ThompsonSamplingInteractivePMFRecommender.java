@@ -80,6 +80,23 @@ public class ThompsonSamplingInteractivePMFRecommender<U, I> extends Interactive
     }
 
     /**
+     * Constructor.
+     *
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param hasRating True if we must ignore unknown items when updating.
+     * @param k         Number of latent factors to use
+     * @param stdevP    Prior standard deviation for the user factors.
+     * @param stdevQ    Prior standard deviation for the item factors.
+     * @param stdev     Prior standard deviation for the ratings.
+     * @param numIter   Number of training iterations.
+     */
+    public ThompsonSamplingInteractivePMFRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, double stdevP, double stdevQ, double stdev, int numIter)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed, k, stdevP, stdevQ, stdev, numIter);
+    }
+
+    /**
      * Given a covariance matrix A, finds a matrix L such that A = L^T L
      *
      * @param covarianceMatrix the covariance matrix.

@@ -128,9 +128,32 @@ public abstract class AbstractCOFIBA<U,I> extends InteractiveRecommender<U,I>
         this.userClusters = new ArrayList<>();
     }
 
+    /**
+     * Constructor.
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     * @param alpha1 Parameter that manages the importance of the confidence bound for the item selection.
+     * @param alpha2 Parameter that manages how difficult is for an edge in the user and item graphs to disappear.
+     */
+    public AbstractCOFIBA(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, double alpha1, double alpha2)
+    {
+        super(uIndex, iIndex, ignoreNotRated, rngSeed);
+        this.alpha1 = alpha1;
+        this.alpha2 = alpha2;
+        this.bs = new Int2ObjectOpenHashMap<>();
+        this.ms = new Int2ObjectOpenHashMap<>();
+
+        this.clustB = new ArrayList<>();
+        this.clustM = new ArrayList<>();
+        this.userGraphs = new ArrayList<>();
+        this.userClusters = new ArrayList<>();
+    }
+
     @Override
     public void init()
     {
+        super.init();
         this.bs.clear();
         this.ms.clear();
         this.clustB.clear();

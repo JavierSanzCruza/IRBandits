@@ -53,6 +53,12 @@ public class CollabGreedyConfigurator<U,I> extends AbstractAlgorithmConfigurator
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new CollaborativeGreedy<>(userIndex, itemIndex, ignoreUnknown, rngSeed, threshold, alpha);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.COLLABGREEDY + "-" + threshold + "-" + alpha + "-" + (ignoreUnknown ? "ignore" : "all");

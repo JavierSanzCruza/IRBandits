@@ -36,10 +36,17 @@ public class AverageConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
         {
             this.ignoreUnknown = ignoreUnknown;
         }
+
         @Override
         public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
             return new AvgRecommender<>(userIndex, itemIndex, ignoreUnknown);
+        }
+
+        @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new AvgRecommender<>(userIndex, itemIndex, ignoreUnknown, rngSeed);
         }
 
         @Override

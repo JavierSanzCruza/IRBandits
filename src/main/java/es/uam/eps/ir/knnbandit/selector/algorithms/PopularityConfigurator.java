@@ -38,6 +38,12 @@ public class PopularityConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new PopularityRecommender<>(userIndex, itemIndex, rngSeed, predicate);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.POP;

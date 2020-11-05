@@ -59,6 +59,13 @@ public class ItemBasedKNNConfigurator<U,I> extends AbstractAlgorithmConfigurator
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            UpdateableSimilarity sim = new VectorCosineSimilarity(itemIndex.numItems());
+            return new InteractiveItemBasedKNN<>(userIndex, itemIndex, ignoreUnknown, rngSeed, ignoreZeroes, 0, k, sim);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.ITEMBASEDKNN + "-" + k + "-" + (ignoreZeroes ? "ignore" : "all") + "-" + (ignoreUnknown ? "ignore" : "all");

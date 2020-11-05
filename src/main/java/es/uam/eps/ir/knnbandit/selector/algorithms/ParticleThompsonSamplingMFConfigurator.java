@@ -69,6 +69,13 @@ public class ParticleThompsonSamplingMFConfigurator<U,I> extends AbstractAlgorit
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            PTSMFParticleFactory<U, I> factory = PTSMParticleFactories.normalFactory(k, stdev, sigmaP, sigmaQ);
+            return new ParticleThompsonSamplingMF<>(userIndex, itemIndex, ignoreUnknown, rngSeed, numP, factory);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.PTS + "-" + k + "-" + numP + "-" + sigmaP + "-" + sigmaQ + "-" + stdev + "-"  + (ignoreUnknown ? "ignore" : "all");

@@ -70,6 +70,13 @@ public class BayesianParticleThompsonSamplingMFConfigurator<U,I> extends Abstrac
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            PTSMFParticleFactory<U, I> factory = PTSMParticleFactories.bayesianFactory(k, stdev, sigmaQ, alpha, beta);
+            return new ParticleThompsonSamplingMF<>(userIndex, itemIndex, ignoreUnknown,  rngSeed, numP, factory);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.BAYESIANPTS + "-" + k + "-" + numP + "-" + sigmaQ + "-" + alpha + "-" + beta + "-" + stdev + "-"  + (ignoreUnknown ? "ignore" : "all");

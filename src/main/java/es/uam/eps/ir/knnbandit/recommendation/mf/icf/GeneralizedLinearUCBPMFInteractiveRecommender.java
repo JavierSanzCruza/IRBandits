@@ -69,6 +69,30 @@ public class GeneralizedLinearUCBPMFInteractiveRecommender<U, I> extends Interac
         }
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param hasRating True if we must ignore unknown items when updating.
+     * @param k         Number of latent factors to use
+     * @param stdevP    Prior standard deviation for the user factors.
+     * @param stdevQ    Prior standard deviation for the item factors.
+     * @param stdev     Prior standard deviation for the ratings.
+     * @param numIter   Number of training iterations.
+     * @param alpha     Parameter for indicating the importance of the UCB term.
+     */
+    public GeneralizedLinearUCBPMFInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed, k, stdevP, stdevQ, stdev, numIter);
+        this.alpha = alpha;
+        this.counters = new IntArrayList();
+        for (int i = 0; i < uIndex.numUsers(); ++i)
+        {
+            this.counters.add(1);
+        }
+    }
+
     @Override
     public void init()
     {

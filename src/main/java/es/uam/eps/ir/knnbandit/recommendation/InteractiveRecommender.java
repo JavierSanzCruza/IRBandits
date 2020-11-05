@@ -39,11 +39,10 @@ public abstract class InteractiveRecommender<U, I>
      * Item index.
      */
     protected final FastUpdateableItemIndex<I> iIndex;
-
     /**
-     * Random number seed generator.
+     * The random number seed
      */
-    protected final UntieRandomNumberReader rngSeedGen;
+    protected final int rngSeed;
     /**
      * Random number generator.
      */
@@ -57,30 +56,45 @@ public abstract class InteractiveRecommender<U, I>
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
+     * @param ignoreNotRated true if we only consider known ratings, false otherwise.
      */
     public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated)
     {
         this.uIndex = uIndex;
         this.iIndex = iIndex;
-        this.rngSeedGen = new UntieRandomNumberReader();
+        this.rngSeed = 0;
+        this.ignoreNotRated = ignoreNotRated;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param ignoreNotRated true if we only consider known ratings, false otherwise.
+     * @param rngSeed the random number generator seed.
+     */
+    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed)
+    {
+        this.uIndex = uIndex;
+        this.iIndex = iIndex;
+        this.rngSeed = rngSeed;
+        this.ignoreNotRated = ignoreNotRated;
     }
 
     /**
      * Initializes the specific variables of a method.
      */
-    public abstract void init();
+    public void init()
+    {
+        this.rng = new Random(rngSeed);
+    }
 
     /**
      * Initializes the specific variables of a method, using some information as training data.
      * @param values a stream of (user, item, value) triplets.
      */
     public abstract void init(Stream<FastRating> values);
-
-    /**
-     * Initializes the specific variables of a method using
-     * @param prefData the training preference data.
-     */
-    //public abstract void init(FastPreferenceData<U,I> prefData);
 
     /**
      * Obtains the set of identifiers of the users.

@@ -96,9 +96,32 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
         this.sim = new RestrictedVectorCosineSimilarity(numUsers());
     }
 
+    /**
+     * Constructor.
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     * @param threshold Similarity threshold. Two users are similar if their similarity is smaller than this value.
+     * @param alpha Value for determining the exploration probability.
+     */
+    public CollaborativeGreedy(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, double threshold, double alpha)
+    {
+        super(uIndex, iIndex, ignoreNotRated, rngSeed);
+
+        this.jointList = new IntArrayList();
+        jointExpl = new Int2ObjectOpenHashMap<>();
+        this.jointData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+        this.threshold = threshold;
+        this.alpha = alpha;
+        this.sim = new RestrictedVectorCosineSimilarity(numUsers());
+    }
+
     @Override
     public void init()
     {
+        super.init();
+
         // Sort the list containing random orders of the items.
         jointList.clear();
         this.getIidx().forEach(jointList::add);

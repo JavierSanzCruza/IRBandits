@@ -116,9 +116,41 @@ public abstract class InteractivePMFRecommender<U, I> extends InteractiveRecomme
         //this.Q = new DenseDoubleMatrix2D(iIndex.numItems(), k);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param hasRating True if we must ignore unknown items when updating.
+     * @param k         Number of latent factors to use
+     * @param stdevP    Prior standard deviation for the user factors.
+     * @param stdevQ    Prior standard deviation for the item factors.
+     * @param stdev     Prior standard deviation for the ratings.
+     * @param numIter   Number of training iterations.
+     */
+    public InteractivePMFRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, double stdevP, double stdevQ, double stdev, int numIter)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed);
+
+        this.stdev = stdev;
+        this.lambdaP = stdevP / stdev;
+        this.lambdaQ = stdevQ / stdev;
+
+        this.numIter = numIter;
+
+        this.k = k;
+
+        this.retrievedData = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+
+        //this.P = new DenseDoubleMatrix2D(uIndex.numUsers(), k);
+        //this.Q = new DenseDoubleMatrix2D(iIndex.numItems(), k);
+    }
+
     @Override
     public void init()
     {
+        super.init();
+
         // First, we initialize the values.
         this.P = new DenseDoubleMatrix2D(uIndex.numUsers(), k);
 

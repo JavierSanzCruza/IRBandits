@@ -113,6 +113,12 @@ public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return this.apply(userIndex, itemIndex);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.ITEMBANDIT + "-" + banditSupplier.getName() + "-" + (ignoreUnknown ? "ignore" : "all");

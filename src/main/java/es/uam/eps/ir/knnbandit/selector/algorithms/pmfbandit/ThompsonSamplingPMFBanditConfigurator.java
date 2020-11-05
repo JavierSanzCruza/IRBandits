@@ -46,6 +46,12 @@ public class ThompsonSamplingPMFBanditConfigurator<U,I> extends AbstractAlgorith
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new ThompsonSamplingInteractivePMFRecommender<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, lambdaP, lambdaQ, stdev, numIter);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.PMFBANDIT + "-" + k + "-" + lambdaP + "-" + lambdaQ + "-" + stdev + "-" + numIter + "-" + PMFBanditIdentifiers.THOMPSON + "-" + (ignoreUnknown ? "ignore" : "all");

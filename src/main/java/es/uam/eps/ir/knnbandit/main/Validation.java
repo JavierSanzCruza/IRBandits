@@ -108,9 +108,6 @@ public abstract class Validation<U,I>
 
                 // Create the recommendation loop: in this case, a general offline dataset loop
                 FastRecommendationLoop<U,I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
-                // Initialize the loop
-                loop.init();
-
                 // Execute the loop:
                 Executor<U, I> executor = new Executor<>();
                 String fileName = outputFolder + name + "_" + i + ".txt";
@@ -163,7 +160,7 @@ public abstract class Validation<U,I>
             File aux = new File(algorithms);
             String rankingname = aux.getName();
 
-            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output + rankingname + "-ranking.txt"))))
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output + rankingname + "-" + metric + "-ranking.txt"))))
             {
                 bw.write("Algorithm\t" + metric);
                 while (!ranking.isEmpty())

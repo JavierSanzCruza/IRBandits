@@ -110,6 +110,13 @@ public class MFConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new InteractiveMF<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, supplier.apply());
+
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.MF + "-" + k + "-" + supplier.getName() + "-" + (ignoreUnknown ? "ignore" : "all");

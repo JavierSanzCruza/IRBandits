@@ -40,6 +40,21 @@ public class LastRatingInteractiveUserBasedKNN<U, I> extends AbstractInteractive
         super(uIndex, iIndex, hasRating, ignoreZeros, k, sim, LastRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param k           Number of neighbors to use.
+     * @param sim         Updateable similarity
+     */
+    public LastRatingInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, boolean ignoreZeros, int k, UpdateableSimilarity sim)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed, ignoreZeros, k, sim, LastRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
+    }
+
     @Override
     protected double score(int vidx, double rating)
     {

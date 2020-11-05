@@ -55,6 +55,12 @@ public class LinearUCBPMFBanditConfigurator<U,I> extends AbstractAlgorithmConfig
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new LinearUCBPMFRecommenderInteractive<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, lambdaP, lambdaQ, stdev, numIter, alpha);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.PMFBANDIT + "-" + k + "-" + lambdaP + "-" + lambdaQ + "-" + stdev + "-" + numIter + "-" + PMFBanditIdentifiers.UCB + "-" + alpha + "-" + (ignoreUnknown ? "ignore" : "all");

@@ -47,16 +47,29 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
         super(uIndex, iIndex, true);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex    user index.
+     * @param iIndex    item index.
+     */
+    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed)
+    {
+        super(uIndex, iIndex, true, rngSeed);
+    }
+
+
     @Override
     public void init()
     {
+        super.init();
         // It is not necessary to do nothing here.
     }
 
     @Override
     public void init(Stream<FastRating> values)
     {
-
+        super.init();
     }
 
     @Override

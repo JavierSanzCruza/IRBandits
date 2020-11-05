@@ -26,6 +26,12 @@ public class RandomConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
         }
 
         @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new RandomRecommender<>(userIndex, itemIndex, rngSeed);
+        }
+
+        @Override
         public String getName()
         {
             return AlgorithmIdentifiers.RANDOM;

@@ -105,10 +105,49 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         this.retrievedData = retrievedData;
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param k           Number of neighbors to use.
+     * @param sim         Updateable similarity
+     */
+    public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, boolean ignoreZeros, int k, UpdateableSimilarity sim, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed);
+
+        // Store the similarity we want to use.
+        this.sim = sim;
+
+        // Fix the number of neighbors to take
+        this.k = (k > 0) ? k : uIndex.numUsers();
+        this.userList = new IntArrayList();
+
+        // Fix a preference order between the users.
+        uIndex.getAllUidx().forEach(userList::add);
+        this.comp = (Tuple2id x, Tuple2id y) ->
+        {
+            int value = (int) Math.signum(x.v2 - y.v2);
+            if (value == 0)
+            {
+                return userList.indexOf(x.v1) - userList.indexOf(y.v1);
+            }
+            return value;
+        };
+
+        this.ignoreZeros = ignoreZeros;
+
+        this.retrievedData = retrievedData;
+    }
+
     @Override
     public void init()
     {
-        this.retrievedData .clear();
+        super.init();
+        this.retrievedData.clear();
         this.sim.initialize();
     }
 
@@ -123,6 +162,7 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
     @Override
     public void init(Stream<FastRating> values)
     {
+        super.init();
         this.retrievedData.clear();
         values.forEach(triplet -> this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), triplet.value()));
         this.sim.initialize(retrievedData);
@@ -240,9 +280,9 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
 
         if(!hasRating)
         {
+            this.retrievedData.updateRating(uidx, iidx, value);
             this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, value, vidx.v2));
             this.sim.updateNorm(uidx, value);
-            this.retrievedData.updateRating(uidx, iidx, value);
         }
         else
         {

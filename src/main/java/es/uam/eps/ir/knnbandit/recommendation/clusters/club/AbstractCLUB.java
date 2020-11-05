@@ -118,6 +118,25 @@ public abstract class AbstractCLUB<U ,I> extends InteractiveRecommender<U,I>
     }
 
     /**
+     * Constructor.
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     * @param alpha1 Parameter that manages the importance of the confidence bound for the item selection.
+     * @param alpha2 Parameter that manages how difficult is for an edge in the graph to disappear.
+     */
+    public AbstractCLUB(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, double alpha1, double alpha2)
+    {
+        super(uIndex, iIndex, ignoreNotRated, rngSeed);
+        this.alpha1 = alpha1;
+        this.alpha2 = alpha2;
+        this.bs = new HashMap<>();
+        this.ms = new HashMap<>();
+        clustM = new HashMap<>();
+        clustB = new HashMap<>();
+    }
+
+    /**
      * Configures a graph generator for the user graph.
      * @return the configured graph generator.
      */
@@ -126,6 +145,7 @@ public abstract class AbstractCLUB<U ,I> extends InteractiveRecommender<U,I>
     @Override
     public void init()
     {
+        super.init();
         GraphGenerator<Integer> ggen = configureGenerator();
         ggen.configure(false, uIndex.getAllUidx().boxed().collect(Collectors.toCollection(HashSet::new)));
 

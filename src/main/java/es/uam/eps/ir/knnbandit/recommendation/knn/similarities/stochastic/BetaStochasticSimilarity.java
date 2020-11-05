@@ -140,13 +140,13 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
     @Override
     public void updateNorm(int uidx, double value)
     {
-        this.usercount[uidx] += 1;
+        if(value > 0.0) this.usercount[uidx] += 1;
     }
 
     @Override
     public void updateNormDel(int uidx, double value)
     {
-        this.usercount[uidx] -= 1;
+        if(value > 0.0) this.usercount[uidx] -= 1;
     }
 
     @Override
@@ -157,25 +157,25 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
             return;
         }
 
-        if(!Double.isNaN(vval) && uval * vval > 1.0)
+        double realUVal = uval > 0.0 ? 1.0 : 0.0;
+        double realVVal = vval > 0.0 ? 1.0 : 0.0;
+
+        if(!this.sims.containsKey(uidx))
         {
-            if(!this.sims.containsKey(uidx))
-            {
-                Int2DoubleMap map = new Int2DoubleOpenHashMap();
-                map.defaultReturnValue(0.0);
-                this.sims.put(uidx, map);
-            }
-
-            if(!this.sims.containsKey(vidx))
-            {
-                Int2DoubleMap map = new Int2DoubleOpenHashMap();
-                map.defaultReturnValue(0.0);
-                this.sims.put(vidx, map);
-            }
-
-            ((Int2DoubleOpenHashMap) this.sims.get(uidx)).addTo(vidx, uval*vval);
-            ((Int2DoubleOpenHashMap) this.sims.get(vidx)).addTo(uidx, uval*vval);
+            Int2DoubleMap map = new Int2DoubleOpenHashMap();
+            map.defaultReturnValue(0.0);
+            this.sims.put(uidx, map);
         }
+
+        if(!this.sims.containsKey(vidx))
+        {
+            Int2DoubleMap map = new Int2DoubleOpenHashMap();
+            map.defaultReturnValue(0.0);
+            this.sims.put(vidx, map);
+        }
+
+        ((Int2DoubleOpenHashMap) this.sims.get(uidx)).addTo(vidx, realUVal*realVVal);
+        ((Int2DoubleOpenHashMap) this.sims.get(vidx)).addTo(uidx, realUVal*realVVal);
     }
 
     @Override
@@ -183,8 +183,11 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
     {
         if(!Double.isNaN(vval) && this.sims.containsKey(uidx) && this.sims.get(uidx).containsKey(vidx))
         {
-            ((Int2DoubleOpenHashMap) this.sims.get(uidx)).addTo(vidx, -uval*vval);
-            ((Int2DoubleOpenHashMap) this.sims.get(vidx)).addTo(uidx, -uval*vval);
+            double realUVal = uval > 0.0 ? 1.0 : 0.0;
+            double realVVal = vval > 0.0 ? 1.0 : 0.0;
+
+            ((Int2DoubleOpenHashMap) this.sims.get(uidx)).addTo(vidx, -realUVal*realVVal);
+            ((Int2DoubleOpenHashMap) this.sims.get(vidx)).addTo(uidx, -realUVal*realVVal);
 
             if(this.sims.get(uidx).get(vidx) == 0.0)
             {

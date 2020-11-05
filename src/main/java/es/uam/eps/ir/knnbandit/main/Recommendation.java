@@ -102,7 +102,6 @@ public abstract class Recommendation<U,I>
 
                 // Create the recommendation loop: in this case, a general offline dataset loop
                 FastRecommendationLoop<U,I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
-                loop.init();
                 // Execute the loop:
                 Executor<U, I> executor = new Executor<>();
                 String fileName = outputFolder + name + "_" + i + ".txt";

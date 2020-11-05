@@ -46,9 +46,24 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
         IntStream.range(0, iIndex.numItems()).forEach(iidx -> this.numTimes[iidx] = 0);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     */
+    public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed)
+    {
+        super(uIndex, iIndex, ignoreNotRated, rngSeed);
+        this.numTimes = new double[iIndex.numItems()];
+        IntStream.range(0, iIndex.numItems()).forEach(iidx -> this.numTimes[iidx] = 0);
+    }
+
     @Override
     public void init()
     {
+        super.init();
         IntStream.range(0, iIndex.numItems()).forEach(iidx ->
         {
             this.numTimes[iidx] = 0.0;

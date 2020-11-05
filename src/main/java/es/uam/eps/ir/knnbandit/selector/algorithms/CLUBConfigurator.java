@@ -50,7 +50,13 @@ public class CLUBConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
         @Override
         public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
-            return new CLUBComplete<>(userIndex, itemIndex, true, alpha, alpha2);
+            return new CLUBComplete<>(userIndex, itemIndex, ignoreUnknown, alpha, alpha2);
+        }
+
+        @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new CLUBComplete<>(userIndex, itemIndex, ignoreUnknown, rngSeed, alpha, alpha2);
         }
 
         @Override

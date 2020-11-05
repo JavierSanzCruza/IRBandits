@@ -86,6 +86,8 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
     @Override
     public void init()
     {
+        super.init();
+
         this.particleWeight.clear();
         this.particles.clear();
 

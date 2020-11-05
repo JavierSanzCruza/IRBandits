@@ -128,6 +128,7 @@ public abstract class WarmupValidation<U,I>
             // Store the values for each algorithm.
             Map<String, Map<String, Double>> auxiliarValues = new ConcurrentHashMap<>();
             metrics.keySet().forEach(metric -> auxiliarValues.put(metric, new HashMap<>()));
+            auxiliarValues.put("numIter", new HashMap<>());
 
             // Run each algorithm
             recs.entrySet().parallelStream().forEach((entry) ->
@@ -154,6 +155,7 @@ public abstract class WarmupValidation<U,I>
 
                     // Create the recommendation loop: in this case, a general offline dataset loop
                     FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
+
                     // Execute the loop:
                     Executor<U, I> executor = new Executor<>();
                     String fileName = currentOutputFolder + name + "_" + i + ".txt";
@@ -206,7 +208,7 @@ public abstract class WarmupValidation<U,I>
                 File aux = new File(algorithms);
                 String rankingname = aux.getName();
 
-                try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentOutputFolder + rankingname + "-ranking.txt"))))
+                try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentOutputFolder + rankingname + "-" + metric + "-ranking.txt"))))
                 {
                     bw.write("Algorithm\t" + metric);
                     while (!ranking.isEmpty())

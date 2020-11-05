@@ -39,13 +39,17 @@ import java.util.function.Supplier;
 public class ReplayerRecommendation<U,I> extends Recommendation<U,I>
 {
     /**
-     * The streaming dataset
-     */
-    private final StreamDataset<U,I> dataset;
-    /**
      * The set of cumulative metrics.
      */
     private final Map<String, Supplier<CumulativeMetric<U,I>>> metrics;
+
+    private final String input;
+    private final String separator;
+    private final String userIndex;
+    private final String itemIndex;
+    private final double threshold;
+    private final Parser<U> uParser;
+    private final Parser<I> iParser;
 
     /**
      * Constructor.
@@ -56,11 +60,17 @@ public class ReplayerRecommendation<U,I> extends Recommendation<U,I>
      * @param threshold the relevance threshold.
      * @param uParser a parser for reading the users.
      * @param iParser a parser for reading the items.
-     * @throws IOException if something fails while reading the dataset.
      */
-    public ReplayerRecommendation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser) throws IOException
+    public ReplayerRecommendation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser)
     {
-        dataset = ReplayerStreamDataset.load(input, userIndex, itemIndex, separator, uParser, iParser, threshold);
+        this.input = input;
+        this.separator = separator;
+        this.userIndex = userIndex;
+        this.itemIndex = itemIndex;
+        this.threshold = threshold;
+        this.uParser = uParser;
+        this.iParser = iParser;
+
         this.metrics = new HashMap<>();
         metrics.put("ctr", ClickthroughRate::new);
         metrics.put("gini", CumulativeGini::new);
@@ -69,7 +79,14 @@ public class ReplayerRecommendation<U,I> extends Recommendation<U,I>
     @Override
     protected Dataset<U, I> getDataset()
     {
-        return dataset;
+        try
+        {
+            return ReplayerStreamDataset.load(input, userIndex, itemIndex, separator, uParser, iParser, threshold);
+        }
+        catch (IOException e)
+        {
+            return null;
+        }
     }
 
     @Override
@@ -77,7 +94,8 @@ public class ReplayerRecommendation<U,I> extends Recommendation<U,I>
     {
         Map<String, CumulativeMetric<U,I>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new ReplayerRecommendationLoop<>(dataset, rec, localMetrics, endCond);
+        Dataset<U,I> dataset = this.getDataset();
+        return new ReplayerRecommendationLoop<>((StreamDataset<U,I>) dataset, rec, localMetrics, endCond, rngSeed);
     }
 
     @Override

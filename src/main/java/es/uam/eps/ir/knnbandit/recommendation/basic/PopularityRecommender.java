@@ -45,9 +45,24 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
         this.relevanceChecker = relevanceChecker;
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param relevanceChecker Relevance checker
+     */
+    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed, DoublePredicate relevanceChecker)
+    {
+        super(uIndex, iIndex, true, rngSeed);
+        this.relevanceChecker = relevanceChecker;
+    }
+
     @Override
     public void init()
     {
+        super.init();
+
         this.iIndex.getAllIidx().forEach(iidx -> this.values[iidx] = 0.0);
     }
 

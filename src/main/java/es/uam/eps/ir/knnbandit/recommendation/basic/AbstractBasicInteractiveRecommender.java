@@ -45,6 +45,20 @@ public abstract class AbstractBasicInteractiveRecommender<U, I> extends Interact
         IntStream.range(0, iIndex.numItems()).forEach(iidx -> values[iidx] = 0);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex    User index.
+     * @param iIndex    Item index.
+     * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     */
+    public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed)
+    {
+        super(uIndex, iIndex, ignoreNotRated, rngSeed);
+        this.values = new double[iIndex.numItems()];
+        IntStream.range(0, iIndex.numItems()).forEach(iidx -> values[iidx] = 0);
+    }
+
     @Override
     public int next(int uidx, IntList availability)
     {

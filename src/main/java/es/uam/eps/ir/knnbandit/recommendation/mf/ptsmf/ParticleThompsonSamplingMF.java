@@ -71,9 +71,29 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
         this.numParticles = numParticles;
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex       user index.
+     * @param iIndex       item index.
+     * @param hasRating    true if the algorithm must not be updated when the rating is unknown, false otherwise.
+     * @param numParticles the number of particles.
+     * @param factory      the particle factory.
+     */
+    public ParticleThompsonSamplingMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int numParticles, PTSMFParticleFactory<U, I> factory)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed);
+        this.factory = factory;
+        this.particleList = new ArrayList<>();
+        this.ptsrng = new Random();
+        this.numParticles = numParticles;
+    }
+
     @Override
     public void init()
     {
+        super.init();
+
         for(int b = 0; b < numParticles; ++b)
         {
             Particle<U,I> particle = factory.create(uIndex, iIndex);

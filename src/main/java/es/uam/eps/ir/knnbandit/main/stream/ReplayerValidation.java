@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Class for applying validation on a dataset using the replayer strategy.
@@ -38,14 +39,17 @@ import java.util.function.Supplier;
 public class ReplayerValidation<U,I> extends Validation<U,I>
 {
     /**
-     * The streaming dataset
-     */
-    private final StreamDataset<U,I> dataset;
-    /**
      * The set of cumulative metrics.
      */
     private final Map<String, Supplier<CumulativeMetric<U,I>>> metrics;
 
+    private final String input;
+    private final String separator;
+    private final String userIndex;
+    private final String itemIndex;
+    private final double threshold;
+    private final Parser<U> uParser;
+    private final Parser<I> iParser;
     /**
      * Constructor.
      * @param input the file containing the log information to use in the replayer strategy.
@@ -55,11 +59,18 @@ public class ReplayerValidation<U,I> extends Validation<U,I>
      * @param threshold the relevance threshold.
      * @param uParser a parser for reading the users.
      * @param iParser a parser for reading the items.
-     * @throws IOException if something fails while reading the dataset.
      */
-    public ReplayerValidation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser) throws IOException
+    public ReplayerValidation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser)
     {
-        dataset = ReplayerStreamDataset.load(input, userIndex, itemIndex, separator, uParser, iParser, threshold);
+        this.input = input;
+        this.separator = separator;
+        this.userIndex = userIndex;
+        this.itemIndex = itemIndex;
+        this.threshold = threshold;
+        this.uParser = uParser;
+        this.iParser = iParser;
+
+
         this.metrics = new HashMap<>();
         metrics.put("ctr", ClickthroughRate::new);
     }
@@ -68,7 +79,14 @@ public class ReplayerValidation<U,I> extends Validation<U,I>
     @Override
     protected Dataset<U, I> getDataset()
     {
-        return dataset;
+        try
+        {
+            return ReplayerStreamDataset.load(input, userIndex, itemIndex, separator, uParser, iParser, threshold);
+        }
+        catch (IOException e)
+        {
+            return null;
+        }
     }
 
     @Override
@@ -76,7 +94,9 @@ public class ReplayerValidation<U,I> extends Validation<U,I>
     {
         Map<String, CumulativeMetric<U,I>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new ReplayerRecommendationLoop<>(dataset, rec, localMetrics, endCond);
+        StreamDataset<U,I> dataset = (StreamDataset<U,I>) this.getDataset();
+
+        return new ReplayerRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed);
     }
 
     @Override

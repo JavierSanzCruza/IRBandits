@@ -48,7 +48,13 @@ public class CLUBErdosConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,
         @Override
         public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
-            return new CLUBERdos<>(userIndex, itemIndex, true, alpha, alpha2);
+            return new CLUBERdos<>(userIndex, itemIndex, ignoreUnknown, alpha, alpha2);
+        }
+
+        @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new CLUBERdos<>(userIndex, itemIndex, ignoreUnknown, rngSeed, alpha, alpha2);
         }
 
         @Override

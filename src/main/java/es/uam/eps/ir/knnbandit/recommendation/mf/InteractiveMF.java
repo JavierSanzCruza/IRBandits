@@ -39,6 +39,20 @@ public class InteractiveMF<U, I> extends AbstractInteractiveMF<U, I>
         super(uIndex, iIndex, hasRating, k, factorizer, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param hasRating  True if we must ignore unknown items when updating.
+     * @param k          Number of latent factors to use.
+     * @param factorizer Factorizer for obtaining the factorized matrices.
+     */
+    public InteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, Factorizer<U, I> factorizer)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed, k, factorizer, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
+    }
+
     @Override
     public void update(int uidx, int iidx, double value)
     {

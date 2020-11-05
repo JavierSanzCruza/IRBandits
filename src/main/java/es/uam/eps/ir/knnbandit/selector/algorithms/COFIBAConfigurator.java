@@ -46,7 +46,13 @@ public class COFIBAConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
         @Override
         public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
-            return new COFIBAErdos<>(userIndex, itemIndex, true, alpha, alpha2);
+            return new COFIBAErdos<>(userIndex, itemIndex, ignoreUnknown, alpha, alpha2);
+        }
+
+        @Override
+        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        {
+            return new COFIBAErdos<>(userIndex, itemIndex, ignoreUnknown, rngSeed, alpha, alpha2);
         }
 
         @Override
