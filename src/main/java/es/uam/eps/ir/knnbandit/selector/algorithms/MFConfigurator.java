@@ -4,22 +4,25 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
+import es.uam.eps.ir.knnbandit.recommendation.mf.AdditiveRatingInteractiveMF;
+import es.uam.eps.ir.knnbandit.recommendation.mf.BestRatingInteractiveMF;
 import es.uam.eps.ir.knnbandit.recommendation.mf.InteractiveMF;
+import es.uam.eps.ir.knnbandit.recommendation.mf.LastRatingInteractiveMF;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmIdentifiers;
-import es.uam.eps.ir.knnbandit.selector.algorithms.factorizer.FactorizerIdentifiers;
+import es.uam.eps.ir.knnbandit.selector.KNNBanditIdentifiers;
 import es.uam.eps.ir.knnbandit.selector.algorithms.factorizer.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.DoublePredicate;
 
 public class MFConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
 {
     private static final String IGNOREUNKNOWN = "ignoreUnknown";
     private static final String FACTORIZER = "factorizer";
     private static final String K = "k";
+    private static final String VARIANT = "variant";
     private static final String NAME = "name";
     private static final String PARAMS = "params";
 
@@ -39,6 +42,7 @@ public class MFConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
             }
 
             int k = object.getInt(K);
+            String variant = object.getString(VARIANT);
 
             JSONObject bandit = object.getJSONObject(FACTORIZER);
             String name = bandit.getString(NAME);
@@ -48,7 +52,7 @@ public class MFConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
             List<FactorizerSupplier<U,I>> factorizerSuppliers = factorizerConfigurator.getFactorizers(bandit.getJSONArray(PARAMS));
             for(FactorizerSupplier<U,I> supplier : factorizerSuppliers)
             {
-                list.add(new MFInteractiveRecommenderSupplier<>(supplier, k, ignoreUnknown));
+                list.add(new MFInteractiveRecommenderSupplier<>(supplier, k, ignoreUnknown, variant));
             }
         }
         return list;
@@ -63,6 +67,7 @@ public class MFConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
             ignoreUnknown = object.getBoolean(IGNOREUNKNOWN);
         }
         int k = object.getInt(K);
+        String variant = object.getString(VARIANT);
 
         JSONObject bandit = object.getJSONObject(FACTORIZER);
         String name = bandit.getString(NAME);
@@ -70,7 +75,7 @@ public class MFConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
         if(factorizerConfigurator == null) return null;
 
         FactorizerSupplier<U,I>supplier = factorizerConfigurator.getFactorizer(bandit.getJSONObject(PARAMS));
-        return new MFInteractiveRecommenderSupplier<>(supplier, k,  ignoreUnknown);
+        return new MFInteractiveRecommenderSupplier<>(supplier, k,  ignoreUnknown, variant);
     }
 
     protected FactorizerConfigurator<U,I> selectFactorizerConfigurator(String name)
@@ -94,32 +99,57 @@ public class MFConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
         FactorizerSupplier<U,I> supplier;
         int k;
         boolean ignoreUnknown;
+        String variant;
 
-        public MFInteractiveRecommenderSupplier(FactorizerSupplier<U,I> supplier, int k, boolean ignoreUnknown)
+        public MFInteractiveRecommenderSupplier(FactorizerSupplier<U,I> supplier, int k, boolean ignoreUnknown, String variant)
         {
             this.supplier = supplier;
             this.k = k;
             this.ignoreUnknown = ignoreUnknown;
+            this.variant = variant;
         }
 
         @Override
         public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
-            return new InteractiveMF<>(userIndex, itemIndex, ignoreUnknown, k, supplier.apply());
-
+            switch(this.variant)
+            {
+                case KNNBanditIdentifiers.BASIC:
+                    return new InteractiveMF<>(userIndex, itemIndex, ignoreUnknown, k, supplier.apply());
+                case KNNBanditIdentifiers.BEST:
+                    return new BestRatingInteractiveMF<>(userIndex, itemIndex, ignoreUnknown, k, supplier.apply());
+                case KNNBanditIdentifiers.LAST:
+                    return new LastRatingInteractiveMF<>(userIndex, itemIndex, ignoreUnknown, k, supplier.apply());
+                case KNNBanditIdentifiers.ADDITIVE:
+                    return new AdditiveRatingInteractiveMF<>(userIndex, itemIndex, ignoreUnknown, k, supplier.apply());
+                default:
+                    return null;
+            }
         }
 
         @Override
         public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
         {
-            return new InteractiveMF<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, supplier.apply());
+            switch(this.variant)
+            {
+                case KNNBanditIdentifiers.BASIC:
+                    return new InteractiveMF<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, supplier.apply());
+                case KNNBanditIdentifiers.BEST:
+                    return new BestRatingInteractiveMF<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, supplier.apply());
+                case KNNBanditIdentifiers.LAST:
+                    return new LastRatingInteractiveMF<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, supplier.apply());
+                case KNNBanditIdentifiers.ADDITIVE:
+                    return new AdditiveRatingInteractiveMF<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, supplier.apply());
+                default:
+                    return null;
+            }
 
         }
 
         @Override
         public String getName()
         {
-            return AlgorithmIdentifiers.MF + "-" + k + "-" + supplier.getName() + "-" + (ignoreUnknown ? "ignore" : "all");
+            return AlgorithmIdentifiers.MF + "-" + variant + "-" + k + "-" + supplier.getName() + "-" + (ignoreUnknown ? "ignore" : "all");
         }
     }
 }

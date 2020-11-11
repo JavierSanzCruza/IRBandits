@@ -30,7 +30,10 @@ public class RandomUserSelector extends FastUserSelector
     @Override
     public int next(int numUsers, int lastRemovedIndex)
     {
-        if(numUsers == 0) return -1;
+        if(numUsers == 0)
+        {
+            return -1;
+        }
         return rng.nextInt(numUsers);
     }
 

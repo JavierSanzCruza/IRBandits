@@ -36,6 +36,20 @@ public class BestRatingInteractiveMF<U, I> extends AbstractInteractiveMF<U, I>
      */
     public BestRatingInteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, Factorizer<U, I> factorizer)
     {
-        super(uIndex, iIndex, hasRating, k, factorizer, BestRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
+        super(uIndex, iIndex, hasRating, k, factorizer, BestRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex), 0);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param hasRating  True if we must ignore unknown items when updating.
+     * @param k          Number of latent factors to use.
+     * @param factorizer Factorizer for obtaining the factorized matrices.
+     */
+    public BestRatingInteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, Factorizer<U, I> factorizer)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed, k, factorizer, BestRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex), 0);
     }
 }

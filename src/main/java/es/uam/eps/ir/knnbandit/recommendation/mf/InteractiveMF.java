@@ -36,7 +36,7 @@ public class InteractiveMF<U, I> extends AbstractInteractiveMF<U, I>
      */
     public InteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, Factorizer<U, I> factorizer)
     {
-        super(uIndex, iIndex, hasRating, k, factorizer, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
+        super(uIndex, iIndex, hasRating, k, factorizer, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex), 100);
     }
 
     /**
@@ -50,7 +50,7 @@ public class InteractiveMF<U, I> extends AbstractInteractiveMF<U, I>
      */
     public InteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, Factorizer<U, I> factorizer)
     {
-        super(uIndex, iIndex, hasRating, rngSeed, k, factorizer, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
+        super(uIndex, iIndex, hasRating, rngSeed, k, factorizer, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex), 100);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class InteractiveMF<U, I> extends AbstractInteractiveMF<U, I>
         {
             this.currentCounter++;
         }
-        if (currentCounter >= LIMITCOUNTER)
+        if (currentCounter >= this.limitCounter)
         {
             this.currentCounter = 0;
             this.factorization = factorizer.factorize(k, retrievedData);

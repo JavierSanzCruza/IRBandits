@@ -11,22 +11,18 @@ package es.uam.eps.ir.knnbandit.recommendation.mf;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.mf.Factorization;
 import es.uam.eps.ir.ranksys.mf.Factorizer;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.Enumeration;
 import java.util.Optional;
-import java.util.function.BiPredicate;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.stream.Stream;
@@ -44,7 +40,7 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
     /**
      * Number of hits before the recommender is updated.
      */
-    protected final static int LIMITCOUNTER = 100;
+    protected final int limitCounter;
     /**
      * Factorizer for obtaining the factorized matrices.
      */
@@ -76,7 +72,7 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
      * @param k          Number of latent factors to use.
      * @param factorizer Factorizer for obtaining the factorized matrices.
      */
-    public AbstractInteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, Factorizer<U, I> factorizer, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
+    public AbstractInteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, Factorizer<U, I> factorizer, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData, int limitCounter)
     {
         super(uIndex, iIndex, hasRating);
         this.factorizer = factorizer;
@@ -88,6 +84,7 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
         }
 
         this.retrievedData = retrievedData;
+        this.limitCounter = limitCounter;
     }
 
     /**
@@ -99,7 +96,7 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
      * @param k          Number of latent factors to use.
      * @param factorizer Factorizer for obtaining the factorized matrices.
      */
-    public AbstractInteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, Factorizer<U, I> factorizer, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
+    public AbstractInteractiveMF(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, Factorizer<U, I> factorizer, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData, int limitCounter)
     {
         super(uIndex, iIndex, hasRating, rngSeed);
         this.factorizer = factorizer;
@@ -111,6 +108,7 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
         }
 
         this.retrievedData = retrievedData;
+        this.limitCounter = limitCounter;
     }
 
     @Override
@@ -221,7 +219,7 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
             }
         }
 
-        if (currentCounter >= LIMITCOUNTER)
+        if (currentCounter >= this.limitCounter)
         {
             this.currentCounter = 0;
             this.factorization = factorizer.factorize(k, retrievedData);

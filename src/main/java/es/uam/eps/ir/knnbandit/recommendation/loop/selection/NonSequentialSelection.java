@@ -85,7 +85,7 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
     public int selectTarget()
     {
         int index = uSel.next(numUsers, lastRemovedIndex);
-        if(index > 0)
+        if(index >= 0)
         {
             if(uSel.reshuffle()) Collections.shuffle(userList, rng);
             return index;
@@ -99,9 +99,13 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
         if(this.availability.get(uidx) == null || this.availability.get(uidx).isEmpty())
         {
             int index = this.userList.indexOf(uidx);
-            this.userList.remove(index);
-            this.numUsers--;
-            this.lastRemovedIndex = index;
+            if(index >= 0)
+            {
+                this.userList.remove(index);
+                this.numUsers--;
+                this.lastRemovedIndex = index;
+            }
+
         }
         return this.availability.get(uidx);
     }
@@ -115,7 +119,7 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
             this.availability.get(uidx).removeInt(index);
         }
 
-        if(this.availability.isEmpty())
+        if(this.availability.get(uidx).isEmpty())
         {
             int auxIndex = this.userList.indexOf(uidx);
             this.userList.remove(auxIndex);

@@ -220,7 +220,8 @@ public class Executor<U,I>
             Pair<Integer> rating = loop.fastNextIteration();
             long bb = System.currentTimeMillis();
 
-            if(rating == null) break; // Everything has finished
+            if(rating == null)
+                break; // Everything has finished
 
             int uidx = rating.v1();
             int iidx = rating.v2();
