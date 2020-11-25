@@ -23,4 +23,6 @@ public class ItemBanditIdentifiers
     public static final String THOMPSON = "thompson";
     public static final String DELAYTHOMPSON = "delaythompson";
     public static final String ETGREEDY = "epsilont";
+    public static final String MLEPOP = "mlepop";
+    public static final String MLEAVG = "mleavg";
 }

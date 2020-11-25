@@ -8,15 +8,12 @@ import es.uam.eps.ir.knnbandit.recommendation.bandits.ItemBanditRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunctions;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmIdentifiers;
-import es.uam.eps.ir.knnbandit.selector.algorithms.bandit.BanditSupplier;
-import es.uam.eps.ir.knnbandit.selector.algorithms.bandit.ItemBanditIdentifiers;
 import es.uam.eps.ir.knnbandit.selector.algorithms.bandit.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.DoublePredicate;
 
 public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
 {
@@ -88,6 +85,10 @@ public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
                 return new ThompsonSamplingConfigurator<>();
             case ItemBanditIdentifiers.DELAYTHOMPSON:
                 return new DelayThompsonSamplingConfigurator<>();
+            case ItemBanditIdentifiers.MLEPOP:
+                return new MLECategoricalItemBanditConfigurator<>();
+            case ItemBanditIdentifiers.MLEAVG:
+                return new MLECategoricalAverageItemBanditConfigurator<>();
             default:
                 return null;
         }

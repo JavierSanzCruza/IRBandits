@@ -88,7 +88,7 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
         if(index >= 0)
         {
             if(uSel.reshuffle()) Collections.shuffle(userList, rng);
-            return index;
+            return userList.get(index);
         }
         return -1;
     }
@@ -114,7 +114,7 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
     public void update(int uidx, int iidx, double value)
     {
         int index = this.availability.get(uidx).indexOf(iidx);
-        if(index > 0)
+        if(index >= 0)
         {
             this.availability.get(uidx).removeInt(index);
         }
