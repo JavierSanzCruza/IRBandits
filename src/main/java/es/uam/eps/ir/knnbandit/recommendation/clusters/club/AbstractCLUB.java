@@ -147,7 +147,6 @@ public abstract class AbstractCLUB<U ,I> extends InteractiveRecommender<U,I>
     {
         super.init();
         GraphGenerator<Integer> ggen = configureGenerator();
-        ggen.configure(false, uIndex.getAllUidx().boxed().collect(Collectors.toCollection(HashSet::new)));
 
         try
         {
@@ -215,7 +214,10 @@ public abstract class AbstractCLUB<U ,I> extends InteractiveRecommender<U,I>
         // Then, select the top value
         for (int iidx : availability)
         {
-            double val = auxB.getOrDefault(iidx,0.0)/(auxM.getOrDefault(iidx,0.0)+1.0) + alpha1 * Math.sqrt(1.0/(auxM.getOrDefault(iidx,0.0)+1.0) * Math.log(this.iter + 1.0));
+            double bVal = auxB.getOrDefault(iidx, 0.0);
+            double mVal = auxM.getOrDefault(iidx, 0.0);
+
+            double val = bVal/(mVal + 1.0) + alpha1*Math.sqrt(1.0/(mVal+1.0) * Math.log(this.iter + 1.0));
             if (top.isEmpty() || val > max)
             {
                 top.clear();
