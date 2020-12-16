@@ -14,6 +14,7 @@ import es.uam.eps.ir.knnbandit.data.datasets.ReplayerStreamDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.StreamDataset;
 import es.uam.eps.ir.knnbandit.main.Recommendation;
 import es.uam.eps.ir.knnbandit.metrics.ClickthroughRate;
+import es.uam.eps.ir.knnbandit.metrics.CumulativeCounter;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
@@ -74,6 +75,7 @@ public class ReplayerRecommendation<U,I> extends Recommendation<U,I>
         this.metrics = new HashMap<>();
         metrics.put("ctr", ClickthroughRate::new);
         metrics.put("gini", CumulativeGini::new);
+        metrics.put("counter", CumulativeCounter::new);
     }
 
     @Override
