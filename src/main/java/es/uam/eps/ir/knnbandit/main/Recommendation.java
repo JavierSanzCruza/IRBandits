@@ -77,6 +77,7 @@ public abstract class Recommendation<U,I>
                 return;
             }
         }
+        UntieRandomNumber.configure(resume, output, k);
 
         // Run each algorithm
         recs.entrySet().parallelStream().forEach((entry) ->
@@ -112,28 +113,32 @@ public abstract class Recommendation<U,I>
                 int currentIter = loop.getCurrentIter();
                 if(currentIter > 0) // if at least one iteration has been recorded:
                 {
+                    int currentSize = counter.size();
+                    String someMetric = new TreeSet<>(getMetrics().keySet()).first();
+                    int auxSize = metricValues.get(someMetric).size();
+
+                    if(auxSize > currentSize)
+                    {
+                        IntStream.range(currentSize, auxSize).forEach(j -> counter.add(1));
+                    }
+
                     //Map<String, Double> metricValues = loop.getMetricValues();
                     for(String metric : this.getMetrics().keySet())
                     {
+                        List<Double> newVals = metricValues.get(metric);
+
                         if(i == 0)
                         {
-                            List<Double> values = metricValues.get(metric);
-                            int auxSize = values.size();
-                            averagedValues.get(metric).addAll(values);
-                            IntStream.range(0, auxSize).forEach(x -> counter.add(1));
+                            averagedValues.get(metric).addAll(newVals);
                         }
                         else
                         {
                             List<Double> oldVals = averagedValues.get(metric);
-                            int currentSize = oldVals.size();
-                            List<Double> newVals = metricValues.get(metric);
-                            int auxSize = newVals.size();
                             for(int j = 0; j < auxSize; ++j)
                             {
                                 if(j >= currentSize)
                                 {
-                                    oldVals.add(newVals.get(j));
-                                    counter.add(1);
+                                    averagedValues.get(metric).add(newVals.get(j));
                                 }
                                 else
                                 {
@@ -159,6 +164,7 @@ public abstract class Recommendation<U,I>
                 {
                     bw.write("\t" + metric);
                 }
+                System.out.println("Size: " + size);
 
                 for(int i = 0; i < size; ++i)
                 {
