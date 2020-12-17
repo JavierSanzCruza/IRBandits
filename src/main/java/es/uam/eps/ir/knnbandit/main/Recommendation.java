@@ -9,6 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.main;
 
+import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -62,6 +63,8 @@ public abstract class Recommendation<U,I>
         long b = System.currentTimeMillis();
 
         System.out.println("Recommenders prepared (" + (b - a) + " ms.)");
+
+        UntieRandomNumber.configure(resume, output, k);
 
         // If it does not exist, create the directory in which to store the recommendation.
         String outputFolder = output + File.separator;
