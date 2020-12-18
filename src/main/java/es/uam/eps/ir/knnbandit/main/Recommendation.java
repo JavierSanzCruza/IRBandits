@@ -112,7 +112,7 @@ public abstract class Recommendation<U,I>
                 if(currentIter > 0) // if at least one iteration has been recorded:
                 {
                     int currentSize = counter.size();
-                    String someMetric = new TreeSet<>(getMetrics().keySet()).first();
+                    String someMetric = new TreeSet<String>(getMetrics().keySet()).first();
                     int auxSize = metricValues.get(someMetric).size();
 
                     if(auxSize > currentSize)
