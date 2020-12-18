@@ -64,6 +64,8 @@ public abstract class Recommendation<U,I>
 
         System.out.println("Recommenders prepared (" + (b - a) + " ms.)");
 
+        UntieRandomNumber.configure(resume, output, k);
+
         // If it does not exist, create the directory in which to store the recommendation.
         String outputFolder = output + File.separator;
         File folder = new File(outputFolder);
