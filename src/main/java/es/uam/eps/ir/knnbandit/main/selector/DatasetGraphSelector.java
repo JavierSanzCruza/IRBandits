@@ -82,12 +82,12 @@ public class DatasetGraphSelector
                 double threshold = Parsers.dp.parse(execArgs[2]);
                 boolean useRatings = execArgs[3].equalsIgnoreCase("true");
 
-                if(args[1].equalsIgnoreCase("movielens"))
+                if(args[0].equalsIgnoreCase("movielens"))
                 {
                     GeneralDatasetGraph<Long, Long> stats = new GeneralDatasetGraph<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings);
                     stats.graph(output);
                 }
-                else if(args[1].equalsIgnoreCase("foursquare"))
+                else if(args[0].equalsIgnoreCase("foursquare"))
                 {
                     GeneralDatasetGraph<Long, String> stats = new GeneralDatasetGraph<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings);
                     stats.graph(output);

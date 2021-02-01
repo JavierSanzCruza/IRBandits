@@ -111,12 +111,12 @@ public class RecommendationSelector
                 double threshold = Parsers.dp.parse(execArgs[5]);
                 boolean useRatings = execArgs[6].equalsIgnoreCase("true");
 
-                if(args[1].equalsIgnoreCase("movielens"))
+                if(args[0].equalsIgnoreCase("movielens"))
                 {
                     Recommendation<Long, Long> rec = new GeneralRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings);
                     rec.recommend(algorithms, output, endCond, resume, k, interval);
                 }
-                else if(args[1].equalsIgnoreCase("foursquare"))
+                else if(args[0].equalsIgnoreCase("foursquare"))
                 {
                     Recommendation<Long, String> rec = new GeneralRecommendation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings);
                     rec.recommend(algorithms, output, endCond, resume, k, interval);

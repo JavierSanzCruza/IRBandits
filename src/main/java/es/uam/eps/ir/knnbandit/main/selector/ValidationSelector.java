@@ -110,12 +110,12 @@ public class ValidationSelector
                 double threshold = Parsers.dp.parse(execArgs[5]);
                 boolean useRatings = execArgs[6].equalsIgnoreCase("true");
 
-                if(args[1].equalsIgnoreCase("movielens"))
+                if(args[0].equalsIgnoreCase("movielens"))
                 {
                     Validation<Long, Long> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings);
                     valid.validate(algorithms, output, endCond, resume, k);
                 }
-                else if(args[1].equalsIgnoreCase("foursquare"))
+                else if(args[0].equalsIgnoreCase("foursquare"))
                 {
                     Validation<Long, String> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings);
                     valid.validate(algorithms, output, endCond, resume, k);

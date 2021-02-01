@@ -99,12 +99,12 @@ public class AdvancedOutputResumerSelector
                 double threshold = Parsers.dp.parse(execArgs[3]);
                 boolean useRatings = execArgs[4].equalsIgnoreCase("true");
 
-                if(args[1].equalsIgnoreCase("movielens"))
+                if(args[0].equalsIgnoreCase("movielens"))
                 {
                     GeneralAdvancedOutputResumer<Long, Long> resumer = new GeneralAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings);
                     resumer.summarize(directory, points, recursive);
                 }
-                else if(args[1].equalsIgnoreCase("foursquare"))
+                else if(args[0].equalsIgnoreCase("foursquare"))
                 {
                     GeneralAdvancedOutputResumer<Long, String> resumer = new GeneralAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings);
                     resumer.summarize(directory, points, recursive);

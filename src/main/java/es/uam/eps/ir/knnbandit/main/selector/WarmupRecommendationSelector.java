@@ -127,12 +127,12 @@ public class WarmupRecommendationSelector
                 double threshold = Parsers.dp.parse(execArgs[7]);
                 boolean useRatings = execArgs[8].equalsIgnoreCase("true");
 
-                if(args[1].equalsIgnoreCase("movielens"))
+                if(args[0].equalsIgnoreCase("movielens"))
                 {
                     WarmupRecommendation<Long, Long> rec = new GeneralWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup);
                     rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);
                 }
-                else if(args[1].equalsIgnoreCase("foursquare"))
+                else if(args[0].equalsIgnoreCase("foursquare"))
                 {
                     WarmupRecommendation<Long, String> rec = new GeneralWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup);
                     rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);

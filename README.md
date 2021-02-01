@@ -1,7 +1,5 @@
-# kNN Bandit
-This repository contains the code needed to reproduce the experiments of the paper:
-
-> J. Sanz-Cruzado, P. Castells, E. López. [A Simple Multi-Armed Nearest-Neighbor Bandit for Interactive Recommendation](http://ir.ii.uam.es/pubs/recsys2019-jsanzcruzado.pdf). 13th ACM Conference on Recommender Systems (RecSys 2019). Copenhagen, Denmark, September 2019.
+# IR bandits
+Interactive recommendation library.
 
 ## Authors
 Information Retrieval Group at Universidad Autónoma de Madrid
@@ -23,6 +21,9 @@ The software includes the implementation of several recommendation algorithms.
 
 #### Multi-armed bandits for recommendation
 - **kNN bandit:** The main contribution of this paper: we implement our proposed approach by defining a user-based kNN recommender with the appropriate item scoring function, to be used with a stochastic similarity that uses Thompson sampling to estimate the similarities between users. 
+- **Interactive matrix factorization:** A probabilistic matrix factorization-based bandit [4]
+- **CLUstering of Bandits (CLUB):** Collaborative filtering version of a clustering-based algorithm [5]
+- **COllaborative FIltering BAndit:** Advanced version of the collaborative filtering CLUB algorithm [6]
 - **Item-oriented, non-personalized multi-armed bandits:** &epsilon;-greedy, &epsilon; t-greedy, UCB1, UCB1-tuned, Thompson sampling. They are used as baseline bandit algorithms in the paper.
 
 #### Myopic recommendation algorithms
@@ -145,3 +146,6 @@ iter	user	item	recall	gini	time
 1. Hofmann, T. (2004). Latent semantic models for collaborative filtering. ACM Transactions on Information Systems, 22(1), pp. 89–115
 2. Hu, Y., Koren, Y., & Volinsky, C. (2008). Collaborative Filtering for Implicit Feedback Datasets. In 2008 Eighth IEEE International Conference on Data Mining (ICDM 2008). Pisa, Italy, December 2008, pp. 263–272.
 3. Pilászy, I., Zibriczky, D., & Tikk, D. (2010). Fast ALS-based matrix factorization for explicit and implicit feedback datasets. In Proceedings of the 4th ACM conference on Recommender systems (Recsys 2010). Barcelona, Spain, September 2010, pp. 71-78.
+4. Zhao, X., Zhang, W., Wang, J. (2013). Interactive collaborative filtering. In 22nd ACM international Conference on Information & Knowledge Management (CIKM 2013). San Francisco, California, USA, October 2013, pp. 1411-1420. 
+5. Gentile, C., Li, S., Zapella, G. (2014). Online clustering of bandits. In 31st International Conference on Machine Learning (ICML 2014). Beijing, China, June 2014.
+6. Li, S., Karatzoglou, A., Gentile, C. (2016). Collaborative Filtering Bandits. In 39th ACM SIGIR conference on Research and Development in Information Retrieval (SIGIR 2016). Pisa, Italy, July 2016, pp 539-548

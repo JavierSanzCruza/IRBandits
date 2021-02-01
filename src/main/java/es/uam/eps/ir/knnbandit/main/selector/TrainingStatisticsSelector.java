@@ -84,12 +84,12 @@ public class TrainingStatisticsSelector
                 double threshold = Parsers.dp.parse(execArgs[3]);
                 boolean useRatings = execArgs[4].equalsIgnoreCase("true");
 
-                if(args[1].equalsIgnoreCase("movielens"))
+                if(args[0].equalsIgnoreCase("movielens"))
                 {
                     GeneralTrainingStatistics<Long, Long> stats = new GeneralTrainingStatistics<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings);
                     stats.statistics(training, partition, numParts);
                 }
-                else if(args[1].equalsIgnoreCase("foursquare"))
+                else if(args[0].equalsIgnoreCase("foursquare"))
                 {
                     GeneralTrainingStatistics<Long, String> stats = new GeneralTrainingStatistics<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings);
                     stats.statistics(training, partition, numParts);

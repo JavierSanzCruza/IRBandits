@@ -117,13 +117,12 @@ public class WarmupValidationSelector
             {
                 double threshold = Parsers.dp.parse(execArgs[8]);
                 boolean useRatings = execArgs[9].equalsIgnoreCase("true");
-
-                if(args[1].equalsIgnoreCase("movielens"))
+                if(args[0].equalsIgnoreCase("movielens"))
                 {
                     WarmupValidation<Long, Long> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup);
                     valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 }
-                else if(args[1].equalsIgnoreCase("foursquare"))
+                else if(args[0].equalsIgnoreCase("foursquare"))
                 {
                     WarmupValidation<Long, String> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup);
                     valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
