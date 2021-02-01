@@ -89,6 +89,7 @@ public class WarmupRecommendationSelector
         int k = 1;
         WarmupType warmup = WarmupType.FULL;
         int interval = 10000;
+        double percTrain = Double.NaN;
         for (int i = lastIndex; i < execArgs.length; ++i)
         {
             if ("-k".equals(args[i]))
@@ -101,11 +102,17 @@ public class WarmupRecommendationSelector
                 ++i;
                 warmup = WarmupType.fromString(args[i]);
             }
-            if("-interval".equals(args[i]))
+            else if("-interval".equals(args[i]))
             {
                 ++i;
                 interval = Parsers.ip.parse(args[i]);
             }
+            else if("-perctrain".equals(args[i]))
+            {
+                ++i;
+                percTrain = Parsers.dp.parse(args[i]);
+            }
+
         }
 
         String training = execArgs[5];
@@ -123,12 +130,12 @@ public class WarmupRecommendationSelector
                 if(args[1].equalsIgnoreCase("movielens"))
                 {
                     WarmupRecommendation<Long, Long> rec = new GeneralWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup);
-                    rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, k, interval);
+                    rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);
                 }
                 else if(args[1].equalsIgnoreCase("foursquare"))
                 {
                     WarmupRecommendation<Long, String> rec = new GeneralWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup);
-                    rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, k, interval);
+                    rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);
                 }
                 break;
             }
@@ -138,7 +145,7 @@ public class WarmupRecommendationSelector
                 boolean notReciprocal = execArgs[8].equalsIgnoreCase("true");
 
                 WarmupRecommendation<Long, Long> rec = new ContactWarmupRecommendation<>(input, "\t", Parsers.lp, directed, notReciprocal, warmup);
-                rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, k, interval);
+                rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);
 
                 break;
             }
@@ -149,7 +156,7 @@ public class WarmupRecommendationSelector
                 KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[9]);
 
                 WarmupRecommendation<Long, Long> rec = new WithKnowledgeWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, warmup);
-                rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, k, interval);
+                rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);
                 break;
             }
             case STREAM:

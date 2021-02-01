@@ -58,7 +58,7 @@ public abstract class WarmupRecommendation<U,I>
      *
      * @throws IOException if something fails while reading / writing.
      */
-    public void recommend(String algorithms, String output, Supplier<EndCondition> endCond, boolean resume, String warmupData, Partition partition, int numParts, int k, int interval) throws IOException
+    public void recommend(String algorithms, String output, Supplier<EndCondition> endCond, boolean resume, String warmupData, Partition partition, int numParts, double percTrain, int k, int interval) throws IOException
     {
         // Obtains the dataset and the metrics.
         Dataset<U,I> dataset = this.getDataset();
@@ -96,7 +96,19 @@ public abstract class WarmupRecommendation<U,I>
         List<Pair<Integer>> train = reader.read(warmupData, "\t", true);
         System.out.println("The warmup data has been read");
 
-        List<Integer> splitPoints = partition.split(dataset, train, numParts);
+        List<Integer> splitPoints;
+        if(Double.isNaN(percTrain) || percTrain <= 0.0 || percTrain >= 1.0)
+        {
+            splitPoints = partition.split(dataset, train, numParts);
+        }
+        else
+        {
+            splitPoints = new ArrayList<>();
+            for(int i = 0; i < numParts; ++i)
+            {
+                splitPoints.add(partition.split(dataset, train, percTrain*(i+1.0)));
+            }
+        }
 
         IntStream.range(0, numParts).parallel().forEach(part ->
         {
@@ -124,8 +136,8 @@ public abstract class WarmupRecommendation<U,I>
                 // Obtain the lists: only the first "numParts" algorithms shall be considered
                 System.out.println("Recommenders  for part " + (part + 1) + " prepared (" + (b - a) + " ms.)");
 
-                List<Pair<Integer>> partValidation = train.subList(0, splitPoints.get(part));
-                Warmup warmup = this.getWarmup(partValidation);
+                List<Pair<Integer>> partTrain = train.subList(0, splitPoints.get(part));
+                Warmup warmup = this.getWarmup(partTrain);
                 int notRel = warmup.getNumRel();
 
                 System.out.println("Training: " + splitPoints.get(part) + " recommendations (" + (part + 1) + "/" + numParts + ")");
