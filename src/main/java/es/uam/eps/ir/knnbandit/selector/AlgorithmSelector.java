@@ -18,7 +18,9 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.DoublePredicate;
 
 /**
@@ -89,6 +91,9 @@ public class AlgorithmSelector<U, I>
                 break;
             case AlgorithmIdentifiers.POP:
                 conf = new PopularityConfigurator<>(this.relevanceChecker);
+                break;
+            case AlgorithmIdentifiers.INFTHEOR:
+                conf = new InformationTheoryUserDiversityConfigurator<>(this.relevanceChecker);
                 break;
             case AlgorithmIdentifiers.ITEMBANDIT:
                 conf = new ItemBanditConfigurator<>();

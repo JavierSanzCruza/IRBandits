@@ -2,18 +2,15 @@ package es.uam.eps.ir.knnbandit.recommendation.wisdom;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AdditiveRatingFastUpdateablePreferenceData;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
-import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
-import java.util.Optional;
+import java.util.function.DoublePredicate;
 import java.util.stream.Stream;
 
 public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<U, I>
@@ -25,25 +22,25 @@ public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<
      */
     protected final AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData;
 
-    protected final double threshold;
+    protected final DoublePredicate predicate;
 
-    public InformationTheoryUserDiversity(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, double threshold)
+
+    public InformationTheoryUserDiversity(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, DoublePredicate predicate)
     {
         super(uIndex, iIndex, ignoreNotRated);
         retrievedData = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         this.num = new Int2DoubleOpenHashMap();
         this.den = new Int2DoubleOpenHashMap();
-        this.threshold = threshold;
+        this.predicate = predicate;
     }
 
-    public InformationTheoryUserDiversity(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, double threshold)
+    public InformationTheoryUserDiversity(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, DoublePredicate predicate)
     {
         super(uIndex, iIndex, ignoreNotRated, rngSeed);
         retrievedData = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         this.num = new Int2DoubleOpenHashMap();
         this.den = new Int2DoubleOpenHashMap();
-        this.threshold = threshold;
-
+        this.predicate = predicate;
     }
 
     @Override
@@ -65,13 +62,13 @@ public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<
     {
         super.init();
         this.retrievedData.clear();
-        values.forEach(triplet -> this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), triplet.value() >= threshold ? 1.0 : 0.0));
+        values.forEach(triplet -> this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), predicate.test(triplet.value()) ? 1.0 : 0.0));
         this.num.clear();
         this.den.clear();
         values.forEach(triplet ->
         {
-           this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), triplet.value());
-           if(triplet.value() >= threshold) num.addTo(triplet.uidx(), 1.0);
+           this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), predicate.test(triplet.value()) ? 1.0 : 0.0);
+           if(predicate.test(triplet.value())) num.addTo(triplet.uidx(), 1.0);
            den.addTo(triplet.uidx(), 1.0);
         });
     }
@@ -87,7 +84,7 @@ public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<
 
         for(int iidx : available)
         {
-            double value = this.retrievedData.getIidxPreferences(iidx).filter(u -> u.v1 > 0).mapToDouble(u -> Math.log(den.get(u.v1)) - Math.log(num.get(u.v1))).sum();
+            double value = this.retrievedData.getIidxPreferences(iidx).filter(u -> predicate.test(u.v2())).mapToDouble(u -> Math.log(den.get(u.v1)) - Math.log(num.get(u.v1))).sum();
             if(value > max)
             {
                 top.clear();
@@ -114,43 +111,8 @@ public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        boolean hasRating = false;
-        double oldValue = 0;
-        // First, we find whether we have a rating or not:
-        if(this.retrievedData.numItems(uidx) > 0 && this.retrievedData.numUsers(iidx) > 0)
-        {
-            Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
-            hasRating = opt.isPresent();
-            if(hasRating)
-            {
-                oldValue = opt.get().v2;
-            }
-        }
-
-        if(!hasRating)
-        {
-            this.retrievedData.updateRating(uidx, iidx, value);
-            this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, value, vidx.v2));
-        }
-        else
-        {
-            if(this.retrievedData.updateRating(uidx, iidx, value))
-            {
-                Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
-                if(opt.isPresent())
-                {
-                    double newValue = opt.get().v2;
-                    this.sim.updateNormDel(uidx, oldValue);
-                    this.sim.updateNorm(uidx, newValue);
-
-                    double finalOldValue = oldValue;
-                    this.retrievedData.getIidxPreferences(iidx).filter(vidx -> vidx.v1 != uidx).forEach(vidx ->
-                                                                                                        {
-                                                                                                            this.sim.updateDel(uidx, vidx.v1, iidx, finalOldValue, vidx.v2);
-                                                                                                            this.sim.update(uidx, vidx.v1, iidx, newValue, vidx.v2);
-                                                                                                        });
-                }
-            }
-        }
+        this.retrievedData.updateRating(uidx, iidx, predicate.test(value) ? 1.0 : 0.0);
+        this.num.addTo(uidx, predicate.test(value) ? 1.0 : 0.0);
+        this.den.addTo(uidx, 1.0);
     }
 }

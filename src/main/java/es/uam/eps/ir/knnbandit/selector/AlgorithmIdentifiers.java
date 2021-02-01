@@ -42,4 +42,7 @@ public class AlgorithmIdentifiers
     public static final String CLUB = "club";
     public static final String CLUBERDOS = "club-erdos";
     public static final String COFIBA = "cofiba";
+
+    // Wisdom of the diverse crowds:
+    public static final String INFTHEOR = "inf-theory";
 }
