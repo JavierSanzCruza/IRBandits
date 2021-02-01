@@ -62,11 +62,11 @@ public class ContactWarmupValidation<U> extends WarmupValidation<U,U>
     }
 
     @Override
-    protected FastRecommendationLoop<U, U> getRecommendationLoop(InteractiveRecommenderSupplier<U,U> rec, EndCondition endCond, int rngSeed)
+    protected FastRecommendationLoop<U, U> getRecommendationLoop(Dataset<U, U> validDataset, InteractiveRecommenderSupplier<U,U> rec, EndCondition endCond, int rngSeed)
     {
         Map<String, CumulativeMetric<U,U>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new ContactOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed);
+        return new ContactOfflineDatasetRecommendationLoop<>((ContactDataset<U>) validDataset, rec, localMetrics, endCond, rngSeed);
     }
 
     @Override
@@ -76,8 +76,8 @@ public class ContactWarmupValidation<U> extends WarmupValidation<U,U>
     }
 
     @Override
-    protected Warmup getWarmup(List<Pair<Integer>> trainData)
+    protected Warmup getWarmup(Dataset<U,U> validDataset, List<Pair<Integer>> trainData)
     {
-        return ContactWarmup.load(dataset, trainData.stream(), warmupType);
+        return ContactWarmup.load((ContactDataset<U>) validDataset, trainData.stream(), warmupType);
     }
 }

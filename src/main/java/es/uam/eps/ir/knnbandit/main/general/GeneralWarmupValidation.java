@@ -93,11 +93,11 @@ public class GeneralWarmupValidation<U,I> extends WarmupValidation<U,I>
 
 
     @Override
-    protected FastRecommendationLoop<U, I> getRecommendationLoop(InteractiveRecommenderSupplier<U,I> rec, EndCondition endCond, int rngSeed)
+    protected FastRecommendationLoop<U, I> getRecommendationLoop(Dataset<U,I> dataset, InteractiveRecommenderSupplier<U,I> rec, EndCondition endCond, int rngSeed)
     {
         Map<String, CumulativeMetric<U,I>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new GeneralOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed);
+        return new GeneralOfflineDatasetRecommendationLoop<>((GeneralDataset<U,I>) dataset, rec, localMetrics, endCond, rngSeed);
     }
 
     @Override
@@ -107,8 +107,8 @@ public class GeneralWarmupValidation<U,I> extends WarmupValidation<U,I>
     }
 
     @Override
-    protected Warmup getWarmup(List<Pair<Integer>> trainData)
+    protected Warmup getWarmup(Dataset<U,I> validDataset, List<Pair<Integer>> trainData)
     {
-        return GeneralWarmup.load(dataset, trainData.stream(), warmupType);
+        return GeneralWarmup.load((GeneralDataset<U,I>) validDataset, trainData.stream(), warmupType);
     }
 }

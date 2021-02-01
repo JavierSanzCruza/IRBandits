@@ -105,8 +105,9 @@ public class WarmupValidationSelector
         }
 
         String training = execArgs[5];
-        int auxNumParts = Parsers.ip.parse(execArgs[6]);
-        double percTrain = Parsers.dp.parse(execArgs[7]);
+        String testType = execArgs[6];
+        int auxNumParts = Parsers.ip.parse(execArgs[7]);
+        double percTrain = Parsers.dp.parse(execArgs[8]);
         int numParts = Math.abs(auxNumParts);
         Partition partition = (auxNumParts > 0) ? new UniformPartition() : new RelevantPartition();
 
@@ -120,12 +121,12 @@ public class WarmupValidationSelector
                 if(args[1].equalsIgnoreCase("movielens"))
                 {
                     WarmupValidation<Long, Long> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup);
-                    valid.validate(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k);
+                    valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 }
                 else if(args[1].equalsIgnoreCase("foursquare"))
                 {
                     WarmupValidation<Long, String> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup);
-                    valid.validate(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k);
+                    valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 }
                 break;
             }
@@ -135,7 +136,7 @@ public class WarmupValidationSelector
                 boolean notReciprocal = execArgs[9].equalsIgnoreCase("true");
 
                 WarmupValidation<Long, Long> valid = new ContactWarmupValidation<>(input, "::", Parsers.lp, directed, notReciprocal, warmup);
-                valid.validate(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k);
+                valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
 
                 break;
             }
@@ -146,7 +147,7 @@ public class WarmupValidationSelector
                 KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[10]);
 
                 WarmupValidation<Long, Long> valid = new WithKnowledgeWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, warmup);
-                valid.validate(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k);
+                valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 break;
             }
             case STREAM:

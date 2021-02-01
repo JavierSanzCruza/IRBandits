@@ -24,10 +24,7 @@ import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -42,6 +39,9 @@ import java.util.function.Supplier;
  */
 public abstract class WarmupValidation<U,I>
 {
+    private static final String FIXED = "fixed";
+    private static final String VARIABLE = "variable";
+
     /**
      * Applies validation over a set of algorithms when some warmup is available.
      * @param algorithms a file containing the algorithm configuration.
@@ -51,13 +51,14 @@ public abstract class WarmupValidation<U,I>
      * @param k the number of times we want to execute each approach.
      * @param warmupData File containing the warmup data.
      * @param partition partition strategy for the warmup data.
+     * @param test fixed if we want to use all the warmup data as test, variable otherwise.
      * @param numParts number of parts in which divide the partition.
      * @param percTrain the percentage of the partition which shall be used as training data.
      *
      * @throws IOException if something fails while reading / writing.
      * @throws UnconfiguredException if the algorithm configurator is not properly configured.
      */
-    public void validate(String algorithms, String output, Supplier<EndCondition> endCond, boolean resume, String warmupData, Partition partition, int numParts, double percTrain, int k) throws IOException, UnconfiguredException
+    public void validate(String algorithms, String output, Supplier<EndCondition> endCond, boolean resume, String warmupData, Partition partition, String test, int numParts, double percTrain, int k) throws IOException, UnconfiguredException
     {
         // Obtains the dataset and the metrics.
         Dataset<U,I> dataset = this.getDataset();
@@ -91,7 +92,18 @@ public abstract class WarmupValidation<U,I>
         List<Pair<Integer>> train = reader.read(warmupData, "\t", true);
         System.out.println("The warmup data has been read");
 
-        List<Integer> splitPoints = partition.split(dataset, train, numParts);
+        List<Integer> splitPoints = new ArrayList<>();
+        switch(test)
+        {
+            case FIXED:
+                break;
+            case VARIABLE:
+                splitPoints.addAll(partition.split(dataset, train, numParts));
+                break;
+            default:
+                System.err.println("ERROR: Invalid parameter");
+                return;
+        }
 
         for(int part = 0; part < numParts; ++part)
         {
@@ -108,22 +120,35 @@ public abstract class WarmupValidation<U,I>
 
             System.out.println("Started part " + (part + 1) + "/" + numParts);
 
-            List<Pair<Integer>> partValidation = train.subList(0, splitPoints.get(part));
-            int realVal = partition.split(dataset, partValidation, percTrain);
+            List<Pair<Integer>> partValidation;
+            double realPercTrain;
+            switch (test)
+            {
+                case FIXED: // Fix the test set (as the whole warmup data), and vary the amount of training.
+                    partValidation = train;
+                    realPercTrain = percTrain*(part+1.0);
+                    break;
+                case VARIABLE: // Fix the data percentage used for training, but vary the amount of test.
+                    partValidation = train.subList(0, splitPoints.get(part));
+                    realPercTrain = percTrain;
+                    break;
+                default:
+                    System.err.println("ERROR: Invalid parameter");
+                    return;
+            }
+            int realVal = partition.split(dataset, partValidation, realPercTrain);
 
             List<Pair<Integer>> partTrain = train.subList(0, realVal);
             Dataset<U,I> validDataset = this.getValidationDataset(partValidation);
 
-            Warmup warmup = this.getWarmup(partTrain);
+            Warmup warmup = this.getWarmup(validDataset, partTrain);
             int notRel = warmup.getNumRel();
 
-            System.out.println("Training: " + splitPoints.get(part) + " recommendations (" + (part + 1) + "/" + numParts + ")");
+            System.out.println("Training: " + partValidation.size() + " recommendations (" + (part + 1) + "/" + numParts + ")");
             System.out.println(validDataset.toString());
-            System.out.println("Total recommendations: " + splitPoints.get(part) + " (" + (part + 1) + "/" + numParts + ")");
+            System.out.println("Total recommendations: " + partValidation.size() + " (" + (part + 1) + "/" + numParts + ")");
             System.out.println("Training recommendations: " + realVal + " (" + (part + 1) + "/" + numParts + ")");
             System.out.println("Relevant recommendations (with training): " + (validDataset.getNumRel() - notRel));
-
-            //
 
             // Store the values for each algorithm.
             Map<String, Map<String, Double>> auxiliarValues = new ConcurrentHashMap<>();
@@ -154,7 +179,7 @@ public abstract class WarmupValidation<U,I>
                     System.out.println("Algorithm " + name + " (" + i + ") " + " starting (" + (bbb - aaa) / 1000000.0 + " ms.)");
 
                     // Create the recommendation loop: in this case, a general offline dataset loop
-                    FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
+                    FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(validDataset, rec, endCond.get(), rngSeed);
 
                     // Execute the loop:
                     Executor<U, I> executor = new Executor<>();
@@ -236,12 +261,13 @@ public abstract class WarmupValidation<U,I>
 
     /**
      * Obtains the recommendation loop.
+     * @param validDataset the validation dataset.
      * @param rec the recommender supplier.
      * @param endCond the ending condition for the loop.
      * @param rngSeed the random number generator seed.
      * @return a configured recommendation loop.
      */
-    protected abstract FastRecommendationLoop<U, I> getRecommendationLoop(InteractiveRecommenderSupplier<U,I> rec, EndCondition endCond, int rngSeed);
+    protected abstract FastRecommendationLoop<U, I> getRecommendationLoop(Dataset<U,I> validDataset, InteractiveRecommenderSupplier<U,I> rec, EndCondition endCond, int rngSeed);
 
     /**
      * Obtains the metrics.
@@ -251,8 +277,9 @@ public abstract class WarmupValidation<U,I>
 
     /**
      * Obtains the warmup
+     * @param validDataset the validation dataset.
      * @param trainData the training data.
      * @return the warmup.
      */
-    protected abstract Warmup getWarmup(List<Pair<Integer>> trainData);
+    protected abstract Warmup getWarmup(Dataset<U,I> validDataset, List<Pair<Integer>> trainData);
 }
