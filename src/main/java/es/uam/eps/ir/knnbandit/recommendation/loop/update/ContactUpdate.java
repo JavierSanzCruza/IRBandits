@@ -102,9 +102,11 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
     @Override
     public List<FastRating> getList(Warmup warmup)
     {
-        List<FastRating> list = new ArrayList<>(warmup.getFullTraining());
-        for(FastRating rating : list)
+        List<FastRating> warmupList = warmup.getFullTraining();
+        List<FastRating> list = new ArrayList<>();
+        for(FastRating rating : warmupList)
         {
+            list.add(rating);
             if(!dataset.isDirected())
             {
                 list.add(new FastRating(rating.iidx(), rating.uidx(), rating.value()));

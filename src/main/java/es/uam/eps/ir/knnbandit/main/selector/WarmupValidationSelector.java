@@ -55,19 +55,19 @@ public class WarmupValidationSelector
         switch(type)
         {
             case GENERAL:
-                length = 11;
+                length = 12;
                 firstIndex = 1;
-                lastIndex = 10;
+                lastIndex = 11;
                 break;
             case CONTACT:
-                length = 10;
-                firstIndex = 0;
-                lastIndex = 10;
-                break;
-            case KNOWLEDGE:
                 length = 11;
                 firstIndex = 0;
                 lastIndex = 11;
+                break;
+            case KNOWLEDGE:
+                length = 12;
+                firstIndex = 0;
+                lastIndex = 12;
                 break;
             case STREAM:
             default:
@@ -115,8 +115,8 @@ public class WarmupValidationSelector
         {
             case GENERAL:
             {
-                double threshold = Parsers.dp.parse(execArgs[8]);
-                boolean useRatings = execArgs[9].equalsIgnoreCase("true");
+                double threshold = Parsers.dp.parse(execArgs[9]);
+                boolean useRatings = execArgs[10].equalsIgnoreCase("true");
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
                     WarmupValidation<Long, Long> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup);
@@ -131,19 +131,19 @@ public class WarmupValidationSelector
             }
             case CONTACT:
             {
-                boolean directed = execArgs[8].equalsIgnoreCase("true");
-                boolean notReciprocal = execArgs[9].equalsIgnoreCase("true");
+                boolean directed = execArgs[9].equalsIgnoreCase("true");
+                boolean notReciprocal = execArgs[10].equalsIgnoreCase("true");
 
-                WarmupValidation<Long, Long> valid = new ContactWarmupValidation<>(input, "::", Parsers.lp, directed, notReciprocal, warmup);
+                WarmupValidation<Long, Long> valid = new ContactWarmupValidation<>(input, "\t", Parsers.lp, directed, notReciprocal, warmup);
                 valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
 
                 break;
             }
             case KNOWLEDGE:
             {
-                double threshold = Parsers.dp.parse(execArgs[8]);
-                boolean useRatings = execArgs[9].equalsIgnoreCase("true");
-                KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[10]);
+                double threshold = Parsers.dp.parse(execArgs[9]);
+                boolean useRatings = execArgs[10].equalsIgnoreCase("true");
+                KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[11]);
 
                 WarmupValidation<Long, Long> valid = new WithKnowledgeWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, warmup);
                 valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
