@@ -46,6 +46,6 @@ public class OfflineDatasetWithKnowledgeRecommendationLoop<U,I> extends GenericR
      */
     public OfflineDatasetWithKnowledgeRecommendationLoop(DatasetWithKnowledge<U, I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, KnowledgeDataUse dataUse, int rngSeed)
     {
-        super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed)), recommender, new WithKnowledgeUpdate<>(dataUse), endCondition, metrics, rngSeed);
+        super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed), false), recommender, new WithKnowledgeUpdate<>(dataUse), endCondition, metrics, rngSeed);
     }
 }

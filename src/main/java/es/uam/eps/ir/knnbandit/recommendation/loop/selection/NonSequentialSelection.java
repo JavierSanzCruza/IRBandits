@@ -64,13 +64,17 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
      * The last removed index from the target user list.
      */
     private int lastRemovedIndex;
+    /**
+     * Indicates whether the selection is for contact recommendation or not.
+     */
+    private final boolean contact;
 
     /**
      * Constructor.
      * @param rngSeed random seed.
      * @param uSel user selector.
      */
-    public NonSequentialSelection(int rngSeed, UserSelector uSel)
+    public NonSequentialSelection(int rngSeed, UserSelector uSel, boolean contact)
     {
         this.rngSeed = rngSeed;
         this.rng = new Random(rngSeed);
@@ -79,6 +83,7 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
         this.numUsers = 0;
         this.uSel = uSel;
         this.lastRemovedIndex = -1;
+        this.contact = contact;
     }
 
     @Override
@@ -136,10 +141,15 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
         this.availability.clear();
         this.rng = new Random(rngSeed);
 
-        general.getUidxWithPreferences().forEach(uidx ->
+        /* Obtain the availability list: an availability list is generated for all the users in the system, but
+         * on the userList, only users with test are included. This is to prevent problems for contact recommendation
+         * (otherwise, it would work)
+         */
+        general.getAllUidx().forEach(uidx ->
         {
-            userList.add(uidx);
             availability.put(uidx, dataset.getAllIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
+            if(general.getUidxPreferences(uidx).count() > 0) userList.add(uidx);
+            if(contact) availability.get(uidx).remove(uidx);
         });
 
         Collections.shuffle(this.userList, rng);
@@ -156,15 +166,22 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
         this.rng = new Random(rngSeed);
 
         List<IntList> warmupAvailability = ((OfflineWarmup) warmup).getAvailability();
-        general.getUidxWithPreferences().forEach(uidx ->
+
+        general.getAllUidx().forEach(uidx ->
         {
-            // First, the availability.
-            IntList uAvailable = warmupAvailability.get(uidx);
-            if(uAvailable != null && !uAvailable.isEmpty())
-            {
-                this.userList.add(uidx);
-                this.availability.put(uidx, new IntArrayList(uAvailable));
-            }
+             IntList uAvailable = warmupAvailability.get(uidx);
+             if(uAvailable != null)
+             {
+                 this.availability.put(uidx, new IntArrayList(uAvailable));
+                 if(general.getUidxPreferences(uidx).count() > 0 && !uAvailable.isEmpty())
+                 {
+                     this.userList.add(uidx);
+                 }
+             }
+             else
+             {
+                 this.availability.put(uidx, new IntArrayList());
+             }
         });
 
         IntSet keySet = availability.keySet();
@@ -184,6 +201,6 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
     @Override
     public boolean isAvailable(int uidx, int iidx)
     {
-        return this.availability.get(uidx).contains(iidx);
+        return availability.containsKey(uidx) && this.availability.get(uidx).contains(iidx);
     }
 }
