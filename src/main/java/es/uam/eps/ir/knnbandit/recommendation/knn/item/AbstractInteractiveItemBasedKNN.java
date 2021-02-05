@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.item;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.FastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
@@ -280,6 +281,16 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
+
+
         boolean hasRating = false;
         double oldValue = 0;
 
@@ -296,26 +307,26 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
         if(!hasRating)
         {
             this.retrievedData.getUidxPreferences(uidx).forEach(jidx -> this.sim.update(iidx, jidx.v1, uidx, value, jidx.v2));
-            this.sim.updateNorm(iidx, value);
-            this.retrievedData.updateRating(uidx, iidx, value);
+            this.sim.updateNorm(iidx, newValue);
+            this.retrievedData.updateRating(uidx, iidx, newValue);
         }
         else
         {
-            if(this.retrievedData.updateRating(uidx, iidx, value))
+            if(this.retrievedData.updateRating(uidx, iidx, newValue))
             {
                 Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
                 if(opt.isPresent())
                 {
-                    double newValue = opt.get().v2;
+                    double auxNewValue = opt.get().v2;
 
                     this.sim.updateNormDel(iidx, oldValue);
-                    this.sim.updateNorm(iidx, newValue);
+                    this.sim.updateNorm(iidx, auxNewValue);
 
                     double finalOldValue = oldValue;
                     this.retrievedData.getUidxPreferences(uidx).filter(jidx -> jidx.v1 != iidx).forEach(jidx ->
                     {
                         this.sim.updateDel(iidx, jidx.v1, uidx, finalOldValue, jidx.v2);
-                        this.sim.update(iidx, jidx.v1, uidx, newValue, jidx.v2);
+                        this.sim.update(iidx, jidx.v1, uidx, auxNewValue, jidx.v2);
                     });
                 }
             }

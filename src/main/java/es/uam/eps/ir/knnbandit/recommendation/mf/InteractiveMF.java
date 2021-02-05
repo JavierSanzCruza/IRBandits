@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.mf;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
@@ -56,9 +57,16 @@ public class InteractiveMF<U, I> extends AbstractInteractiveMF<U, I>
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        retrievedData.updateRating(uidx, iidx, value);
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+        retrievedData.updateRating(uidx, iidx, newValue);
 
-        if (value > 0.0)
+        if (newValue > 0.0)
         {
             this.currentCounter++;
         }

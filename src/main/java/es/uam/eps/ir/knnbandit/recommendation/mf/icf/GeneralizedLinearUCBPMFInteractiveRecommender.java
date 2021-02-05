@@ -13,6 +13,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
@@ -179,6 +180,14 @@ public class GeneralizedLinearUCBPMFInteractiveRecommender<U, I> extends Interac
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
         // Update the counter by 1
         this.counters.set(uidx, this.counters.get(uidx) + 1);
 
@@ -189,7 +198,7 @@ public class GeneralizedLinearUCBPMFInteractiveRecommender<U, I> extends Interac
 
         // First, update the values for the A and b matrices for user u
         As[uidx].assign(aux, Double::sum);
-        bs[uidx].assign(qi, (x, y) -> x + value * y);
+        bs[uidx].assign(qi, (x, y) -> x + newValue * y);
 
         // Then, find A^-1 b and A^-1 sigma^2
         LUDecompositionQuick lu = new LUDecompositionQuick(0);
@@ -209,6 +218,6 @@ public class GeneralizedLinearUCBPMFInteractiveRecommender<U, I> extends Interac
         this.P.viewRow(uidx).assign(c);
         this.stdevP[uidx] = sigmaI;
 
-        this.retrievedData.updateRating(uidx, iidx, value);
+        this.retrievedData.updateRating(uidx, iidx, newValue);
     }
 }

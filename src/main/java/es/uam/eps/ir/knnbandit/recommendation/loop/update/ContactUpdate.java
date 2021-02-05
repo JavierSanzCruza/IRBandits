@@ -38,20 +38,11 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
     /**
      * True if we do not want to recommend reciprocal links to existing ones, false otherwise.
      */
-    private final boolean notReciprocal;
+    private boolean notReciprocal;
     /**
      * The contact recommendation dataset.
      */
     private ContactDataset<U> dataset;
-
-    /**
-     * Constructor.
-     * @param notReciprocal true if we do not want to recommend reciprocal links to existing ones, false otherwise.
-     */
-    public ContactUpdate(boolean notReciprocal)
-    {
-        this.notReciprocal = notReciprocal;
-    }
 
     /**
      * Constructor. We assume that we want to recommend reciprocal links to existing ones.
@@ -65,6 +56,7 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
     public void init(Dataset<U, U> dataset)
     {
         this.dataset = ((ContactDataset<U>) dataset);
+        this.notReciprocal = !this.dataset.useReciprocal();
     }
 
     @Override
@@ -74,22 +66,22 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
         {
             List<FastRating> list = new ArrayList<>();
             List<FastRating> metricList = new ArrayList<>();
-
             Optional<Double> value = dataset.getPreference(uidx, iidx);
+            FastRating rating = new FastRating(uidx, iidx, value.orElse(Double.NaN));
+            list.add(rating);
+            metricList.add(rating);
+
             if (value.isPresent())
             {
-                FastRating pair = new FastRating(uidx, iidx, value.get());
-                list.add(pair);
-                metricList.add(pair);
                 if (!dataset.isDirected())
                 {
-                    pair = new FastRating(iidx, uidx, value.get());
+                    FastRating pair = new FastRating(iidx, uidx, value.get());
                     list.add(pair);
                 }
                 else if (this.notReciprocal && selection.isAvailable(iidx, uidx))
                 {
                     value = dataset.getPreference(iidx, uidx);
-                    pair = new FastRating(iidx, uidx, value.orElse(0.0));
+                    FastRating pair = new FastRating(iidx, uidx, value.orElse(Double.NaN));
                     list.add(pair);
                 }
             }
@@ -113,7 +105,7 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
             }
             else if(notReciprocal && rating.value() > 0.0)
             {
-                list.add(new FastRating(rating.iidx(), rating.uidx(), dataset.getPreference(rating.uidx(), rating.iidx()).orElse(0.0)));
+                list.add(new FastRating(rating.iidx(), rating.uidx(), dataset.getPreference(rating.uidx(), rating.iidx()).orElse(Double.NaN)));
             }
         }
 

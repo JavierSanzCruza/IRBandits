@@ -10,6 +10,7 @@ package es.uam.eps.ir.knnbandit.recommendation.mf;
 
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
@@ -187,6 +188,14 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
         boolean hasRating = false;
         double oldValue = 0;
         // First, we find whether we have a rating or not:
@@ -202,17 +211,17 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
 
         if(!hasRating)
         {
-            this.retrievedData.updateRating(uidx, iidx, value);
+            this.retrievedData.updateRating(uidx, iidx, newValue);
             if(value > 0.0)
                 ++this.currentCounter;
         }
-        else if(this.retrievedData.updateRating(uidx, iidx, value))
+        else if(this.retrievedData.updateRating(uidx, iidx, newValue))
         {
             Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
             if(opt.isPresent())
             {
-                double newValue = opt.get().v2;
-                if(newValue != oldValue || newValue > 0.0)
+                double auxNewValue = opt.get().v2;
+                if(auxNewValue != oldValue || auxNewValue > 0.0)
                 {
                     ++this.currentCounter;
                 }

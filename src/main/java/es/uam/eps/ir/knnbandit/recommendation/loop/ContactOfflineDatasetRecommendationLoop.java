@@ -42,6 +42,6 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends GenericRecommend
      */
     public ContactOfflineDatasetRecommendationLoop(ContactDataset<U> dataset, InteractiveRecommenderSupplier<U, U> recommender, Map<String, CumulativeMetric<U, U>> metrics, EndCondition endCondition, int rngSeed)
     {
-        super(dataset,new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed), true), recommender, new ContactUpdate<>(!dataset.useReciprocal()), endCondition, metrics, rngSeed);
+        super(dataset,new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed), true), recommender, new ContactUpdate<>(), endCondition, metrics, rngSeed);
     }
 }

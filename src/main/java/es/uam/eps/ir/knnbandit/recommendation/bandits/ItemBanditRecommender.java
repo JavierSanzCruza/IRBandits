@@ -9,6 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.bandits;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
@@ -74,7 +75,14 @@ public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        this.itemBandit.update(iidx, value);
+        if(!Double.isNaN(value)) // If the (uidx, iidx) pair exists.
+        {
+            this.itemBandit.update(iidx, value);
+        }
+        else if(!this.ignoreNotRated) // If we update the bandit even when the (uidx, iidx) pair does not exist.
+        {
+            this.itemBandit.update(iidx, Constants.NOTRATEDNOTIGNORED);
+        }
     }
 
     @Override

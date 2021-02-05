@@ -1,5 +1,6 @@
 package es.uam.eps.ir.knnbandit.recommendation.wisdom;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AdditiveRatingFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -111,8 +112,15 @@ public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        this.retrievedData.updateRating(uidx, iidx, predicate.test(value) ? 1.0 : 0.0);
-        this.num.addTo(uidx, predicate.test(value) ? 1.0 : 0.0);
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+        this.retrievedData.updateRating(uidx, iidx, predicate.test(newValue) ? 1.0 : 0.0);
+        this.num.addTo(uidx, predicate.test(newValue) ? 1.0 : 0.0);
         this.den.addTo(uidx, 1.0);
     }
 }

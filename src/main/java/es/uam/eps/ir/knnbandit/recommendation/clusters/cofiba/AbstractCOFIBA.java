@@ -9,6 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.clusters.cofiba;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.graph.Graph;
@@ -298,6 +299,14 @@ public abstract class AbstractCOFIBA<U,I> extends InteractiveRecommender<U,I>
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
         // First, find the item cluster
         int itemCluster = this.itemClusters.getCluster(iidx);
 
@@ -312,7 +321,7 @@ public abstract class AbstractCOFIBA<U,I> extends InteractiveRecommender<U,I>
             this.bs.put(uidx, map);
         }
 
-        ((Int2DoubleOpenHashMap) this.bs.get(uidx)).addTo(iidx, value);
+        ((Int2DoubleOpenHashMap) this.bs.get(uidx)).addTo(iidx, newValue);
         ((Int2DoubleOpenHashMap) this.ms.get(uidx)).addTo(iidx, 1.0);
         double uCB = Math.log(this.iter + 1)/(this.ms.get(uidx).get(iidx) + 1.0);
         double uW = this.bs.get(uidx).get(iidx) / (this.ms.get(uidx).get(iidx) + 1.0);
@@ -374,13 +383,13 @@ public abstract class AbstractCOFIBA<U,I> extends InteractiveRecommender<U,I>
             }
             else
             {
-                ((Int2DoubleOpenHashMap) this.clustB.get(itemCluster).get(userCluster)).addTo(iidx, value);
+                ((Int2DoubleOpenHashMap) this.clustB.get(itemCluster).get(userCluster)).addTo(iidx, newValue);
                 ((Int2DoubleOpenHashMap) this.clustM.get(itemCluster).get(userCluster)).addTo(iidx, 1.0);
             }
         }
         else // Otherwise, just update the weights for the cluster.
         {
-            ((Int2DoubleOpenHashMap) this.clustB.get(itemCluster).get(userCluster)).addTo(iidx, value);
+            ((Int2DoubleOpenHashMap) this.clustB.get(itemCluster).get(userCluster)).addTo(iidx, newValue);
             ((Int2DoubleOpenHashMap) this.clustM.get(itemCluster).get(userCluster)).addTo(iidx, 1.0);
         }
 

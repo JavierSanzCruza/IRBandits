@@ -12,6 +12,7 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
@@ -63,6 +64,14 @@ public class EpsilonGreedyInteractivePMFRecommenderWithItemUpdate<U, I> extends 
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
         // Update the user factors:
         DoubleMatrix1D qi = this.Q.viewRow(iidx);
         DenseDoubleMatrix2D aux = new DenseDoubleMatrix2D(this.k, this.k);
@@ -70,7 +79,7 @@ public class EpsilonGreedyInteractivePMFRecommenderWithItemUpdate<U, I> extends 
 
         // First, update the values for the A and b matrices for user u
         As[uidx].assign(aux, Double::sum);
-        bs[uidx].assign(qi, (x, y) -> x + value * y);
+        bs[uidx].assign(qi, (x, y) -> x + newValue * y);
 
         // Then, find A^-1 b and A^-1 sigma^2
         LUDecompositionQuick lu = new LUDecompositionQuick(0);
@@ -81,7 +90,7 @@ public class EpsilonGreedyInteractivePMFRecommenderWithItemUpdate<U, I> extends 
         lu.solve(c);
 
         this.P.viewRow(uidx).assign(c);
-        this.retrievedData.updateRating(uidx, iidx, value);
+        this.retrievedData.updateRating(uidx, iidx, newValue);
 
         if (value > 0.0)
         {
