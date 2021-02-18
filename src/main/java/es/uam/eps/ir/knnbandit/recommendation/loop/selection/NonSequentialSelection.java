@@ -64,13 +64,17 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
      * The last removed index from the target user list.
      */
     private int lastRemovedIndex;
+    /**
+     * Indicates whether the selection is for contact recommendation or not.
+     */
+    private final boolean contact;
 
     /**
      * Constructor.
      * @param rngSeed random seed.
      * @param uSel user selector.
      */
-    public NonSequentialSelection(int rngSeed, UserSelector uSel)
+    public NonSequentialSelection(int rngSeed, UserSelector uSel, boolean contact)
     {
         this.rngSeed = rngSeed;
         this.rng = new Random(rngSeed);
@@ -79,6 +83,7 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
         this.numUsers = 0;
         this.uSel = uSel;
         this.lastRemovedIndex = -1;
+        this.contact = contact;
     }
 
     @Override
@@ -140,6 +145,7 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
         {
             userList.add(uidx);
             availability.put(uidx, dataset.getAllIidx().boxed().collect(Collectors.toCollection(IntArrayList::new)));
+            if(contact) availability.get(uidx).remove(uidx);
         });
 
         Collections.shuffle(this.userList, rng);
@@ -158,13 +164,19 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
         List<IntList> warmupAvailability = ((OfflineWarmup) warmup).getAvailability();
         general.getUidxWithPreferences().forEach(uidx ->
         {
-            // First, the availability.
-            IntList uAvailable = warmupAvailability.get(uidx);
-            if(uAvailable != null && !uAvailable.isEmpty())
-            {
-                this.userList.add(uidx);
-                this.availability.put(uidx, new IntArrayList(uAvailable));
-            }
+             IntList uAvailable = warmupAvailability.get(uidx);
+             if(uAvailable != null)
+             {
+                 this.availability.put(uidx, new IntArrayList(uAvailable));
+                 if(!uAvailable.isEmpty())
+                 {
+                     this.userList.add(uidx);
+                 }
+             }
+             else
+             {
+                 this.availability.put(uidx, new IntArrayList());
+             }
         });
 
         IntSet keySet = availability.keySet();

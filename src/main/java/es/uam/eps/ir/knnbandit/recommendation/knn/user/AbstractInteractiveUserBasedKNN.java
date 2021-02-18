@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.user;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -188,10 +189,14 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
             {
                 neighborHeap.add(new Tuple2id(vidx.v1, vidx.v2));
             }
-            else if (neighborHeap.peek().v2 <= s)
+            else
             {
-                neighborHeap.poll();
-                neighborHeap.add(new Tuple2id(vidx.v1, s));
+                assert neighborHeap.peek() != null;
+                if (neighborHeap.peek().v2 <= s)
+                {
+                    neighborHeap.poll();
+                    neighborHeap.add(new Tuple2id(vidx.v1, s));
+                }
             }
         });
 
@@ -265,6 +270,15 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
+
         boolean hasRating = false;
         double oldValue = 0;
         // First, we find whether we have a rating or not:
@@ -280,26 +294,26 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
 
         if(!hasRating)
         {
-            this.retrievedData.updateRating(uidx, iidx, value);
-            this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, value, vidx.v2));
-            this.sim.updateNorm(uidx, value);
+            this.retrievedData.updateRating(uidx, iidx, newValue);
+            this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, newValue, vidx.v2));
+            this.sim.updateNorm(uidx, newValue);
         }
         else
         {
-            if(this.retrievedData.updateRating(uidx, iidx, value))
+            if(this.retrievedData.updateRating(uidx, iidx, newValue))
             {
                 Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
                 if(opt.isPresent())
                 {
-                    double newValue = opt.get().v2;
+                    double auxNewValue = opt.get().v2;
                     this.sim.updateNormDel(uidx, oldValue);
-                    this.sim.updateNorm(uidx, newValue);
+                    this.sim.updateNorm(uidx, auxNewValue);
 
                     double finalOldValue = oldValue;
                     this.retrievedData.getIidxPreferences(iidx).filter(vidx -> vidx.v1 != uidx).forEach(vidx ->
                     {
                         this.sim.updateDel(uidx, vidx.v1, iidx, finalOldValue, vidx.v2);
-                        this.sim.update(uidx, vidx.v1, iidx, newValue, vidx.v2);
+                        this.sim.update(uidx, vidx.v1, iidx, auxNewValue, vidx.v2);
                     });
                 }
             }

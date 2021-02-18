@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.clusters.club;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.graph.fast.FastGraph;
@@ -245,6 +246,14 @@ public abstract class AbstractCLUB<U ,I> extends InteractiveRecommender<U,I>
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
         ++this.iter;
 
         // Step 1: find the cluster
@@ -274,7 +283,7 @@ public abstract class AbstractCLUB<U ,I> extends InteractiveRecommender<U,I>
             this.bs.put(uidx, uB);
         }
 
-        ((Int2DoubleOpenHashMap) uB).addTo(iidx, value);
+        ((Int2DoubleOpenHashMap) uB).addTo(iidx, newValue);
         ((Int2DoubleOpenHashMap) uM).addTo(iidx, 1.0);
 
         // Update the individual values:
@@ -350,13 +359,13 @@ public abstract class AbstractCLUB<U ,I> extends InteractiveRecommender<U,I>
             else  // just update the cluster values for this particular case.
             {
                 ((Int2DoubleOpenHashMap) this.clustM.get(cluster)).addTo(iidx, 1.0);
-                ((Int2DoubleOpenHashMap) this.clustB.get(cluster)).addTo(iidx, value);
+                ((Int2DoubleOpenHashMap) this.clustB.get(cluster)).addTo(iidx, newValue);
             }
         }
         else // If no edge is removed, then, just update the cluster value...
         {
             ((Int2DoubleOpenHashMap) this.clustM.get(cluster)).addTo(iidx, 1.0);
-            ((Int2DoubleOpenHashMap) this.clustB.get(cluster)).addTo(iidx, value);
+            ((Int2DoubleOpenHashMap) this.clustB.get(cluster)).addTo(iidx, newValue);
         }
 
         times.put(uidx, times.get(uidx)+1);

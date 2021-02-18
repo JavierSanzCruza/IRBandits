@@ -46,7 +46,7 @@ public class GeneralUpdate<U,I> implements UpdateStrategy<U,I>
         {
             Optional<Double> value = dataset.getPreference(uidx, iidx);
             List<FastRating> list = new ArrayList<>();
-            list.add(new FastRating(uidx, iidx, value.orElse(0.0)));
+            list.add(new FastRating(uidx, iidx, value.orElse(Double.NaN)));
             return new Pair<>(list, list);
         }
         return new Pair<>(new ArrayList<>(), new ArrayList<>());

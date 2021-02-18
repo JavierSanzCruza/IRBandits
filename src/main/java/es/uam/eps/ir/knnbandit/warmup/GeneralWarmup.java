@@ -77,7 +77,7 @@ public class GeneralWarmup implements OfflineWarmup
             }
             else if(type == WarmupType.FULL)
             {
-                value = 0.0;
+                value = Double.NaN;
                 fullTraining.add(new FastRating(uidx, iidx, value));
                 availability.get(uidx).removeInt(availability.get(uidx).indexOf(iidx));
             }

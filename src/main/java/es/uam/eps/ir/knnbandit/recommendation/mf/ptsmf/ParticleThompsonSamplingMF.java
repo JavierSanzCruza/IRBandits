@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
@@ -167,12 +168,20 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
         // Reweighting: for each particle, we recalculate the weights:
         double[] weights = new double[this.numParticles];
         double sum = 0.0;
         for (int d = 0; d < this.numParticles; ++d)
         {
-            double wd = this.particleList.get(d).getWeight(uidx, iidx, value);
+            double wd = this.particleList.get(d).getWeight(uidx, iidx, newValue);
             sum += wd;
             weights[d] = wd;
         }
@@ -193,7 +202,7 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
             // The re-sampled particle:
             Particle<U, I> aux = this.particleList.get(idx - 1).clone();
             // Update the particle.
-            aux.update(uidx, iidx, value);
+            aux.update(uidx, iidx, newValue);
             // Store it as the new particle.
             defList.add(aux);
         }

@@ -14,6 +14,7 @@ import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.EigenvalueDecomposition;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
@@ -231,6 +232,14 @@ public class ThompsonSamplingInteractivePMFRecommender<U, I> extends Interactive
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
         if (this.lastqi != null)
         {
             // First, obtain the last qi
@@ -239,7 +248,7 @@ public class ThompsonSamplingInteractivePMFRecommender<U, I> extends Interactive
 
             // First, update the values for the A and b matrices for user u
             As[uidx].assign(aux, Double::sum);
-            bs[uidx].assign(this.lastqi, (x, y) -> x + value * y);
+            bs[uidx].assign(this.lastqi, (x, y) -> x + newValue * y);
 
             // Then, find A^-1 b and A^-1 sigma^2
 
@@ -269,7 +278,7 @@ public class ThompsonSamplingInteractivePMFRecommender<U, I> extends Interactive
             this.lastqi = null;
         }
 
-        this.retrievedData.updateRating(uidx, iidx, value);
+        this.retrievedData.updateRating(uidx, iidx, newValue);
     }
 
     /**

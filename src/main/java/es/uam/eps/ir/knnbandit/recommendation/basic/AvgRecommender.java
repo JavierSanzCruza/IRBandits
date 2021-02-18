@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.basic;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
@@ -87,14 +88,23 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
+
         double oldValue = values[iidx];
         if (numTimes[iidx] <= 0.0)
         {
-            this.values[iidx] = value;
+            this.values[iidx] = newValue;
         }
         else
         {
-            this.values[iidx] = oldValue + (value - oldValue) / (numTimes[iidx] + 1.0);
+            this.values[iidx] = oldValue + (newValue - oldValue) / (numTimes[iidx] + 1.0);
         }
         this.numTimes[iidx]++;
     }

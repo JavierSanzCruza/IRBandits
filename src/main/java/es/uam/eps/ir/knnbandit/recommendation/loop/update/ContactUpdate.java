@@ -38,7 +38,7 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
     /**
      * True if we do not want to recommend reciprocal links to existing ones, false otherwise.
      */
-    private final boolean notReciprocal;
+    private boolean notReciprocal;
     /**
      * The contact recommendation dataset.
      */
@@ -65,6 +65,7 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
     public void init(Dataset<U, U> dataset)
     {
         this.dataset = ((ContactDataset<U>) dataset);
+        this.notReciprocal = !this.dataset.useReciprocal();
     }
 
     @Override
@@ -76,8 +77,9 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
             List<FastRating> metricList = new ArrayList<>();
 
             Optional<Double> value = dataset.getPreference(uidx, iidx);
-            list.add(new FastRating(uidx, iidx, value.orElse(0.0)));
-            metricList.add(new FastRating(uidx, iidx, value.orElse(0.0)));
+            FastRating rating = new FastRating(uidx, iidx, value.orElse(Double.NaN));
+            list.add(rating);
+            metricList.add(rating);
 
             if(value.isPresent())
             {
@@ -89,7 +91,7 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
                 else if (this.notReciprocal && selection.isAvailable(iidx, uidx))
                 {
                     value = dataset.getPreference(iidx, uidx);
-                    FastRating pair = new FastRating(iidx, uidx, value.orElse(0.0));
+                    FastRating pair = new FastRating(iidx, uidx, value.orElse(Double.NaN));
                     list.add(pair);
                 }
             }
@@ -102,16 +104,18 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
     @Override
     public List<FastRating> getList(Warmup warmup)
     {
-        List<FastRating> list = new ArrayList<>(warmup.getFullTraining());
-        for(FastRating rating : warmup.getFullTraining())
+        List<FastRating> warmupList = warmup.getFullTraining();
+        List<FastRating> list = new ArrayList<>();
+        for(FastRating rating : warmupList)
         {
+            list.add(rating);
             if(!dataset.isDirected())
             {
                 list.add(new FastRating(rating.iidx(), rating.uidx(), rating.value()));
             }
             else if(notReciprocal && rating.value() > 0.0)
             {
-                list.add(new FastRating(rating.iidx(), rating.uidx(), dataset.getPreference(rating.uidx(), rating.iidx()).orElse(0.0)));
+                list.add(new FastRating(rating.iidx(), rating.uidx(), dataset.getPreference(rating.uidx(), rating.iidx()).orElse(Double.NaN)));
             }
         }
 

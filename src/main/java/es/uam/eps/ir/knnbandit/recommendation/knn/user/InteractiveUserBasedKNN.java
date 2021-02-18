@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.user;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
@@ -59,9 +60,17 @@ public class InteractiveUserBasedKNN<U, I> extends AbstractInteractiveUserBasedK
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        this.sim.updateNorm(uidx, value);
-        this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, value, vidx.v2));
-        this.retrievedData.updateRating(uidx, iidx, value);
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
+        this.sim.updateNorm(uidx, newValue);
+        this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, newValue, vidx.v2));
+        this.retrievedData.updateRating(uidx, iidx, newValue);
     }
 
     @Override

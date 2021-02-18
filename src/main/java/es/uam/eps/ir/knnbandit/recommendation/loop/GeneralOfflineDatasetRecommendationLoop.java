@@ -43,6 +43,6 @@ public class GeneralOfflineDatasetRecommendationLoop<U,I> extends GenericRecomme
      */
     public GeneralOfflineDatasetRecommendationLoop(GeneralDataset<U, I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, int rngSeed)
     {
-        super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed)), recommender, new GeneralUpdate<>(), endCondition, metrics, rngSeed);
+        super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed), false), recommender, new GeneralUpdate<>(), endCondition, metrics, rngSeed);
     }
 }

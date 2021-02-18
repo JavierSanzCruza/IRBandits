@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.mf.ictr;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
@@ -162,6 +163,15 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
+
         // Update the methods.
         double sum = 0.0;
         double[] weights = new double[numParticles];
@@ -170,7 +180,7 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
         for (int i = 0; i < numParticles; ++i)
         {
             // First, we compute the weight of particle i
-            double fitness = particles.get(i).getWeight(uidx, iidx, value);
+            double fitness = particles.get(i).getWeight(uidx, iidx, newValue);
             weights[i] = fitness;
             sum += fitness;
         }
@@ -191,7 +201,7 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
             // The re-sampled particle:
             Particle<U, I> aux = this.particles.get(idx - 1).clone();
             // Update the particle.
-            aux.update(uidx, iidx, value);
+            aux.update(uidx, iidx, newValue);
             // Store it as the new particle.
             defList.add(aux);
         }

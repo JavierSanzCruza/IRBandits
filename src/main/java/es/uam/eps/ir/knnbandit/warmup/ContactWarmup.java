@@ -47,7 +47,7 @@ public class ContactWarmup extends GeneralWarmup
                 fullTraining.add(new FastRating(uidx, iidx, value));
                 availability.get(uidx).removeInt(availability.get(uidx).indexOf(iidx));
 
-                if(dataset.isDirected() || !dataset.useReciprocal())
+                if(!dataset.isDirected() || !dataset.useReciprocal())
                 {
                     int index = availability.get(iidx).indexOf(uidx);
                     if(index > 0)
@@ -58,7 +58,7 @@ public class ContactWarmup extends GeneralWarmup
             }
             else if(type == WarmupType.FULL)
             {
-                value = 0.0;
+                value = Double.NaN;
                 fullTraining.add(new FastRating(uidx, iidx, value));
                 availability.get(uidx).removeInt(availability.get(uidx).indexOf(iidx));
             }

@@ -13,6 +13,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -133,13 +134,21 @@ public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFReco
     @Override
     public void update(int uidx, int iidx, double value)
     {
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
         DoubleMatrix1D qi = this.Q.viewRow(iidx);
         DenseDoubleMatrix2D aux = new DenseDoubleMatrix2D(this.k, this.k);
         ALG.multOuter(qi, qi, aux);
 
         // First, update the values for the A and b matrices for user u
         As[uidx].assign(aux, Double::sum);
-        bs[uidx].assign(qi, (x, y) -> x + value * y);
+        bs[uidx].assign(qi, (x, y) -> x + newValue * y);
 
         // Then, find A^-1 b and A^-1 sigma^2
         LUDecompositionQuick lu = new LUDecompositionQuick(0);
@@ -161,7 +170,7 @@ public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFReco
         this.P.viewRow(uidx).assign(extraMatrix.viewColumn(k));
         this.stdevP[uidx] = ALG.subMatrix(extraMatrix, 0, k - 1, 0, k - 1);
 
-        this.retrievedData.updateRating(uidx, iidx, value);
+        this.retrievedData.updateRating(uidx, iidx, newValue);
         /*DenseDoubleMatrix2D sigmaI = new DenseDoubleMatrix2D(this.k, this.k);
         for (int i = 0; i < k; ++i)
         {

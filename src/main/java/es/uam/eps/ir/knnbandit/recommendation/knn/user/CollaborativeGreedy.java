@@ -8,6 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.user;
 
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
@@ -267,7 +268,16 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
     @Override
     public void update(int uidx, int iidx, double value)
     {
-        if(this.retrievedData.updateRating(uidx, iidx, value))
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
+
+        if(this.retrievedData.updateRating(uidx, iidx, newValue))
         {
             // Update the number of times that the user u has been recommended.
             this.times.put(uidx, this.times.getOrDefault(uidx, 1) + 1);
@@ -278,7 +288,7 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
             if (this.jointExpl.get(uidx).contains(iidx))
             {
                 this.jointData.update(this.uIndex.uidx2user(uidx), this.iIndex.iidx2item(iidx), auxvalue);
-                this.jointData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, value, vidx.v2));
+                this.jointData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, auxvalue, vidx.v2));
             }
 
             // Update the index for the joint exploration list.
