@@ -184,6 +184,6 @@ public class NonSequentialSelection<U,I> implements Selection<U,I>
     @Override
     public boolean isAvailable(int uidx, int iidx)
     {
-        return this.availability.get(uidx).contains(iidx);
+        return this.availability.containsKey(uidx) && this.availability.get(uidx).contains(iidx);
     }
 }

@@ -79,7 +79,7 @@ public abstract class WarmupRecommendation<U,I>
                 jSon.append("\n");
             }
         }
-        JSONArray array = new JSONArray(jSon);
+        JSONArray array = new JSONArray(jSon.toString());
 
         // If it does not exist, create the directory in which to store the recommendation.
         String outputFolder = output + File.separator;
@@ -136,7 +136,7 @@ public abstract class WarmupRecommendation<U,I>
                 long b = System.currentTimeMillis();
 
                 // Obtain the lists: only the first "numParts" algorithms shall be considered
-                System.out.println("Recommenders  for part " + (part + 1) + " prepared (" + (b - a) + " ms.)");
+                System.out.println("Recommenders for part " + (part + 1) + " prepared (" + (b - a) + " ms.)");
 
                 List<Pair<Integer>> partTrain = train.subList(0, splitPoints.get(part));
                 Warmup warmup = this.getWarmup(partTrain);
@@ -160,7 +160,7 @@ public abstract class WarmupRecommendation<U,I>
                     // Obtain the corresponding random numbers:
                     UntieRandomNumberReader rngSeedGen = new UntieRandomNumberReader();
                     // Configure and initialize the recommendation loop:
-                    System.out.println("Starting algorithm " + name);
+                    System.out.println("Starting algorithm " + name + " for the " + (part + 1) + "/" + numParts + " part.");
                     long aaa = System.nanoTime();
                     // Create a map storing the average values for each metric:
                     Map<String, Double> averagedLastIteration = new HashMap<>();
@@ -172,7 +172,7 @@ public abstract class WarmupRecommendation<U,I>
                         // Obtain the random seed:
                         int rngSeed = rngSeedGen.nextSeed();
                         long bbb = System.nanoTime();
-                        System.out.println("Algorithm " + name + " (" + i + ") " + " starting (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                        System.out.println("Algorithm " + name + " (" + i + ") " + " for the " + (part + 1) + "/" + numParts + " split starting (" + (bbb - aaa) / 1000000.0 + " ms.)");
 
                         // Create the recommendation loop: in this case, a general offline dataset loop
                         FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
@@ -228,7 +228,7 @@ public abstract class WarmupRecommendation<U,I>
                         }
 
                         bbb = System.nanoTime();
-                        System.out.println("Algorithm " + name + " (" + i + ") " + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                        System.out.println("Algorithm " + name + " (" + i + ") " + " for the " + (part+1) + "/" + numParts + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
                     }
 
                     int size = counter.size();

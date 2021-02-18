@@ -76,20 +76,20 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
             List<FastRating> metricList = new ArrayList<>();
 
             Optional<Double> value = dataset.getPreference(uidx, iidx);
-            if (value.isPresent())
+            list.add(new FastRating(uidx, iidx, value.orElse(0.0)));
+            metricList.add(new FastRating(uidx, iidx, value.orElse(0.0)));
+
+            if(value.isPresent())
             {
-                FastRating pair = new FastRating(uidx, iidx, value.get());
-                list.add(pair);
-                metricList.add(pair);
                 if (!dataset.isDirected())
                 {
-                    pair = new FastRating(iidx, uidx, value.get());
+                    FastRating pair = new FastRating(iidx, uidx, value.get());
                     list.add(pair);
                 }
                 else if (this.notReciprocal && selection.isAvailable(iidx, uidx))
                 {
                     value = dataset.getPreference(iidx, uidx);
-                    pair = new FastRating(iidx, uidx, value.orElse(0.0));
+                    FastRating pair = new FastRating(iidx, uidx, value.orElse(0.0));
                     list.add(pair);
                 }
             }
@@ -103,7 +103,7 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
     public List<FastRating> getList(Warmup warmup)
     {
         List<FastRating> list = new ArrayList<>(warmup.getFullTraining());
-        for(FastRating rating : list)
+        for(FastRating rating : warmup.getFullTraining())
         {
             if(!dataset.isDirected())
             {
