@@ -18,9 +18,9 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.DoublePredicate;
 
 /**
@@ -34,9 +34,14 @@ import java.util.function.DoublePredicate;
  */
 public class AlgorithmSelector<U, I>
 {
+    /**
+     * The identifier for the algorithm name.
+     */
     private final static String NAME = "name";
+    /**
+     * The identifier for the parameters of the algorithms.
+     */
     private final static String PARAMS = "params";
-
 
     /**
      * A map of recommenders to apply.
@@ -57,7 +62,7 @@ public class AlgorithmSelector<U, I>
      */
     public AlgorithmSelector()
     {
-        recs = new HashMap<>();
+        recs = new TreeMap<>();
     }
 
     /**
@@ -141,6 +146,11 @@ public class AlgorithmSelector<U, I>
         return conf;
     }
 
+    /**
+     * Obtains the suppliers for a single recommendation algorithm.
+     * @param json the JSON object.
+     * @return the list of recommender suppliers.
+     */
     public List<InteractiveRecommenderSupplier<U,I>> getAlgorithms(JSONObject json)
     {
         String algorithm = json.getString(NAME);
@@ -148,6 +158,11 @@ public class AlgorithmSelector<U, I>
         return conf.getAlgorithms(json.getJSONArray(PARAMS));
     }
 
+    /**
+     * Obtains a single algorithm supplier from a JSON object.
+     * @param json the JSON object containing the algorithm configuration parameters.
+     * @return the supplier for the algorithm under the corresponding configuration.
+     */
     public InteractiveRecommenderSupplier<U,I> getAlgorithm(JSONObject json)
     {
         String algorithm = json.getString(NAME);

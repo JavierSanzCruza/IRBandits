@@ -27,10 +27,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.json.JSONArray;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -112,6 +109,7 @@ public abstract class WarmupRecommendation<U,I>
             }
         }
 
+        // We parallely execute the different parts.
         IntStream.range(0, numParts).parallel().forEach(part ->
         {
             try
@@ -183,47 +181,42 @@ public abstract class WarmupRecommendation<U,I>
                         int currentIter = loop.getCurrentIter();
                         if (currentIter > 0) // if at least one iteration has been recorded:
                         {
+                            int currentSize = counter.size();
+                            String someMetric = new TreeSet<>(getMetrics().keySet()).first();
+                            int auxSize = metricValues.get(someMetric).size();
+
+                            if (auxSize > currentSize)
+                            {
+                                IntStream.range(currentSize, auxSize).forEach(j -> counter.add(1));
+                            }
+
+                            //Map<String, Double> metricValues = loop.getMetricValues();
                             for (String metric : this.getMetrics().keySet())
                             {
-                                List<Double> values = metricValues.get(metric);
+                                List<Double> newVals = metricValues.get(metric);
+
                                 if (i == 0)
                                 {
-                                    int auxSize = values.size();
-                                    averagedValues.get(metric).addAll(values);
-                                    IntStream.range(0, auxSize).forEach(x -> counter.add(1));
+                                    averagedValues.get(metric).addAll(newVals);
                                 }
                                 else
                                 {
                                     List<Double> oldVals = averagedValues.get(metric);
-                                    int currentSize = oldVals.size();
-                                    int auxSize = values.size();
                                     for (int j = 0; j < auxSize; ++j)
                                     {
                                         if (j >= currentSize)
                                         {
-                                            oldVals.add(values.get(j));
-                                            counter.add(1);
+                                            averagedValues.get(metric).add(newVals.get(j));
                                         }
                                         else
                                         {
                                             double oldM = oldVals.get(j);
-                                            double averaged = oldM + (values.get(j) - oldM) / (counter.get(j) + 1);
+                                            double averaged = oldM + (newVals.get(j) - oldM) / (counter.get(j) + 1);
                                             oldVals.set(j, averaged);
                                             counter.set(j, counter.get(j) + 1);
                                         }
                                     }
                                 }
-                            }
-
-                            if (i == 0) // Store the information about the number of iterations.
-                            {
-                                averagedLastIteration.put("numIter", currentIter + 0.0);
-                            }
-                            else
-                            {
-                                double lastIter = averagedLastIteration.get("numIter");
-                                double newIter = lastIter + (currentIter - lastIter) / (i + 1.0);
-                                averagedLastIteration.put("numIter", newIter);
                             }
                         }
 
@@ -232,7 +225,7 @@ public abstract class WarmupRecommendation<U,I>
                     }
 
                     int size = counter.size();
-                    try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output + name + "-summary.txt"))))
+                    try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output + part + File.separator + name + "-summary.txt"))))
                     {
                         bw.write("Iteration");
                         for (String metric : averagedValues.keySet())
