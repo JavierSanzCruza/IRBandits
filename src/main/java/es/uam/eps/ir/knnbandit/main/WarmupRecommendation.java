@@ -189,6 +189,7 @@ public abstract class WarmupRecommendation<U,I>
                             {
                                 IntStream.range(currentSize, auxSize).forEach(j -> counter.add(1));
                             }
+                            IntStream.range(0, Math.min(auxSize,currentSize)).forEach(j -> counter.set(j, counter.get(j) + 1));
 
                             //Map<String, Double> metricValues = loop.getMetricValues();
                             for (String metric : this.getMetrics().keySet())
@@ -211,9 +212,8 @@ public abstract class WarmupRecommendation<U,I>
                                         else
                                         {
                                             double oldM = oldVals.get(j);
-                                            double averaged = oldM + (newVals.get(j) - oldM) / (counter.get(j) + 1);
+                                            double averaged = oldM + (newVals.get(j) - oldM) / (counter.get(j));
                                             oldVals.set(j, averaged);
-                                            counter.set(j, counter.get(j) + 1);
                                         }
                                     }
                                 }

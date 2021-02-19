@@ -114,13 +114,14 @@ public abstract class Recommendation<U,I>
                 if(currentIter > 0) // if at least one iteration has been recorded:
                 {
                     int currentSize = counter.size();
-                    String someMetric = new TreeSet<String>(getMetrics().keySet()).first();
+                    String someMetric = new TreeSet<>(getMetrics().keySet()).first();
                     int auxSize = metricValues.get(someMetric).size();
 
                     if(auxSize > currentSize)
                     {
                         IntStream.range(currentSize, auxSize).forEach(j -> counter.add(1));
                     }
+                    IntStream.range(0, Math.min(currentSize, auxSize)).forEach(j -> counter.set(j, counter.get(j)+1));
 
                     //Map<String, Double> metricValues = loop.getMetricValues();
                     for(String metric : this.getMetrics().keySet())
@@ -143,7 +144,7 @@ public abstract class Recommendation<U,I>
                                 else
                                 {
                                     double oldM = oldVals.get(j);
-                                    double averaged = oldM + (newVals.get(j) - oldM) / (counter.get(j) + 1);
+                                    double averaged = oldM + (newVals.get(j) - oldM) / (counter.get(j));
                                     oldVals.set(j, averaged);
                                     counter.set(j, counter.get(j)+1);
                                 }
