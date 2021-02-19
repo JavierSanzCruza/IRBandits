@@ -1,0 +1,314 @@
+[
+{
+		"name" : "mf",
+		"params" :
+		[
+			{
+				"variant" : "basic",
+				"ignoreUnknown" : "true",
+				"k" : "10",
+				"factorizer" : 
+				{
+					"name" : "fastimf",
+					"params" : 
+					[
+						{
+							"alpha" : "1",
+							"lambda" : "0.1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "10",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "100",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "150",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "0.1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "10",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "100",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "150",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "0.1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "10",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "100",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "150",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						}						
+					]
+				}
+			},
+			{
+				"variant" : "basic",
+				"ignoreUnknown" : "true",
+				"k" : "20",
+				"factorizer" : 
+				{
+					"name" : "fastimf",
+					"params" : 
+					[
+						{
+							"alpha" : "1",
+							"lambda" : "0.1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "10",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "100",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "150",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "0.1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "10",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "100",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "150",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "0.1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "10",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "100",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "150",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						}						
+					]
+				}
+			},
+			{
+				"variant" : "basic",
+				"ignoreUnknown" : "true",
+				"k" : "50",
+				"factorizer" : 
+				{
+					"name" : "fastimf",
+					"params" : 
+					[
+						{
+							"alpha" : "1",
+							"lambda" : "0.1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "10",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "100",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "1",
+							"lambda" : "150",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "0.1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "10",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "100",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "10",
+							"lambda" : "150",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "0.1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "1",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "10",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "100",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						},
+						{
+							"alpha" : "40",
+							"lambda" : "150",
+							"numIter" : "20",
+							"useZeroes" : "true"
+						}						
+					]
+				}
+			}
+		]
+	}
+] 

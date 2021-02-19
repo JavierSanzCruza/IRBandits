@@ -7,4 +7,8 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
+
+/**
+ * Basic and not personalized recommendation approaches.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.basic;

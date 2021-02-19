@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.data.datasets;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -5,10 +13,10 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
+import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
-import org.jooq.lambda.tuple.Tuple3;
 import org.jooq.lambda.tuple.Tuple4;
 import org.ranksys.formats.parsing.Parser;
 import org.ranksys.formats.parsing.Parsers;
@@ -21,9 +29,27 @@ import java.util.*;
 import java.util.function.DoublePredicate;
 import java.util.function.DoubleUnaryOperator;
 
-public class DatasetWithKnowledge<U, I> extends Dataset<U, I>
+
+/**
+ * A dataset containing additional information on whether the users
+ * knew the items before they rated them.
+ * Example: cm100k
+ *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
+public class DatasetWithKnowledge<U, I> extends GeneralDataset<U, I>
 {
+    /**
+     * Preference data with knowledge information about whether the users knew about the items before the rating.
+     */
     protected final SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData;
+    /**
+     * Number of relevant (and known) ratings.
+     */
     protected final int numRelKnown;
 
     /**
@@ -42,26 +68,70 @@ public class DatasetWithKnowledge<U, I> extends Dataset<U, I>
         this.numRelKnown = numRelKnown;
     }
 
-    public SimpleFastPreferenceData<U, I> getKnownPrefData()
+    /**
+     * Obtains a reduced dataset containing only the set of rating given by users to items they did know before
+     * the recommendation.
+     * @return the reduced dataset.
+     */
+    public OfflineDataset<U,I> getKnownDataset()
+    {
+        return new GeneralDataset<>(this.userIndex, this.itemIndex, this.getKnownPrefData(), this.getNumRelKnown(), this.relevance);
+    }
+
+    /**
+     * Obtains a reduced dataset containing only the set of rating given by users to items they did not know before
+     * the recommendation.
+     * @return the reduced dataset.
+     */
+    public OfflineDataset<U,I> getUnknownDataset()
+    {
+        return new GeneralDataset<>(this.userIndex, this.itemIndex, this.getUnknownPrefData(), this.getNumRelUnknown(), this.relevance);
+    }
+
+    /**
+     * Obtains a reduced dataset depending on the use we are going to make of the data.
+     * @param dataUse the selection of the dataset.
+     * @return the reduced dataset
+     */
+    public OfflineDataset<U,I> getDataset(KnowledgeDataUse dataUse)
+    {
+        switch (dataUse)
+        {
+            case ONLYKNOWN: return this.getKnownDataset();
+            case ONLYUNKNOWN: return this.getUnknownDataset();
+            default: return this;
+        }
+    }
+
+    /**
+     * Obtains the data previously known by the users.
+     * @return the previously known ratings.
+     */
+    private SimpleFastPreferenceData<U, I> getKnownPrefData()
     {
         return (SimpleFastPreferenceData<U, I>) this.knowledgeData.getKnownPreferenceData();
     }
-
-    public SimpleFastPreferenceData<U, I> getUnknownPrefData()
+    /**
+     * Obtains the data unknown by the users before the rating.
+     * @return the previously unknown ratings.
+     */
+    private SimpleFastPreferenceData<U, I> getUnknownPrefData()
     {
         return (SimpleFastPreferenceData<U, I>) this.knowledgeData.getUnknownPreferenceData();
     }
 
-    public SimpleFastUserKnowledgePreferenceData<U, I> getKnowledgeData()
-    {
-        return this.knowledgeData;
-    }
-
+    /**
+     * Obtains the number of relevant and known ratings.
+     * @return the number of relevant and known ratings.
+     */
     public int getNumRelKnown()
     {
         return this.numRelKnown;
     }
-
+    /**
+     * Obtains the number of relevant and unknown ratings.
+     * @return the number of relevant and unknown ratings.
+     */
     public int getNumRelUnknown()
     {
         return this.numRel - this.numRelKnown;
@@ -147,13 +217,21 @@ public class DatasetWithKnowledge<U, I> extends Dataset<U, I>
         return new DatasetWithKnowledge<>(uIndex, iIndex, knowledgeData, numrel, numrelknown, relevance);
     }
 
+    /**
+     * Loads a dataset from another dataset.
+     * @param dataset the original dataset.
+     * @param list a list of (user,item) interactions.
+     * @param <U> type of the users.
+     * @param <I> type of the items.
+     * @return the new dataset.
+     */
     public static <U, I> DatasetWithKnowledge<U, I> load(DatasetWithKnowledge<U, I> dataset, List<Tuple2<Integer, Integer>> list)
     {
         List<Tuple4<U, I, Double, Boolean>> quartets = new ArrayList<>();
-        FastUpdateableUserIndex<U> userIndex = dataset.getUserIndex();
-        FastUpdateableItemIndex<I> itemIndex = dataset.getItemIndex();
+        FastUpdateableUserIndex<U> userIndex = dataset.userIndex;
+        FastUpdateableItemIndex<I> itemIndex = dataset.itemIndex;
 
-        SimpleFastUserKnowledgePreferenceData<U, I> datasetKnowledgeData = dataset.getKnowledgeData();
+        SimpleFastUserKnowledgePreferenceData<U, I> datasetKnowledgeData = dataset.knowledgeData;
 
         int numrel = 0;
         int numrelknown = 0;
@@ -190,4 +268,11 @@ public class DatasetWithKnowledge<U, I> extends Dataset<U, I>
         SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData = SimpleFastUserKnowledgePreferenceData.load(quartets.stream(), userIndex, itemIndex);
         return new DatasetWithKnowledge<>(userIndex, itemIndex, knowledgeData, numrel, numrelknown, dataset.relevance);
     }
+
+    @Override
+    public int getNumRatings()
+    {
+        return this.prefData.numPreferences();
+    }
+
 }

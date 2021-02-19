@@ -1,0 +1,62 @@
+[
+	{
+		"name" : "ub",
+		"params" : 
+		[
+			{
+				"variant" : "best",
+				"ignoresUnknown" : "false",
+				"ignoreZeroes" : "true",
+				"k" : "1"
+			},
+			{
+				"variant" : "best",
+				"ignoresUnknown" : "false",
+				"ignoreZeroes" : "true",
+				"k" : "10"
+			},
+			{
+				"variant" : "best",
+				"ignoresUnknown" : "false",
+				"ignoreZeroes" : "true",
+				"k" : "100"
+			},
+			{
+				"variant" : "last",
+				"ignoresUnknown" : "false",
+				"ignoreZeroes" : "true",
+				"k" : "1"
+			},
+			{
+				"variant" : "last",
+				"ignoresUnknown" : "false",
+				"ignoreZeroes" : "true",
+				"k" : "10"
+			},
+			{
+				"variant" : "last",
+				"ignoresUnknown" : "false",
+				"ignoreZeroes" : "true",
+				"k" : "100"
+			},
+			{
+				"variant" : "additive",
+				"ignoresUnknown" : "false",
+				"ignoreZeroes" : "true",
+				"k" : "1"
+			},
+			{
+				"variant" : "additive",
+				"ignoresUnknown" : "false",
+				"ignoreZeroes" : "true",
+				"k" : "10"
+			},
+			{
+				"variant" : "additive",
+				"ignoresUnknown" : "false",
+				"ignoreZeroes" : "true",
+				"k" : "100"
+			}
+		]
+	}
+] 

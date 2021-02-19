@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
+ * Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
  * de Madrid, http://ir.ii.uam.es.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -9,8 +9,10 @@
  */
 package es.uam.eps.ir.knnbandit;
 
-import org.jooq.lambda.tuple.Tuple2;
+import es.uam.eps.ir.knnbandit.main.selector.*;
+import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
@@ -25,15 +27,12 @@ public class Main
     private final static String RECOMMENDATION = "rec";
     private final static String VALIDATION = "valid";
     private final static String WARMUPRECOMMENDATION = "warmup-rec";
-    private final static String WARMUPRECOMMENDATIONPARALLEL = "warmup-rec-parallel";
     private final static String WARMUPVALIDATION = "warmup-valid";
     private final static String TRAININGSTATS = "train-stats";
     private final static String DATASET = "dataset";
     private final static String ANALYSIS = "dataset-analysis";
     private final static String SUMMARIZE = "summarize";
-    private final static String AUXSUMM = "auxsummarize";
     private final static String OUTPUTRANKER = "outputranker";
-    private final static String RANKERCONFIG = "rankerconfig";
 
     /**
      * Main method. Executes the main method in the class specified by the first
@@ -50,100 +49,74 @@ public class Main
             int from = 1;
             switch (main)
             {
-                case RECOMMENDATION:
-                    Tuple2<Integer, String> alg = Main.getAlgorithm(args, "Recommendation");
-                    className = alg.v2;
-                    from = alg.v1;
-                    break;
                 case VALIDATION:
-                    alg = Main.getAlgorithm(args, "Validation");
-                    className = alg.v2;
-                    from = alg.v1;
+                {
+                    ValidationSelector valid = new ValidationSelector();
+                    valid.validate(args[1], Arrays.copyOfRange(args, 2, args.length));
                     break;
-                case WARMUPRECOMMENDATION:
-                    alg = Main.getAlgorithm(args, "WarmupRecommendation");
-                    className = alg.v2;
-                    from = alg.v1;
+                }
+                case RECOMMENDATION:
+                {
+                    RecommendationSelector rec = new RecommendationSelector();
+                    rec.recommend(args[1], Arrays.copyOfRange(args, 2, args.length));
                     break;
+                }
                 case WARMUPVALIDATION:
-                    alg = Main.getAlgorithm(args, "WarmupValidation");
-                    className = alg.v2;
-                    from = alg.v1;
+                {
+                    WarmupValidationSelector valid = new WarmupValidationSelector();
+                    valid.validate(args[1], Arrays.copyOfRange(args, 2, args.length));
                     break;
-                case WARMUPRECOMMENDATIONPARALLEL:
-                    alg = Main.getAlgorithm(args, "WarmupRecommendationParallel");
-                    className = alg.v2;
-                    from = alg.v1;
+                }
+                case WARMUPRECOMMENDATION:
+                {
+                    WarmupRecommendationSelector rec = new WarmupRecommendationSelector();
+                    rec.recommend(args[1], Arrays.copyOfRange(args, 2, args.length));
                     break;
+                }
                 case TRAININGSTATS:
-                    alg = Main.getAlgorithm(args, "TrainingStatistics");
-                    className = alg.v2;
-                    from = alg.v1;
+                {
+                    TrainingStatisticsSelector stats = new TrainingStatisticsSelector();
+                    stats.statistics(args[1], Arrays.copyOfRange(args, 2, args.length));
                     break;
-                case DATASET:
-                    alg = Main.getAlgorithm(args, "DatasetGraph");
-                    className = alg.v2;
-                    from = alg.v1;
-                    break;
-                case ANALYSIS:
-                    alg = Main.getAlgorithm(args, "DatasetGraphAnalysis");
-                    className = alg.v2;
-                    from = alg.v1;
-                    break;
-                case AUXSUMM:
-                    alg = Main.getAlgorithm(args, "AdvancedOutputResumer");
-                    className = alg.v2;
-                    from = alg.v1;
-                    break;
+                }
                 case SUMMARIZE:
-                    className = "es.uam.eps.ir.knnbandit.main.OutputResumer";
+                {
+                    AdvancedOutputResumerSelector resumer = new AdvancedOutputResumerSelector();
+                    resumer.summarize(args[1], Arrays.copyOfRange(args,2, args.length));
                     break;
+                }
+                case DATASET:
+                {
+                    DatasetGraphSelector grapher = new DatasetGraphSelector();
+                    grapher.graph(args[1], Arrays.copyOfRange(args, 2, args.length));
+                    break;
+                }
+                case ANALYSIS:
+                {
+                    DatasetGraphAnalysisSelector grapher = new DatasetGraphAnalysisSelector();
+                    grapher.analyze(args[1], Arrays.copyOfRange(args, 2, args.length));
+                    break;
+                }
                 case OUTPUTRANKER:
+                {
                     className = "es.uam.eps.ir.knnbandit.main.OutputRanker";
+                    String[] executionArgs = Arrays.copyOfRange(args, from, args.length);
+                    Class[] argTypes = {executionArgs.getClass()};
+                    Object[] passedArgs = {executionArgs};
+                    Class.forName(className).getMethod("main", argTypes).invoke(null, passedArgs);
                     break;
-                case RANKERCONFIG:
-                    className = "es.uam.eps.ir.knnbandit.main.ParallelConfigurator";
-                    break;
+                }
                 default:
                     System.err.println("ERROR: Invalid configuration.");
                     return;
             }
 
-            String[] executionArgs = Arrays.copyOfRange(args, from, args.length);
-            Class[] argTypes = {executionArgs.getClass()};
-            Object[] passedArgs = {executionArgs};
-            Class.forName(className).getMethod("main", argTypes).invoke(null, passedArgs);
+
         }
-        catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex)
+        catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException | UnconfiguredException ex)
         {
             System.err.println("The run time arguments were not correct");
             ex.printStackTrace();
         }
-    }
-
-    /**
-     * For the different classes that depend on dataset selection, choose the most appropriate one.
-     *
-     * @param args        the list of arguments received by the Main program.
-     * @param programName the name of the program we want to find the route to.
-     * @return the point of the arguments where the real arguments begin and the class name.
-     */
-    private static Tuple2<Integer, String> getAlgorithm(String[] args, String programName)
-    {
-        String command = "es.uam.eps.ir.knnbandit.main";
-        String type = args[1];
-        Tuple2<Integer, String> tuple = null;
-        if (type.equalsIgnoreCase("contact"))
-        {
-            command += ".contact." + programName;
-            tuple = new Tuple2<>(2, command);
-        }
-        else if (type.equalsIgnoreCase("general"))// general
-        {
-            String dataset = args[2].toLowerCase();
-            command += ".general." + dataset + "." + programName;
-            tuple = new Tuple2<>(3, command);
-        }
-        return tuple;
     }
 }

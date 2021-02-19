@@ -1,5 +1,16 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.metrics;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
 import es.uam.eps.ir.ranksys.novdiv.distance.FeatureItemDistanceModel;
 import it.unimi.dsi.fastutil.ints.*;
@@ -16,17 +27,20 @@ import java.util.List;
  *
  * @param <U> the type of the users.
  * @param <I> the type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class CumulativeILD<U, I, F, V> implements CumulativeMetric<U, I>
 {
     /**
      * Number of users of the system.
      */
-    private final int numUsers;
+    private int numUsers;
     /**
      * Number of items of the system.
      */
-    private final int numItems;
+    private int numItems;
     /**
      * Model for the distance between different items. We assume that this is static, i.e. it depends on external properties
      * of the items, such as features.
@@ -35,7 +49,7 @@ public class CumulativeILD<U, I, F, V> implements CumulativeMetric<U, I>
     /**
      * Index for translating from items to indexes and viceversa.
      */
-    private final FastItemIndex<I> index;
+    private FastUpdateableItemIndex<I> index;
     /**
      * Global ILD sum.
      */
@@ -59,39 +73,43 @@ public class CumulativeILD<U, I, F, V> implements CumulativeMetric<U, I>
      * (i.e. it does not change with time). Therefore, it does not depend on
      * the ratings: only on external features.
      *
-     * @param numUsers number of users in the system.
-     * @param numItems number of items in the system.
+     * @param distanceModel model for computing the distance between pairs of
+     *                      items in the system.
      */
-    public CumulativeILD(int numUsers, int numItems, FeatureItemDistanceModel<I, F, V> distanceModel, FastItemIndex<I> index)
+    public CumulativeILD(FeatureItemDistanceModel<I, F, V> distanceModel)
     {
-        // Store the number of users and items.
-        this.numUsers = numUsers;
-        this.numItems = numItems;
-
         // Create the user-related elements.
-        this.usersItemsSets = new Int2ObjectOpenHashMap<IntSet>();
+        this.usersItemsSets = new Int2ObjectOpenHashMap<>();
         this.usersItemsCount = new Int2IntOpenHashMap();
         this.sums = new Int2DoubleOpenHashMap();
 
-        // Initialize the global sum.
-        this.sum = 0.0;
-
-        // Initialize the different users.
-        for (int i = 0; i < numUsers; ++i)
-        {
-            this.usersItemsSets.put(i, new IntOpenHashSet());
-            this.usersItemsCount.put(i, 0);
-            this.sums.put(i, 0.0);
-        }
-
         this.distModel = distanceModel;
-        this.index = index;
     }
 
     @Override
-    public void initialize(List<Tuple2<Integer, Integer>> train, boolean notReciprocal)
+    public void initialize(Dataset<U,I> dataset)
     {
+        this.numUsers = dataset.numUsers();
+        this.numItems = dataset.numItems();
+        this.index = dataset;
 
+        this.sum = 0.0;
+        this.sums.clear();
+        this.usersItemsCount.clear();
+        this.usersItemsSets.clear();
+
+        for (int i = 0; i < this.numUsers; ++i)
+        {
+            this.sums.put(i, 0.0);
+            this.usersItemsCount.put(i, 0);
+            this.usersItemsSets.put(i, new IntOpenHashSet());
+        }
+    }
+
+    @Override
+    public void initialize(Dataset<U, I> dataset, List<FastRating> train)
+    {
+        this.initialize(dataset);
     }
 
     @Override
@@ -105,7 +123,7 @@ public class CumulativeILD<U, I, F, V> implements CumulativeMetric<U, I>
     }
 
     @Override
-    public void update(int uidx, int iidx)
+    public void update(int uidx, int iidx, double value)
     {
         // Check that the input is OK.
         if (uidx < 0 || uidx >= numUsers || iidx < 0 || iidx >= numItems)

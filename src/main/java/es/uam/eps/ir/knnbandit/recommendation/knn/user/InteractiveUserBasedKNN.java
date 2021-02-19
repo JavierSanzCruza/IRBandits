@@ -1,21 +1,24 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.user;
 
+import es.uam.eps.ir.knnbandit.Constants;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+
+import java.util.stream.Stream;
 
 /**
- * Interactive version of user-based kNN algorithm.
+ * Interactive version of user-based kNN algorithm. This is the legacy version,
+ * used for offline recommendation with a classical dataset.
  *
  * @param <U> User type.
  * @param <I> Item type.
@@ -29,36 +32,45 @@ public class InteractiveUserBasedKNN<U, I> extends AbstractInteractiveUserBasedK
      *
      * @param uIndex      User index.
      * @param iIndex      Item index.
-     * @param prefData    Preference data.
      * @param hasRating   True if we must ignore unknown items when updating.
      * @param ignoreZeros True if we ignore zero ratings when updating.
      * @param k           Number of neighbors to use.
      * @param sim         Updateable similarity
      */
-    public InteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim)
+    public InteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim)
     {
-        super(uIndex, iIndex, prefData, hasRating, ignoreZeros, k, sim);
+        super(uIndex, iIndex, hasRating, ignoreZeros, k, sim, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
     }
 
     /**
      * Constructor.
      *
-     * @param uIndex    User index.
-     * @param iIndex    Item index.
-     * @param prefData  Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param k         Number of neighbors to use.
-     * @param sim       Updateable similarity
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param k           Number of neighbors to use.
+     * @param sim         Updateable similarity
      */
-    public InteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, boolean notReciprocal, int k, UpdateableSimilarity sim)
+    public InteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, boolean ignoreZeros, int k, UpdateableSimilarity sim)
     {
-        super(uIndex, iIndex, prefData, hasRating, ignoreZeros, notReciprocal, k, sim);
+        super(uIndex, iIndex, hasRating, rngSeed, ignoreZeros, k, sim, SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
     {
-        this.trainData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, value, vidx.v2));
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
+        this.sim.updateNorm(uidx, newValue);
+        this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, newValue, vidx.v2));
+        this.retrievedData.updateRating(uidx, iidx, newValue);
     }
 
     @Override

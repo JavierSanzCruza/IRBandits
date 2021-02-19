@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.metrics;
 
-import org.jooq.lambda.tuple.Tuple2;
-
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import java.util.List;
 
 /**
@@ -31,12 +30,20 @@ public interface CumulativeMetric<U, I>
     double compute();
 
     /**
+     * Initializes the values without training data.
+     *
+     * @param dataset   the dataset containing the information.
+     */
+    void initialize(Dataset<U,I> dataset);
+
+
+    /**
      * Initializes the values
      *
+     * @param dataset       the dataset.
      * @param train         training data.
-     * @param notReciprocal if you have to consider that reciprocal links will not be recommended.
      */
-    void initialize(List<Tuple2<Integer, Integer>> train, boolean notReciprocal);
+    void initialize(Dataset<U,I> dataset, List<FastRating> train);
 
     /**
      * Updates the current value of the metric.
@@ -44,7 +51,7 @@ public interface CumulativeMetric<U, I>
      * @param uidx User identifier.
      * @param iidx Item identifier.
      */
-    void update(int uidx, int iidx);
+    void update(int uidx, int iidx, double value);
 
     /**
      * Resets the metric.

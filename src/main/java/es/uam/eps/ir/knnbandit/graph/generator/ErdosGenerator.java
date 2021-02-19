@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Information Retrieval Group at Universidad AutÃ³noma
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
  *  de Madrid, http://ir.ii.uam.es
  *
  *  This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,7 +21,8 @@ import java.util.stream.Collectors;
  * Generates a random graph following the Erdös-Renyi model.
  *
  * Erdös, P., Rényi, A. On Random Graphs. I, Publicationes Mathematicae Debrecen 6, 1959, pp. 290-297
- * @author Javier Sanz-Cruzado Puig
+ * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  * @param <U> type of the users
  *
  */

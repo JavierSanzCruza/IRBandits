@@ -1,27 +1,42 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.metrics.atk;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import org.jooq.lambda.tuple.Tuple2;
+import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 
 import java.util.List;
+
+// TODO: Think how to compute this
 
 /**
  * Cumulative version of Expected Popularity Complement at cutoff k
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class CumulativeEPCAtK<U, I> extends CumulativeMetricAtK<U, I>
 {
     /**
      * Number of users.
      */
-    private final int numUsers;
+    private int numUsers;
     /**
      * Number of items
      */
-    private final int numItems;
+    private int numItems;
     /**
      * A map containing the popularity of each item.
      */
@@ -58,8 +73,24 @@ public class CumulativeEPCAtK<U, I> extends CumulativeMetricAtK<U, I>
     }
 
     @Override
-    public void initialize(List<Tuple2<Integer, Integer>> train, boolean notReciprocal)
+    public void initialize(Dataset<U, I> dataset)
     {
+        this.numUsers = dataset.numUsers();
+        this.numItems = dataset.numItems();
+        this.sum = 0.0;
+        this.popularities.clear();
+        this.frequencies.clear();
+    }
+
+    @Override
+    public void initialize(Dataset<U,I> dataset, List<FastRating> train)
+    {
+        this.numUsers = dataset.numUsers();
+        this.numItems = dataset.numItems();
+        this.sum = 0.0;
+        this.popularities.clear();
+        this.frequencies.clear();
+
 
     }
 
@@ -70,7 +101,8 @@ public class CumulativeEPCAtK<U, I> extends CumulativeMetricAtK<U, I>
         int popularity = this.popularities.getOrDefault(iidx, this.popularities.defaultReturnValue());
         sum += popularity;
 
-        this.frequencies.put(iidx, this.frequencies.getOrDefault(iidx, this.frequencies.defaultReturnValue()).intValue());
+        ((Int2IntOpenHashMap) this.frequencies).addTo(iidx, 1);
+        ((Int2IntOpenHashMap) this.popularities).addTo(iidx, 1);
     }
 
     @Override
@@ -84,11 +116,16 @@ public class CumulativeEPCAtK<U, I> extends CumulativeMetricAtK<U, I>
             return; // An error ocurred.
         }
 
+        // as we are removing a single item, the popularity
+
         // Then: update the value of the sum.
         sum -= frequency * popularity;
         sum += (frequency - 1) * (popularity + 1);
         // And update the frequency of the item in the last k elements.
         this.frequencies.put(iidx, frequency - 1);
+
+        ((Int2IntOpenHashMap) this.frequencies).addTo(iidx, -1);
+
     }
 
     @Override

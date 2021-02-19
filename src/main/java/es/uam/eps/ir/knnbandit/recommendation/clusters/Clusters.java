@@ -67,6 +67,14 @@ public interface Clusters<E>
     Stream<E> getElements(int cluster);
 
     /**
+     * Checks whether element elem is in a cluster or not.
+     * @param elem the element.
+     * @param cluster the cluster.
+     * @return true if it belongs to the cluster, false otherwise.
+     */
+    boolean containsElement(E elem, int cluster);
+
+    /**
      * Obtains the size of a cluster.
      * @param cluster The cluster whose size we want to obtain.
      * @return the size of the cluster if it exists, 0 if it does not.

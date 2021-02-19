@@ -1,7 +1,7 @@
 /*
- *  Copyright (C) 2016 Information Retrieval Group at Universidad Aut�noma
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
  *  de Madrid, http://ir.ii.uam.es
- * 
+ *
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this
  *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -24,7 +24,10 @@ import java.util.stream.Stream;
  * Wrapper for the complementary graph of another one given. Since this is the complementary
  * of another graph, no nodes nor edges can be removed. Every time the original graph is modified,
  * so this graph will be.
- * @author Javier Sanz-Cruzado Puig
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ *
  * @param <U> type of the users.
  */
 public abstract class ComplementaryGraph<U> implements Graph<U>

@@ -1,0 +1,88 @@
+[
+	{
+		"name" : "itembandit",
+		"params" : 
+		[
+			{
+				"ignoreUnknown" : "false",
+				"bandit" : 
+				{
+					"name" : "epsilon",
+					"params" : 
+					[
+						{
+							"epsilon" : "0.05",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						},
+						{
+							"epsilon" : "0.1",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						},
+						{
+							"epsilon" : "0.2",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						},
+						{
+							"epsilon" : "0.3",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						},
+						{
+							"epsilon" : "0.4",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						},
+						{
+							"epsilon" : "0.5",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						},
+						{
+							"epsilon" : "0.6",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						},
+						{
+							"epsilon" : "0.7",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						},
+						{
+							"epsilon" : "0.8",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						},
+						{
+							"epsilon" : "0.9",
+							"updateFunc" : 
+							{
+								"function" : "stationary"
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+] 

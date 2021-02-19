@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.data.datasets;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -9,25 +17,39 @@ import es.uam.eps.ir.knnbandit.graph.fast.FastDirectedUnweightedGraph;
 import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedUnweightedGraph;
 import es.uam.eps.ir.knnbandit.graph.io.GraphReader;
 import es.uam.eps.ir.knnbandit.graph.io.TextGraphReader;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.formats.parsing.Parser;
-import org.ranksys.formats.parsing.Parsers;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.DoublePredicate;
-import java.util.function.DoubleUnaryOperator;
 
-public class ContactDataset<U> extends Dataset<U, U>
+/**
+ * Stores a social network-based contact recommendation dataset.
+ * @param <U> Type of the users
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
+public class ContactDataset<U> extends GeneralDataset<U, U>
 {
-
+    /**
+     * The number of reciprocal links
+     */
     private final int numRecipr;
+    /**
+     * Indicates whether the graph is directed or not.
+     */
     private final boolean directed;
+
+    /**
+     * A true value indicates that reciprocal links are counted as one link. False differentiates them.
+     */
+    private final boolean notReciprocal;
 
     /**
      * Constructor.
@@ -38,27 +60,42 @@ public class ContactDataset<U> extends Dataset<U, U>
      * @param numEdges  Number of edges
      * @param numRecipr Number of reciprocal edges.
      */
-    protected ContactDataset(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<U> iIndex, SimpleFastPreferenceData<U, U> prefData, int numEdges, int numRecipr, boolean directed)
+    protected ContactDataset(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<U> iIndex, SimpleFastPreferenceData<U, U> prefData, int numEdges, int numRecipr, boolean directed, boolean notReciprocal)
     {
         super(uIndex, iIndex, prefData, numEdges, x -> x > 0);
         this.numRecipr = numRecipr;
         this.directed = directed;
+        this.notReciprocal = notReciprocal;
     }
 
     /**
      * Gets the number of relevant (user, user) pairs.
      *
-     * @param notReciprocal true if we do not count the reciprocal, false otherwise.
      * @return the number of relevant (user, user) pairs.
      */
-    public int getNumRel(boolean notReciprocal)
+    @Override
+    public int getNumRel()
     {
         return (notReciprocal ? this.numRel - this.numRecipr / 2 : this.numRel);
     }
 
+    /**
+     * Obtains whether the underlying social network is directed or not.
+     * @return true if it is directed, false otherwise.
+     */
     public boolean isDirected()
     {
         return directed;
+    }
+
+    /**
+     * Obtains the value determining whether we shall recommend reciprocal edges
+     * to existing ones (i.e. we take reciprocal edges separately) or not.
+     * @return true if reciprocal edges are treated separately, false otherwise.
+     */
+    public boolean useReciprocal()
+    {
+        return !notReciprocal;
     }
 
     @Override
@@ -69,9 +106,9 @@ public class ContactDataset<U> extends Dataset<U, U>
                 "\nItems: " +
                 this.numItems() +
                 "\nNum. edges: " +
-                this.getNumRel(false) +
+                this.numRel +
                 "\nNum. edges (without reciprocal): " +
-                this.getNumRel(true);
+                (this.numRel - this.numRecipr / 2);
     }
 
     /**
@@ -84,7 +121,7 @@ public class ContactDataset<U> extends Dataset<U, U>
      * @param <U>       type of the users.
      * @return the contact recommendation dataset.
      */
-    public static <U> ContactDataset<U> load(String filename, boolean directed, Parser<U> uParser, String separator)
+    public static <U> ContactDataset<U> load(String filename, boolean directed, boolean notReciprocal, Parser<U> uParser, String separator)
     {
         // Read the ratings.
         Set<U> users = new HashSet<>();
@@ -104,43 +141,56 @@ public class ContactDataset<U> extends Dataset<U, U>
         FastUpdateableItemIndex<U> iIndex = SimpleFastUpdateableItemIndex.load(users.stream());
         SimpleFastPreferenceData<U, U> prefData = SimpleFastPreferenceData.load(triplets.stream(), uIndex, iIndex);
 
-        return new ContactDataset<>(uIndex, iIndex, prefData, numEdges, numRecipr, directed);
+        return new ContactDataset<>(uIndex, iIndex, prefData, numEdges, numRecipr, directed, notReciprocal);
     }
 
-
-    public static <U> ContactDataset<U> load(ContactDataset<U> dataset, List<Tuple2<Integer, Integer>> list, boolean notReciprocal)
+    /**
+     * Loads a contact recommendation dataset from another dataset.
+     * @param dataset the dataset.
+     * @param list a list of (user, item) interactions.
+     * @param notReciprocal true if we cannot recommend reciprocal links to existing ones.
+     * @param <U> type of the users
+     * @return the new contact recommendation dataset.
+     */
+    public static <U> ContactDataset<U> load(ContactDataset<U> dataset, List<Pair<Integer>> list, boolean notReciprocal)
     {
         // We build the preference data.
         List<Tuple3<U, U, Double>> validationTriplets = new ArrayList<>();
         Graph<U> graph = (dataset.isDirected() ? new FastDirectedUnweightedGraph<>() : new FastUndirectedUnweightedGraph<>());
-        dataset.getUserIndex().getAllUsers().forEach(graph::addNode);
-        SimpleFastPreferenceData<U, U> prefData = dataset.getPrefData();
+        dataset.userIndex.getAllUsers().forEach(graph::addNode);
+        SimpleFastPreferenceData<U, U> prefData = dataset.prefData;
 
         list.forEach(tuple ->
-                     {
-                         int uidx = tuple.v1;
-                         int iidx = tuple.v2;
-                         U u = prefData.uidx2user(uidx);
-                         U i = prefData.iidx2item(iidx);
+        {
+            int uidx = tuple.v1();
+            int iidx = tuple.v2();
+            U u = prefData.uidx2user(uidx);
+            U i = prefData.iidx2item(iidx);
 
-                         if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0 && prefData.getPreference(uidx, iidx).isPresent())
-                         {
-                             validationTriplets.add(new Tuple3<>(prefData.uidx2user(uidx), prefData.iidx2item(iidx), 1.0));
-                             graph.addEdge(u, i);
-                             if (notReciprocal && prefData.numItems(iidx) > 0 && prefData.numUsers(uidx) > 0 && prefData.getPreference(iidx, uidx).isPresent())
-                             {
-                                 validationTriplets.add(new Tuple3<>(prefData.uidx2user(iidx), prefData.iidx2item(uidx), 1.0));
-                                 graph.addEdge(i, u);
-                             }
-                         }
-                     });
+            if (prefData.numItems(uidx) > 0 && prefData.numUsers(iidx) > 0 && prefData.getPreference(uidx, iidx).isPresent())
+            {
+                validationTriplets.add(new Tuple3<>(prefData.uidx2user(uidx), prefData.iidx2item(iidx), 1.0));
+                graph.addEdge(u, i);
+                if (notReciprocal && prefData.numItems(iidx) > 0 && prefData.numUsers(uidx) > 0 && prefData.getPreference(iidx, uidx).isPresent())
+                {
+                    validationTriplets.add(new Tuple3<>(prefData.uidx2user(iidx), prefData.iidx2item(uidx), 1.0));
+                    graph.addEdge(i, u);
+                }
+            }
+         });
 
         int numEdges = ((int) graph.getEdgeCount()) * (dataset.isDirected() ? 1 : 2);
         int numRecipr = graph.getAllNodes().mapToInt(graph::getMutualNodesCount).sum();
-        SimpleFastPreferenceData<U, U> validData = SimpleFastPreferenceData.load(validationTriplets.stream(), dataset.getUserIndex(), dataset.getItemIndex());
+        SimpleFastPreferenceData<U, U> validData = SimpleFastPreferenceData.load(validationTriplets.stream(), dataset.userIndex, dataset.itemIndex);
 
-        return new ContactDataset<>(dataset.getUserIndex(), dataset.getItemIndex(), validData, numEdges, numRecipr, dataset.isDirected());
+        return new ContactDataset<>(dataset.userIndex, dataset.itemIndex, validData, numEdges, numRecipr, dataset.isDirected(), notReciprocal);
         // Create the validation data, which will be provided as input to recommenders and metrics.
+    }
+
+    @Override
+    public int getNumRatings()
+    {
+        return this.getNumRel();
     }
 
 }

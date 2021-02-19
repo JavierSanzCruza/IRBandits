@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.basic;
 
@@ -13,10 +12,13 @@ import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jooq.lambda.tuple.Tuple3;
 
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 
 /**
@@ -39,50 +41,58 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
      *
      * @param uIndex    user index.
      * @param iIndex    item index.
-     * @param prefData  preference data.
-     * @param hasRating true if we want to ignore missing ratings at updating, false if we want to treat them as failures.
      */
-    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating)
+    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex)
     {
-        super(uIndex, iIndex, prefData, hasRating);
+        super(uIndex, iIndex, true);
     }
 
     /**
      * Constructor.
      *
-     * @param uIndex        user index.
-     * @param iIndex        item index.
-     * @param prefData      preference data.
-     * @param ignoreUnknown true if we want to ignore missing ratings at updating, false if we want to treat them as failures.
-     * @param notReciprocal true if we do not recommend reciprocal social links, false otherwise
+     * @param uIndex    user index.
+     * @param iIndex    item index.
      */
-    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreUnknown, boolean notReciprocal)
+    public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed)
     {
-        super(uIndex, iIndex, prefData, ignoreUnknown, notReciprocal);
+        super(uIndex, iIndex, true, rngSeed);
     }
 
+
     @Override
-    public void initializeMethod()
+    public void init()
     {
+        super.init();
         // It is not necessary to do nothing here.
     }
 
     @Override
-    public int next(int uidx)
+    public void init(Stream<FastRating> values)
     {
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+        super.init();
+    }
+
+    @Override
+    public int next(int uidx, IntList availability)
+    {
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
         else
         {
-            return list.get(rng.nextInt(list.size()));
+            return availability.get(rng.nextInt(availability.size()));
         }
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
+    {
+
+    }
+
+    @Override
+    public void update(List<Tuple3<Integer, Integer, Double>> train)
     {
 
     }

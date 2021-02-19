@@ -1,10 +1,24 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.metrics;
 
+import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
+
+
+// TODO: Finish
 
 /**
  * Cumulative Expected Popularity Complement (EPC) metric. Finds how popular are the different
@@ -12,17 +26,20 @@ import java.util.List;
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class CumulativeEPC<U, I> implements CumulativeMetric<U, I>
 {
     /**
      * Number of users.
      */
-    private final int numUsers;
+    private int numUsers;
     /**
      * Number of items
      */
-    private final int numItems;
+    private int numItems;
     /**
      * A map containing the popularity of each item.
      */
@@ -58,9 +75,22 @@ public class CumulativeEPC<U, I> implements CumulativeMetric<U, I>
     }
 
     @Override
-    public void initialize(List<Tuple2<Integer, Integer>> train, boolean notReciprocal)
+    public void initialize(Dataset<U,I> dataset)
     {
+        this.numUsers = dataset.numUsers();
+        this.numItems = dataset.numItems();
+        this.numRatings = 0.0;
+        this.popularities.clear();
+        this.epcValue = Double.NaN;
+        this.sum = 0.0;
+    }
 
+    @Override
+    public void initialize(Dataset<U,I> dataset, List<FastRating> train)
+    {
+        this.initialize(dataset);
+        // Initialize the popularity values.
+        train.forEach(rating -> ((Int2LongOpenHashMap) this.popularities).addTo(rating.iidx(), 1));
     }
 
     @Override
@@ -70,7 +100,7 @@ public class CumulativeEPC<U, I> implements CumulativeMetric<U, I>
     }
 
     @Override
-    public void update(int uidx, int iidx)
+    public void update(int uidx, int iidx, double value)
     {
         if (numUsers > 0 && numRatings > 0.0)
         {

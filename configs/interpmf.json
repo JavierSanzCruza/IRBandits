@@ -1,0 +1,2038 @@
+[
+	{
+		"name" : "inter-pmf",
+		"params" : 
+		[
+			{
+				"k" : "2",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "0.1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "0.1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "0.1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "10",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "10",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "10",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+						{
+				"k" : "2",
+				"lambdaP" : "1",
+				"lambdaQ" : "0.1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "1",
+				"lambdaQ" : "0.1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "1",
+				"lambdaQ" : "0.1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "1",
+				"lambdaQ" : "1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "1",
+				"lambdaQ" : "1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "1",
+				"lambdaQ" : "1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "1",
+				"lambdaQ" : "10",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "1",
+				"lambdaQ" : "10",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "1",
+				"lambdaQ" : "10",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "10",
+				"lambdaQ" : "0.1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "10",
+				"lambdaQ" : "0.1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "10",
+				"lambdaQ" : "0.1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "10",
+				"lambdaQ" : "1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "10",
+				"lambdaQ" : "1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "10",
+				"lambdaQ" : "1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "10",
+				"lambdaQ" : "10",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "10",
+				"lambdaQ" : "10",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "2",
+				"lambdaP" : "10",
+				"lambdaQ" : "10",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+
+
+
+
+			{
+				"k" : "3",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "0.1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "0.1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "0.1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "10",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "10",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "10",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+						{
+				"k" : "3",
+				"lambdaP" : "1",
+				"lambdaQ" : "0.1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "1",
+				"lambdaQ" : "0.1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "1",
+				"lambdaQ" : "0.1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "1",
+				"lambdaQ" : "1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "1",
+				"lambdaQ" : "1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "1",
+				"lambdaQ" : "1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "1",
+				"lambdaQ" : "10",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "1",
+				"lambdaQ" : "10",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "1",
+				"lambdaQ" : "10",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "10",
+				"lambdaQ" : "0.1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "10",
+				"lambdaQ" : "0.1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "10",
+				"lambdaQ" : "0.1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "10",
+				"lambdaQ" : "1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "10",
+				"lambdaQ" : "1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "10",
+				"lambdaQ" : "1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "10",
+				"lambdaQ" : "10",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "10",
+				"lambdaQ" : "10",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "3",
+				"lambdaP" : "10",
+				"lambdaQ" : "10",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+
+			{
+				"k" : "5",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "0.1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "0.1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "0.1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "10",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "10",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "0.1",
+				"lambdaQ" : "10",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+						{
+				"k" : "5",
+				"lambdaP" : "1",
+				"lambdaQ" : "0.1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "1",
+				"lambdaQ" : "0.1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "1",
+				"lambdaQ" : "0.1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "1",
+				"lambdaQ" : "1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "1",
+				"lambdaQ" : "1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "1",
+				"lambdaQ" : "1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "1",
+				"lambdaQ" : "10",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "1",
+				"lambdaQ" : "10",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "1",
+				"lambdaQ" : "10",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "10",
+				"lambdaQ" : "0.1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "10",
+				"lambdaQ" : "0.1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "10",
+				"lambdaQ" : "0.1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "10",
+				"lambdaQ" : "1",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "10",
+				"lambdaQ" : "1",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "10",
+				"lambdaQ" : "1",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "10",
+				"lambdaQ" : "10",
+				"stdev" : "0.1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "10",
+				"lambdaQ" : "10",
+				"stdev" : "1",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			},
+			{
+				"k" : "5",
+				"lambdaP" : "10",
+				"lambdaQ" : "10",
+				"stdev" : "10",
+				"numIter" : "20",
+				"ignoreUnknown" : "true",
+				"variant" : 
+				{
+					"name" : "epsilon",
+					"params" :
+					[ 
+						{
+
+							"epsilon" : "0.05"
+						},
+						{
+							"epsilon" : "0.1"
+						},
+						{
+							"epsilon" : "0.2"
+						}
+					]
+				}
+			}
+		]
+	}
+]

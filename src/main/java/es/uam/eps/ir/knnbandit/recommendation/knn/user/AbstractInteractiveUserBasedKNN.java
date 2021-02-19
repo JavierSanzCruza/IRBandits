@@ -1,26 +1,30 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.user;
 
+import es.uam.eps.ir.knnbandit.Constants;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
+import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
-import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
+import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.stream.Stream;
 
 /**
  * Abstract version of an interactive user-based kNN algorithm
@@ -34,6 +38,12 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
      * Updateable similarity.
      */
     protected final UpdateableSimilarity sim;
+
+    /**
+     * Preference data.
+     */
+    protected final AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData;
+
     /**
      * Random number generator to untie neighbors.
      */
@@ -51,6 +61,11 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
      */
     private final IntList userList;
 
+    /**
+     * This variable gives more importance to irrelevant items for the final item selection
+     * than to unknown items when it is false. Otherwise, they will be given the same
+     * importance.
+     */
     private final boolean ignoreZeros;
 
     /**
@@ -58,18 +73,23 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
      *
      * @param uIndex      User index.
      * @param iIndex      Item index.
-     * @param prefData    Preference data.
      * @param hasRating   True if we must ignore unknown items when updating.
      * @param ignoreZeros True if we ignore zero ratings when updating.
      * @param k           Number of neighbors to use.
      * @param sim         Updateable similarity
      */
-    public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim)
+    public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
     {
-        super(uIndex, iIndex, prefData, hasRating);
+        super(uIndex, iIndex, hasRating);
+
+        // Store the similarity we want to use.
         this.sim = sim;
-        this.k = (k > 0) ? k : prefData.numUsers();
+
+        // Fix the number of neighbors to take
+        this.k = (k > 0) ? k : uIndex.numUsers();
         this.userList = new IntArrayList();
+
+        // Fix a preference order between the users.
         uIndex.getAllUidx().forEach(userList::add);
         this.comp = (Tuple2id x, Tuple2id y) ->
         {
@@ -80,27 +100,34 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
             }
             return value;
         };
+
         this.ignoreZeros = ignoreZeros;
+
+        this.retrievedData = retrievedData;
     }
 
     /**
      * Constructor.
      *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param ignoreZeros   True if we ignore zero ratings when updating.
-     * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise.
-     * @param k             Number of neighbors to use.
-     * @param sim           Updateable similarity
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param k           Number of neighbors to use.
+     * @param sim         Updateable similarity
      */
-    public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean ignoreZeros, boolean notReciprocal, int k, UpdateableSimilarity sim)
+    public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, boolean ignoreZeros, int k, UpdateableSimilarity sim, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
     {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
+        super(uIndex, iIndex, hasRating, rngSeed);
+
+        // Store the similarity we want to use.
         this.sim = sim;
-        this.k = (k > 0) ? k : prefData.numUsers();
+
+        // Fix the number of neighbors to take
+        this.k = (k > 0) ? k : uIndex.numUsers();
         this.userList = new IntArrayList();
+
+        // Fix a preference order between the users.
         uIndex.getAllUidx().forEach(userList::add);
         this.comp = (Tuple2id x, Tuple2id y) ->
         {
@@ -111,20 +138,41 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
             }
             return value;
         };
+
         this.ignoreZeros = ignoreZeros;
+
+        this.retrievedData = retrievedData;
     }
 
     @Override
-    protected void initializeMethod()
+    public void init()
     {
-        this.sim.initialize(this.trainData);
+        super.init();
+        this.retrievedData.clear();
+        this.sim.initialize();
+    }
+
+    /*@Override
+    public void init(FastPreferenceData<U,I> prefData)
+    {
+        this.retrievedData.clear();
+        prefData.getUidxWithPreferences().forEach(uidx -> prefData.getUidxPreferences(uidx).forEach(i -> retrievedData.updateRating(uidx, i.v1, i.v2)));
+        this.sim.initialize(retrievedData);
+    }*/
+
+    @Override
+    public void init(Stream<FastRating> values)
+    {
+        super.init();
+        this.retrievedData.clear();
+        values.forEach(triplet -> this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), triplet.value()));
+        this.sim.initialize(retrievedData);
     }
 
     @Override
-    public int next(int uidx)
+    public int next(int uidx, IntList availability)
     {
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
@@ -135,40 +183,47 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         // Obtain the top-k best neighbors for user uidx.
         PriorityQueue<Tuple2id> neighborHeap = new PriorityQueue<>(k, comp);
         this.sim.similarElems(uidx).forEach(vidx ->
-                                            {
-                                                double s = vidx.v2;
-                                                if (neighborHeap.size() < k)
-                                                {
-                                                    neighborHeap.add(new Tuple2id(vidx.v1, vidx.v2));
-                                                }
-                                                else if (neighborHeap.peek().v2 <= s)
-                                                {
-                                                    neighborHeap.poll();
-                                                    neighborHeap.add(new Tuple2id(vidx.v1, s));
-                                                }
-                                            });
+        {
+            double s = vidx.v2;
+            if (neighborHeap.size() < k)
+            {
+                neighborHeap.add(new Tuple2id(vidx.v1, vidx.v2));
+            }
+            else
+            {
+                assert neighborHeap.peek() != null;
+                if (neighborHeap.peek().v2 <= s)
+                {
+                    neighborHeap.poll();
+                    neighborHeap.add(new Tuple2id(vidx.v1, s));
+                }
+            }
+        });
 
+        // If no neighbor has been selected, then, select an item at random.
         if (neighborHeap.isEmpty())
         {
-            return list.get(rng.nextInt(list.size()));
+            return availability.get(rng.nextInt(availability.size()));
         }
 
+        // Generate the scores for the different items.
         Int2DoubleOpenHashMap itemScores = new Int2DoubleOpenHashMap();
         itemScores.defaultReturnValue(0.0);
+        IntSet availableItems = new IntOpenHashSet(availability);
 
         // Then, generate scores for the different items.
         while (!neighborHeap.isEmpty())
         {
             Tuple2id neigh = neighborHeap.poll();
 
-            this.trainData.getUidxPreferences(neigh.v1).forEach(vs ->
-                                                                {
-                                                                    double p = neigh.v2 * this.score(neigh.v1, vs.v2);
-                                                                    if (!ignoreZeros || p > 0)
-                                                                    {
-                                                                        itemScores.addTo(vs.v1, p);
-                                                                    }
-                                                                });
+            retrievedData.getUidxPreferences(neigh.v1).filter(vs -> availableItems.contains(vs.v1)).forEach(vs ->
+            {
+                double p = neigh.v2 * this.score(neigh.v1, vs.v2);
+                if (!ignoreZeros || p > 0)
+                {
+                    itemScores.addTo(vs.v1, p);
+                }
+            });
         }
 
         // Select the best item.
@@ -178,10 +233,6 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         for (int iidx : itemScores.keySet())
         {
             double val = itemScores.get(iidx);
-            if (!list.contains(iidx))
-            {
-                continue;
-            }
 
             if (top.isEmpty() || val > max)
             {
@@ -198,7 +249,7 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         int topSize = top.size();
         if (top.isEmpty())
         {
-            return list.get(rng.nextInt(list.size()));
+            return availability.get(rng.nextInt(availability.size()));
         }
         else if (topSize == 1)
         {
@@ -217,8 +268,55 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
     protected abstract double score(int vidx, double rating);
 
     @Override
-    public void updateMethod(List<Tuple3<Integer, Integer, Double>> train)
+    public void update(int uidx, int iidx, double value)
     {
-        this.sim.initialize(this.trainData);
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
+
+
+        boolean hasRating = false;
+        double oldValue = 0;
+        // First, we find whether we have a rating or not:
+        if(this.retrievedData.numItems(uidx) > 0 && this.retrievedData.numUsers(iidx) > 0)
+        {
+            Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
+            hasRating = opt.isPresent();
+            if(hasRating)
+            {
+                oldValue = opt.get().v2;
+            }
+        }
+
+        if(!hasRating)
+        {
+            this.retrievedData.updateRating(uidx, iidx, newValue);
+            this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, newValue, vidx.v2));
+            this.sim.updateNorm(uidx, newValue);
+        }
+        else
+        {
+            if(this.retrievedData.updateRating(uidx, iidx, newValue))
+            {
+                Optional<IdxPref> opt = this.retrievedData.getPreference(uidx, iidx);
+                if(opt.isPresent())
+                {
+                    double auxNewValue = opt.get().v2;
+                    this.sim.updateNormDel(uidx, oldValue);
+                    this.sim.updateNorm(uidx, auxNewValue);
+
+                    double finalOldValue = oldValue;
+                    this.retrievedData.getIidxPreferences(iidx).filter(vidx -> vidx.v1 != uidx).forEach(vidx ->
+                    {
+                        this.sim.updateDel(uidx, vidx.v1, iidx, finalOldValue, vidx.v2);
+                        this.sim.update(uidx, vidx.v1, iidx, auxNewValue, vidx.v2);
+                    });
+                }
+            }
+        }
     }
 }

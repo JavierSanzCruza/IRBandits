@@ -1,19 +1,23 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.knn.user;
 
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.FastUpdateablePreferenceData;
+import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.RestrictedVectorCosineSimilarity;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.*;
-import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
@@ -22,10 +26,11 @@ import java.util.stream.Stream;
  * @param <U> Type of the users.
  * @param <I> Type of the items.
  *
+ * <b>Reference:</b> G. Bresler, G.H. Chen, D. Shah. A latent source model for online collaborative filtering. 28th Conference on Neural Information Processing Systems (NeurIPS 2014). Montréal, Canada (2014).
+ *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  *
- * Bresler, G., Chen, George H., Shah, D.: A latent source model for online collaborative filtering. NIPS 2014.
  */
 public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
 {
@@ -41,7 +46,9 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
     /**
      * Relation between users and jointly explored objects (including ratings)
      */
-    FastUpdateablePreferenceData<U, I> jointData;
+    SimpleFastUpdateablePreferenceData<U, I> jointData;
+
+    SimpleFastUpdateablePreferenceData<U,I> retrievedData;
     /**
      * Number of times each user has been recommended an item.
      */
@@ -69,43 +76,78 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
      */
     private RestrictedVectorCosineSimilarity sim;
 
-    public CollaborativeGreedy(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, double threshold, double alpha)
+    /**
+     * Constructor.
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     * @param threshold Similarity threshold. Two users are similar if their similarity is smaller than this value.
+     * @param alpha Value for determining the exploration probability.
+     */
+    public CollaborativeGreedy(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, double threshold, double alpha)
     {
-        super(uIndex, iIndex, prefData, ignoreNotRated);
+        super(uIndex, iIndex, ignoreNotRated);
+
         this.jointList = new IntArrayList();
         jointExpl = new Int2ObjectOpenHashMap<>();
         this.jointData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         this.threshold = threshold;
         this.alpha = alpha;
         this.sim = new RestrictedVectorCosineSimilarity(numUsers());
     }
 
-    public CollaborativeGreedy(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean ignoreNotRated, KnowledgeDataUse dataUse, double threshold, double alpha)
+    /**
+     * Constructor.
+     * @param uIndex     User index.
+     * @param iIndex     Item index.
+     * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     * @param threshold Similarity threshold. Two users are similar if their similarity is smaller than this value.
+     * @param alpha Value for determining the exploration probability.
+     */
+    public CollaborativeGreedy(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, double threshold, double alpha)
     {
-        super(uIndex, iIndex, prefData, knowledgeData, ignoreNotRated, dataUse);
+        super(uIndex, iIndex, ignoreNotRated, rngSeed);
+
         this.jointList = new IntArrayList();
         jointExpl = new Int2ObjectOpenHashMap<>();
         this.jointData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+        this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         this.threshold = threshold;
         this.alpha = alpha;
         this.sim = new RestrictedVectorCosineSimilarity(numUsers());
-
-    }
-
-    public CollaborativeGreedy(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean ignoreNotRated, boolean notReciprocal, double threshold, double alpha)
-    {
-        super(uIndex, iIndex, prefData, ignoreNotRated, notReciprocal);
-        this.jointList = new IntArrayList();
-        jointExpl = new Int2ObjectOpenHashMap<>();
-        this.jointData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
-        this.threshold = threshold;
-        this.alpha = alpha;
-        this.sim = new RestrictedVectorCosineSimilarity(numUsers());
-
     }
 
     @Override
-    protected void initializeMethod()
+    public void init()
+    {
+        super.init();
+
+        // Sort the list containing random orders of the items.
+        jointList.clear();
+        this.getIidx().forEach(jointList::add);
+        Collections.shuffle(jointList);
+
+        jointExpl.clear();
+        this.times.clear();
+        this.jointIndex.clear();
+
+        this.jointData.clear();
+        this.retrievedData.clear();
+
+        this.sim.initialize();
+    }
+
+    @Override
+    public void init(Stream<FastRating> values)
+    {
+        this.init();
+        values.forEach(t -> jointData.updateRating(t.uidx(), t.iidx(), t.value() == 0 ? -1.0 : 1.0));
+        this.sim.initialize(jointData);
+    }
+
+    /*@Override
+    public void init(FastPreferenceData<U, I> prefData)
     {
         jointList.clear();
         this.getIidx().forEach(jointList::add);
@@ -113,50 +155,49 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
 
         jointExpl.clear();
         this.times.clear();
-        this.getUidx().forEach(uidx ->
-        {
-            this.jointExpl.put(uidx, new IntOpenHashSet());
-            this.times.put(uidx, trainData.numItems(uidx)+1);
-            this.jointIndex.put(uidx, 0);
-        });
+        jointIndex.clear();
 
         this.jointData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
-        this.sim.initialize(trainData);
 
-        trainData.getAllUidx().forEach(uidx ->
-           trainData.getUidxPreferences(uidx).forEach(iidx ->
-              this.jointData.update(trainData.uidx2user(uidx), trainData.iidx2item(iidx.v1),iidx.v2 == 0 ? -1 : iidx.v2)));
-    }
+        prefData.getAllUidx().forEach(uidx ->
+            prefData.getUidxPreferences(uidx).forEach(iidx ->
+                this.jointData.update(prefData.uidx2user(uidx), prefData.iidx2item(iidx.v1),iidx.v2 == 0 ? -1 : iidx.v2)));
+
+        this.sim.initialize(jointData);
+    }*/
 
     @Override
-    public int next(int uidx)
+    public int next(int uidx, IntList availability)
     {
-        IntList list = this.availability.get(uidx);
-        if (list == null || list.isEmpty())
+        // We check whether there is an available item to recommend
+        if (availability == null || availability.isEmpty())
         {
             return -1;
         }
 
+        // Find the probabilities of exploring / joint exploring
         double probExpl = 1.0/Math.pow(numUsers(), alpha);
         double probJointExpl = 1.0/Math.pow(this.times.get(uidx), alpha);
+
 
         double next = partrng.nextDouble();
         if(next < probExpl) // Return at random
         {
-            return list.getInt(rng.nextInt(list.size()));
+            return availability.getInt(rng.nextInt(availability.size()));
         }
         else if(next < probExpl + probJointExpl) // return the next element by joint exploration.
         {
-            int index = this.jointIndex.get(uidx);
+            int index = this.jointIndex.getOrDefault(uidx, 0);
             int iidx = this.jointList.getInt(index);
 
-            while(!this.availability.get(uidx).contains(iidx))
+            while(!availability.contains(iidx))
             {
                 ++index;
                 this.jointIndex.put(uidx, index);
                 iidx = this.jointList.getInt(index);
             }
 
+            if(!this.jointExpl.containsKey(uidx)) this.jointExpl.put(uidx, new IntOpenHashSet());
             this.jointExpl.get(uidx).add(iidx);
             return iidx;
         }
@@ -173,7 +214,7 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
             if(sim.v2 > threshold)
             {
                 int vidx = sim.v1;
-                this.trainData.getUidxPreferences(vidx).forEach(iidx ->
+                this.retrievedData.getUidxPreferences(vidx).forEach(iidx ->
                 {
                     if(itemScores.containsKey(iidx.v1))
                     {
@@ -193,7 +234,7 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
         double max = Double.NEGATIVE_INFINITY;
         IntList top = new IntArrayList();
 
-        for(int iidx : list)
+        for(int iidx : availability)
         {
             double val = itemScores.getOrDefault(iidx, itemScores.defaultReturnValue());
             double count = itemDen.getOrDefault(iidx, itemDen.defaultReturnValue());
@@ -215,7 +256,7 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
         int topSize = top.size();
         if (top.isEmpty())
         {
-            return list.get(rng.nextInt(list.size()));
+            return availability.get(rng.nextInt(availability.size()));
         }
         else if (topSize == 1)
         {
@@ -225,42 +266,42 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void update(int uidx, int iidx, double value)
     {
-        // Update the number of times that the user u has been recommended.
-        this.times.put(uidx, this.times.get(uidx)+1);
+        double newValue;
+        if(!Double.isNaN(value))
+            newValue = value;
+        else if(!this.ignoreNotRated)
+            newValue = Constants.NOTRATEDNOTIGNORED;
+        else
+            return;
 
-        double auxvalue = value > 0 ? 1 : -1;
 
-        // If the item has been explored through joint exploration, update the similarities.
-        if(this.jointExpl.get(uidx).contains(iidx))
+        if(this.retrievedData.updateRating(uidx, iidx, newValue))
         {
-            this.jointData.update(this.uIndex.uidx2user(uidx), this.iIndex.iidx2item(iidx), auxvalue);
-            this.jointData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, value, vidx.v2));
-        }
+            // Update the number of times that the user u has been recommended.
+            this.times.put(uidx, this.times.getOrDefault(uidx, 1) + 1);
 
-        // Update the index for the joint exploration list.
-        int index = this.jointIndex.get(uidx);
-        if(index < this.prefData.numItemsWithPreferences() && iidx == this.jointList.get(index))
-        {
-            ++index;
-            while(index < this.jointList.size() && !this.availability.get(uidx).contains(this.jointList.get(index)))
+            double auxvalue = value > 0 ? 1 : -1;
+
+            // If the item has been explored through joint exploration, update the similarities.
+            if (this.jointExpl.get(uidx).contains(iidx))
+            {
+                this.jointData.update(this.uIndex.uidx2user(uidx), this.iIndex.iidx2item(iidx), auxvalue);
+                this.jointData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, auxvalue, vidx.v2));
+            }
+
+            // Update the index for the joint exploration list.
+            int index = this.jointIndex.get(uidx);
+            if (index < this.retrievedData.numItemsWithPreferences() && iidx == this.jointList.get(index))
             {
                 ++index;
+                while (index < this.jointList.size() && this.retrievedData.getPreference(uidx, this.jointList.get(index)).isPresent())
+                {
+                    ++index;
+                }
+                this.jointIndex.put(uidx, index);
             }
-            this.jointIndex.put(uidx, index);
         }
-
-    }
-
-
-
-    @Override
-    public void updateMethod(List<Tuple3<Integer, Integer, Double>> train)
-    {
-
-
-        this.sim.initialize(this.trainData);
-
     }
 }

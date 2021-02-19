@@ -1,5 +1,14 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.io;
 
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import org.jooq.lambda.tuple.Tuple2;
 import org.ranksys.formats.parsing.Parsers;
 
@@ -11,7 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class for reading
+ * Class for reading a recommendation loop
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class Reader
 {
@@ -22,9 +34,9 @@ public class Reader
      * @param delimiter field separator
      * @return the list of user-item pairs in the file.
      */
-    public List<Tuple2<Integer, Integer>> read(String file, String delimiter, boolean header)
+    public List<Pair<Integer>> read(String file, String delimiter, boolean header)
     {
-        List<Tuple2<Integer, Integer>> list = new ArrayList<>();
+        List<Pair<Integer>> list = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file))))
         {
             String line;
@@ -35,7 +47,7 @@ public class Reader
 
             while ((line = br.readLine()) != null)
             {
-                Tuple2<Integer, Integer> pair = this.parseLine(line, delimiter);
+                Pair<Integer> pair = this.parseLine(line, delimiter);
                 if (pair != null)
                 {
                     list.add(pair);
@@ -56,7 +68,7 @@ public class Reader
      * @param line the line.
      * @return the user-item pair if everything is OK, null otherwise
      */
-    private Tuple2<Integer, Integer> parseLine(String line, String delimiter)
+    private Pair<Integer> parseLine(String line, String delimiter)
     {
         String[] split = line.split(delimiter);
         if (split.length < 3)
@@ -65,6 +77,6 @@ public class Reader
         }
         int user = Parsers.ip.parse(split[1]);
         int item = Parsers.ip.parse(split[2]);
-        return new Tuple2<>(user, item);
+        return new Pair<>(user, item);
     }
 }

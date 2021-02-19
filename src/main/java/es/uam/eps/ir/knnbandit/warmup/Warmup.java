@@ -1,7 +1,7 @@
 package es.uam.eps.ir.knnbandit.warmup;
 
+import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
 
@@ -10,24 +10,18 @@ import java.util.List;
  */
 public interface Warmup
 {
-    /**
-     * Gets the availability lists.
-     *
-     * @return the availability lists, null if the Initializer has not been configured.
-     */
-    List<IntList> getAvailability();
-
+    int getNumRel();
     /**
      * Gets the full list of training tuples.
      *
      * @return the full list of training tuples, null if the initializer has not been configured.
      */
-    List<Tuple2<Integer, Integer>> getFullTraining();
+    List<FastRating> getFullTraining();
 
     /**
      * Gets the list of training tuples without unknown ratings.
      *
      * @return the full list of training tuples, null if the initializer has not been configured.
      */
-    List<Tuple2<Integer, Integer>> getCleanTraining();
+    List<FastRating> getCleanTraining();
 }

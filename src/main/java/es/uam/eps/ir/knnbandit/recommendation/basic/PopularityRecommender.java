@@ -1,22 +1,21 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.basic;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
-import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import org.jooq.lambda.tuple.Tuple3;
 
-import java.util.List;
+import java.util.function.DoublePredicate;
+import java.util.stream.Stream;
 
 /**
  * Interactive version of a popularity-based algorithm.
@@ -31,37 +30,19 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
     /**
      * Relevance threshold.
      */
-    public final double threshold;
+    public final DoublePredicate relevanceChecker;
 
     /**
      * Constructor.
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
-     * @param prefData  Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param threshold Relevance threshold
+     * @param relevanceChecker Relevance checker
      */
-    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, double threshold)
+    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, DoublePredicate relevanceChecker)
     {
-        super(uIndex, iIndex, prefData, hasRating);
-        this.threshold = threshold;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param threshold     Relevance threshold
-     * @param notReciprocal True if we do not recommend reciprocal social links, false otherwise
-     */
-    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, double threshold)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal);
-        this.threshold = threshold;
+        super(uIndex, iIndex, true);
+        this.relevanceChecker = relevanceChecker;
     }
 
     /**
@@ -69,38 +50,32 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
-     * @param prefData  Preference data.
-     * @param hasRating True if we must ignore unknown items when updating.
-     * @param threshold Relevance threshold
+     * @param relevanceChecker Relevance checker
      */
-    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, SimpleFastUserKnowledgePreferenceData<U, I> knowledgeData, boolean hasRating, KnowledgeDataUse dataUse, double threshold)
+    public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed, DoublePredicate relevanceChecker)
     {
-        super(uIndex, iIndex, prefData, knowledgeData, hasRating, dataUse);
-        this.threshold = threshold;
-    }
-
-
-    @Override
-    public void initializeMethod()
-    {
-        this.trainData.getAllIidx().forEach(iidx -> this.values[iidx] = 0.0);
-
-        this.trainData.getIidxWithPreferences().forEach(iidx -> this.values[iidx] = this.trainData.getIidxPreferences(iidx).filter(pref -> pref.v2 >= threshold).count());
+        super(uIndex, iIndex, true, rngSeed);
+        this.relevanceChecker = relevanceChecker;
     }
 
     @Override
-    public void updateMethod(int uidx, int iidx, double value)
+    public void init()
     {
-        this.values[iidx] += (value >= threshold ? 1.0 : 0.0);
+        super.init();
+
+        this.iIndex.getAllIidx().forEach(iidx -> this.values[iidx] = 0.0);
     }
 
     @Override
-    public void updateMethod(List<Tuple3<Integer, Integer, Double>> train)
+    public void init(Stream<FastRating> values)
     {
-        for (int iidx = 0; iidx < this.prefData.numItems(); ++iidx)
-        {
-            this.values[iidx] = this.trainData.getIidxPreferences(iidx).filter(vidx -> vidx.v2 > threshold).count();
-        }
+        this.init();
+        values.filter(triplet -> relevanceChecker.test(triplet.value())).forEach(triplet -> ++this.values[triplet.iidx()]);
     }
 
+    @Override
+    public void update(int uidx, int iidx, double value)
+    {
+        this.values[iidx] += (relevanceChecker.test(value) ? 1.0 : 0.0);
+    }
 }

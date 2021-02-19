@@ -1,15 +1,18 @@
 /*
- * Copyright (C) 2019 Information Retrieval Group at Universidad Autónoma
- * de Madrid, http://ir.ii.uam.es.
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, you can obtain one at http://mozilla.org/MPL/2.0.
- *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package es.uam.eps.ir.knnbandit.recommendation.knn.similarities.stochastic;
 
 import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
+import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
+import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.Random;
@@ -28,7 +31,7 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
     /**
      * Current similarities (alpha values)
      */
-    private final double[][] sims;
+    private final Int2ObjectMap<Int2DoubleMap> sims;
     /**
      * Norms.
      */
@@ -46,15 +49,6 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
      */
     private final double beta;
     private final Random rng = new Random(0);
-    /**
-     * Last visited user.
-     */
-    private int lastu = -1;
-    /**
-     * Last visited item.
-     */
-    private int lasti = -1;
-
 
     /**
      * Constructor.
@@ -66,18 +60,44 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
     public BetaStochasticSimilarity(int numUsers, double alpha, double beta)
     {
         this.numUsers = numUsers;
-        this.sims = new double[numUsers][numUsers];
+        this.sims = new Int2ObjectOpenHashMap<>();
         this.usercount = new double[numUsers];
         this.alpha = alpha;
         this.beta = beta;
         for (int i = 0; i < numUsers; ++i)
         {
             this.usercount[i] = 0.0;
-            for (int j = 0; j < numUsers; ++j)
-            {
-                this.sims[i][j] = 0.0;
-            }
         }
+    }
+
+    @Override
+    public void initialize()
+    {
+        IntStream.range(0, this.numUsers).forEach(uidx -> this.usercount[uidx] = 0.0);
+        this.sims.clear();
+    }
+
+    @Override
+    public void initialize(FastPreferenceData<?, ?> trainData)
+    {
+        this.sims.clear();
+        trainData.getAllUidx().forEach(uidx ->
+        {
+            Int2DoubleOpenHashMap map = new Int2DoubleOpenHashMap();
+            map.defaultReturnValue(0.0);
+            this.sims.put(uidx, map);
+
+            this.usercount[uidx] = trainData.getUidxPreferences(uidx).filter(iidx -> iidx.v2 > 0.0).mapToDouble(iidx ->
+            {
+                Int2DoubleOpenHashMap auxMap = new Int2DoubleOpenHashMap();
+                auxMap.defaultReturnValue(0.0);
+
+                trainData.getIidxPreferences(iidx.v1).filter(vidx -> vidx.v2 > 0.0).forEach(vidx ->
+                    ((Int2DoubleOpenHashMap) this.sims.get(uidx)).addTo(vidx.v1,iidx.v2*vidx.v2));
+
+                return iidx.v2;
+            }).sum();
+        });
     }
 
     /**
@@ -87,7 +107,7 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
      */
     public BetaStochasticSimilarity(int numUsers)
     {
-        this(numUsers, 1, 1);
+        this(numUsers, 1.0, 1.0);
     }
 
     @Override
@@ -95,35 +115,84 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
     {
         return (int idx2) ->
         {
-            double auxalpha = this.sims[idx][idx2] + alpha;
-            double auxbeta = this.usercount[idx2] + beta;
-            return auxalpha / auxbeta;
+            if(this.usercount[idx2] == 0.0) return 0.0;
+            if(this.sims.containsKey(idx))
+            {
+                double auxalpha = this.sims.get(idx).getOrDefault(idx2, 0.0) + alpha;
+                double auxbeta = this.usercount[idx2] + beta;
+                return auxalpha / auxbeta;
+            }
+            return 0.0;
         };
     }
 
     @Override
     public Stream<Tuple2id> exactSimilarElems(int idx)
     {
-        IntToDoubleFunction sim = this.exactSimilarity(idx);
-        return IntStream.range(0, numUsers).filter(i -> i != idx).mapToObj(i -> new Tuple2id(i, sim.applyAsDouble(i))).filter(x -> x.v2 > 0.0);
+        return this.sims.getOrDefault(idx, new Int2DoubleOpenHashMap()).entrySet().stream().filter(idx2 -> idx != idx2.getKey()).map(idx2 ->
+        {
+            double auxalpha = idx2.getValue() + alpha;
+            double auxbeta = this.usercount[idx2.getKey()] + beta;
+            return new Tuple2id(idx2.getKey(), auxalpha / auxbeta);
+        });
+    }
+
+    @Override
+    public void updateNorm(int uidx, double value)
+    {
+        if(value > 0.0) this.usercount[uidx] += 1;
+    }
+
+    @Override
+    public void updateNormDel(int uidx, double value)
+    {
+        if(value > 0.0) this.usercount[uidx] -= 1;
     }
 
     @Override
     public void update(int uidx, int vidx, int iidx, double uval, double vval)
     {
-        if (!Double.isNaN(vval) && uval * vval > 0)
+        if(Double.isNaN(vval) || uval*vval == 0)
         {
-            sims[uidx][vidx] += 1.0;
-            sims[vidx][uidx] += 1.0;
+            return;
         }
 
-        if (lastu != uidx || lasti != iidx)
+        double realUVal = uval > 0.0 ? 1.0 : 0.0;
+        double realVVal = vval > 0.0 ? 1.0 : 0.0;
+
+        if(!this.sims.containsKey(uidx))
         {
-            lastu = uidx;
-            lasti = iidx;
-            if (uval > 0)
+            Int2DoubleMap map = new Int2DoubleOpenHashMap();
+            map.defaultReturnValue(0.0);
+            this.sims.put(uidx, map);
+        }
+
+        if(!this.sims.containsKey(vidx))
+        {
+            Int2DoubleMap map = new Int2DoubleOpenHashMap();
+            map.defaultReturnValue(0.0);
+            this.sims.put(vidx, map);
+        }
+
+        ((Int2DoubleOpenHashMap) this.sims.get(uidx)).addTo(vidx, realUVal*realVVal);
+        ((Int2DoubleOpenHashMap) this.sims.get(vidx)).addTo(uidx, realUVal*realVVal);
+    }
+
+    @Override
+    public void updateDel(int uidx, int vidx, int iidx, double uval, double vval)
+    {
+        if(!Double.isNaN(vval) && this.sims.containsKey(uidx) && this.sims.get(uidx).containsKey(vidx))
+        {
+            double realUVal = uval > 0.0 ? 1.0 : 0.0;
+            double realVVal = vval > 0.0 ? 1.0 : 0.0;
+
+            ((Int2DoubleOpenHashMap) this.sims.get(uidx)).addTo(vidx, -realUVal*realVVal);
+            ((Int2DoubleOpenHashMap) this.sims.get(vidx)).addTo(uidx, -realUVal*realVVal);
+
+            if(this.sims.get(uidx).get(vidx) == 0.0)
             {
-                this.usercount[uidx] += 1;
+                this.sims.get(uidx).remove(vidx);
+                this.sims.get(vidx).remove(uidx);
             }
         }
     }
@@ -133,7 +202,7 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
     {
         return (int idx2) ->
         {
-            double auxalpha = this.sims[idx][idx2];
+            double auxalpha = this.sims.getOrDefault(idx, new Int2DoubleOpenHashMap()).getOrDefault(idx2, 0.0);
             double auxbeta = this.usercount[idx2] - auxalpha;
             return this.betaSample(auxalpha + alpha, auxbeta + beta);
         };
@@ -208,20 +277,5 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
                 }
             }
         }
-    }
-
-
-    @Override
-    public void initialize(FastPreferenceData<?, ?> trainData)
-    {
-        trainData.getAllUidx().forEach(uidx -> trainData.getAllUidx().forEach(vidx -> this.sims[uidx][vidx] = 0.0));
-
-        // First, find the norms.
-        trainData.getAllUidx().forEach(uidx -> this.usercount[uidx] = trainData.getUidxPreferences(uidx).filter(iidx -> iidx.v2 > 0.0)
-        .mapToDouble(iidx ->
-        {
-            trainData.getIidxPreferences(iidx.v1).filter(vidx -> vidx.v2 > 0.0).forEach(vidx -> this.sims[uidx][vidx.v1] += 1.0);
-            return 1.0;
-        }).sum());
     }
 }

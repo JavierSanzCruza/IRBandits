@@ -24,19 +24,25 @@ public class AlgorithmIdentifiers
     // Non-personalized item-oriented bandits.
     public static final String ITEMBANDIT = "itembandit";
     // User based.
-    public static final String USERBASEDKNN = "ubknn";
-    public static final String BANDITKNN = "knnbandit";
+    public static final String USERBASEDKNN = "ub";
+    public static final String UBBANDIT = "ub-bandit";
     // Item based
-    public static final String ITEMBASEDKNN = "ibknn";
+    public static final String ITEMBASEDKNN = "ib";
+    public static final String IBBANDIT = "ib-bandit";
+
     // Matrix factorization.
     public static final String MF = "mf";
     // Bandits using probabilistic matrix factorization.
-    public static final String PMFBANDIT = "pmfbandit";
+    public static final String PMFBANDIT = "inter-pmf";
     public static final String PTS = "pts";
-    public static final String BAYESIANPTS = "bayespts";
+    public static final String BAYESIANPTS = "bayesian-pts";
     // Bandits using knn
-    public static final String COLLABGREEDY = "collabgreedy";
+    public static final String COLLABGREEDY = "collab-greedy";
     // Cluster-based approaches
     public static final String CLUB = "club";
-    public static final String CLUBERDOS = "cluberdos";
+    public static final String CLUBERDOS = "club-erdos";
+    public static final String COFIBA = "cofiba";
+
+    // Wisdom of the diverse crowds:
+    public static final String INFTHEOR = "inf-theory";
 }

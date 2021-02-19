@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.mf.ictr;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -12,6 +20,9 @@ import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
  *
  * @param <U> Type of the users.
  * @param <I> Type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class UCBICTRRecommender<U, I> extends ICTRRecommender<U, I>
 {
@@ -25,35 +36,15 @@ public class UCBICTRRecommender<U, I> extends ICTRRecommender<U, I>
      *
      * @param uIndex       User index.
      * @param iIndex       Item index.
-     * @param prefData     Preference data.
      * @param hasRating    True if we must ignore unknown items when updating.
      * @param K            Number of latent factors to use.
      * @param numParticles Number of particles to use.
      * @param factory      A factory for the particles.
      * @param gamma        Estimates the importance of the UCB.
      */
-    public UCBICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, int K, int numParticles, ICTRParticleFactory<U,I> factory, double gamma)
+    public UCBICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int K, int numParticles, ICTRParticleFactory<U,I> factory, double gamma)
     {
-        super(uIndex, iIndex, prefData, hasRating, K, numParticles, factory);
-        this.gamma = gamma;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex        User index.
-     * @param iIndex        Item index.
-     * @param prefData      Preference data.
-     * @param hasRating     True if we must ignore unknown items when updating.
-     * @param notReciprocal True if reciprocal users can be recommended, false otherwise.
-     * @param K             Number of latent factors to use.
-     * @param numParticles  Number of particles to use.
-     * @param factory       A factory for the particles.
-     * @param gamma         Estimates the importance of the UCB.
-     */
-    public UCBICTRRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, boolean hasRating, boolean notReciprocal, int K, int numParticles, ICTRParticleFactory<U,I> factory, double gamma)
-    {
-        super(uIndex, iIndex, prefData, hasRating, notReciprocal, K, numParticles, factory);
+        super(uIndex, iIndex, hasRating, K, numParticles, factory);
         this.gamma = gamma;
     }
 
