@@ -1,3 +1,6 @@
+![Java CI with Maven](https://github.com/JavierSanzCruza/SocialRankSys/workflows/Java%20CI%20with%20Maven/badge.svg)
+[![GitHub license](https://img.shields.io/badge/license-MPL--2.0-orange)](https://www.mozilla.org/en-US/MPL/)
+
 # IR bandits
 Interactive recommendation library.
 
