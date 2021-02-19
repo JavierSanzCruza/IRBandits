@@ -1,3 +1,5 @@
+![Java CI with Maven](https://github.com/JavierSanzCruza/IRBandits/workflows/Java%20CI%20with%20Maven/badge.svg)
+[![GitHub license](https://img.shields.io/badge/license-MPL--2.0-orange)](https://www.mozilla.org/en-US/MPL/)
 # kNN Bandit
 This repository contains the code needed to reproduce the experiments of the paper:
 
