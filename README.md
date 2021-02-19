@@ -70,75 +70,177 @@ If you do not want to use Maven, it is still possible to compile the code using 
 
 ## Execution
 
-Several programs can be executed with the IR Bandits library. We summarize here the utility of such programs, but the execution details for each of them are included in the project Wiki:
-
-Once you have generated a .jar, you can execute the program. There are two different ways to run this program: one for general recommendation (movies, songs, venues...) and one for contact recommendation in social networks, since the respective evaluation protocols have slight differences between them.
-
-### General recommendation
+Several programs can be executed in this library. We summarize here the utility of such programs. Execution details for each of them are included in the project Wiki. The different programs have different configurations, depending on the dataset type we want to use. The common execution line is the following:
 ```
-java -jar knnbandit-jar-with-dependencies.jar generalrec algorithmsFile dataFile outputFolder numIter threshold resume binarize
+java -jar IRBandits.jar program type-of-dataset program-basic-arguments dataset-related-arguments optional-arguments
 ```
 where the command line arguments are:
-  - `algorithmsFile`: A file indicating which algorithms have to be executed.
-  - `dataFile`: The rating data, including one rating per line with the format: `user \t item \t rating`.
-  - `outputFolder`: The directory where the output files will be stored.
-  - `numIter`: The number of iterations to run for each algorithm. Use value `0` for running until no new items can be recommended.
-  - `threshold`: Relevance threshold. Ratings greater than or equal to this value will be considered as relevant.
-  - `resume`: Set value to `true` to resume execution following up from the output of a previous execution (if any) or `false` to overwrite and start the interactive recommendation cycle from scratch.
-  - `binarize`: Set value to `true` for using binarized rating values (1 for relevant, 0 for non-relevant), `false` to leave rating values as are.
-  
-For reproducing the exact experiments of the paper, program argument values are:
-- `numIter = 500000` for Foursquare-NY, `numIter = 1000000` for Foursquare-Tokyo and `numIter = 3000000` for MovieLens1M.
-- `threshold = 1` for Foursquare and `threshold = 4` for MovieLens1M.
-- `binarize = true` for all datasets.
+ - `program`: The identifier of the program we want to execute. We shall explain them later.
+ - `type-of-dataset`: arguments refering to the type of dataset we want to execute. We distinguish four possibilities here:
+     - `general` for using a general item recommendation dataset (movies, songs, artists, etc.) like Movielens1M, Netflix, etc. As of now, we distinguish two types:
+         - `movielens`: Fields separated by `::`, and uses long values to represent users and items.
+         - `foursquare`: Fields separated by `::`, uses long values to represent users, and strings to represent items. 
+     - `knowledge` for using a recommendation dataset including information about whether the users knew the items previously to the recommendation (e.g. cm100k). Fields are separated by `::`, as in the `general` case.
+     - `contact` for using a contact recommendation dataset, where the "ratings" represent connection between users. Fields are separated by a tab character.
+     - `stream` for applying the Replayer evaluation strategy on a dataset.
+ - `program-basic-arguments`: program arguments shared by all the dataset types.
+ - `dataset-related-arguments`: program arguments related to the specific nature of each dataset. The arguments are the following, and must be introduced in the upcoming order.
+     - `general` takes the following arguments:
+         - `threshold`: The relevance threshold for the ratings. Ratings with value greater or equal than this shall be considered relevant.
+         - `useRatings`: True if the recommenders use the actual bandits, false if the ratings are binarized (if rating is greater or equal than the threshold, it will be assigned value 1, 0 otherwise).
+     - `knowledge` takes the arguments for the `general` case, and adds the following one:
+         - `dataUse`: Specifies which ratings we use for updating the recommendation approaches: `known` for only using the items the users already knew about before the recommendation, `unknown` for using only those items the target user did not know about, and `all` to use all of them.
+     - `contact` takes the following arguments:
+         - `directed`: True if the underlying social network is directed, false otherwise.
+         - `notReciprocal`: in directed networks, if this value is true, it does not allow to recommend reciprocal edges to those discovered in the network. Note: if the edge (u,v) does not exist, u can still be recommended to v.
+     - `stream` uses the following arguments:
+         - `threshold`: The relevance threshold for the ratings.  Ratings with value greater or equal than this shall be considered relevant.
+         - `userIndex`: In order to read the dataset just once per execution, these programs receive a file containing the users in the dataset (one per line).
+         - `itemIndex`: Similarly to the user index, this argument points to a file containing the items in the dataset (one per line).
+ - `optional-arguments`: additional arguments that the user might (or might not) introduce for the different programs.
 
-### Contact recommendation
+Next, we detail the arguments and utilities of the different programs:
+
+### Validation
+Given no warmup, this program executes validation to search for the optimal parameters for a recommendation algorithm. It is executed as:
 ```
-java -jar knnbandit-jar-with-dependencies.jar contactRec algorithmsFile dataFile outputFolder numIter directed resume notReciprocal
+java -jar IRBandits.jar valid type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times)
+```
+where the command line arguments are:
+   - `type-of-dataset`: see the earlier type of dataset configuration.
+   - `algorithms`: a JSON file containing the possible hyperparameter configurations of algorithms to consider.
+   - `input`: file containing the dataset.
+   - `output`: the directory in which to store the output.
+   - `end-condition`: the end condition for the recommendation. Depending on its value, several possibilities:
+       - `end-condition = 0.0`: ends when no user can be recommended anything.
+       - `0.0 < end-condition < 1.0`: ends when it has discovered a fraction of the positive ratings equal to `end-condition`.
+       - `end-condition > 1.0`: executes it for a number of iterations equal to `end-condition`
+   - `resume`: if we have to recover recommendations from a previous execution.
+   - `dataset-related-arguments`: see earlier.
+   - (Optional) `-k times`: the number of times each recommendation might be executed 
+
+With these parameters, the different algorithms execute, and the following output is produced:
+   - A recommendation file for each recommendation loop execution. The name format for this file is: ` algorithmname-iter.txt`, where algorithm name shows the used algorithm and its parameters. In case the optional parameter `k` is not used, the `iter` value shall be equal to `0`. If `k`is used (and each algorithm is executed several times), it represents the execution number for that algorithm.
+   - The algorithm ranking in the comparison, in a file named `algorithms-metric-ranking.txt`, where `algorithms` is the name of the JSON configuration file, and `metric` is each one of the considered metrics: the clickthrough rate in the `stream` case, and the number of iterations / cumulative recall in the rest of cases. The file contains, on each line, an algorithm-value pair, sorted by descending metric value. An example can be observed below:
+```
+Algorithm	recall
+club-erdos-0.01-1.0-ignore	0.05313432835820896
+club-erdos-0.01-2.0-ignore	0.03295522388059702
+club-erdos-0.01-5.0-ignore	0.03295522388059702
+club-erdos-0.01-0.5-ignore	0.02591044776119403
+club-erdos-0.1-1.0-ignore	0.008238805970149254
+club-erdos-0.1-5.0-ignore	0.0039402985074626865
+club-erdos-0.1-2.0-ignore	0.0039402985074626865
+```
+
+### Recommendation
+Given no warmup, this program executes a set of recommendation algorithms. It is executed as:
+```
+java -jar IRBandits.jar rec type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times -interval interval)
+```
+where the command line arguments are:
+   - `type-of-dataset`: see the earlier type of dataset configuration.
+   - `algorithms`: a JSON file containing the possible hyperparameter configurations of algorithms to consider.
+   - `output`: the directory in which to store the output.
+   - `end-condition`: the end condition for the recommendation. Depending on its value, several possibilities:
+       - `end-condition = 0.0`: ends when no user can be recommended anything.
+       - `0.0 < end-condition < 1.0`: ends when it has discovered a fraction of the positive ratings equal to `end-condition`.
+       - `end-condition > 1.0`: executes it for a number of iterations equal to `end-condition`
+   - `resume`: if we have to recover recommendations from a previous execution.
+   - `dataset-related-arguments`: see earlier.
+   - (Optional) `-k times`: the number of times each recommendation might be executed.
+   - (Optional) `-interval interval`: this program produces a summary file for each recommendation. This value establishes the amount of iterations between each recorded point in the summary. By default, it records a register in the summary file each 10,000 iterations.
+
+With these parameters, the different algorithms execute, and the following output is produced:
+   - A recommendation file for each recommendation loop execution. The name format for this file is: ` algorithmname-iter.txt`, where algorithm name shows the used algorithm and its parameters. In case the optional parameter `k` is not used, the `iter` value shall be equal to `0`. If `k`is used (and each algorithm is executed several times), it represents the execution number for that algorithm.
+   - A summary of the executions of a single algorithm, averaged over the different times the algorithm has been executed. It is named as `algorithm-summary.txt` with `algorithm` being the algorithm name. Each line, the algorithm contains, tab-separated, in the following order, the iteration number and the different metric values. We show next an example of this file:
+```
+Iteration	recall	gini
+100000	0.004083192282072049	0.4030777503476343
+200000	0.009147512185132834	0.3103410430621766
+300000	0.013760880805087986	0.2676407025492733
+400000	0.018585973003067024	0.24228543736198463
+500000	0.022876422581124423	0.2244776744496217
+```
+
+### Validation with warm-up
+This program is similar to the Validation one, but it takes some warm-up data. It is executed as:
+```
+java -jar IRBandits.jar warmup-valid type-of-dataset algorithms input output end-condition resume training partition-params dataset-related-arguments (-k times - type type)
+```
+where the command line arguments are:
+   - `type-of-dataset`: see the earlier type of dataset configuration.
+   - `algorithms`: a JSON file containing the possible hyperparameter configurations of algorithms to consider.
+   - `input`: file containing the dataset.
+   - `output`: the directory in which to store the output.
+   - `end-condition`: the end condition for the recommendation. Depending on its value, several possibilities:
+       - `end-condition = 0.0`: ends when no user can be recommended anything.
+       - `0.0 < end-condition < 1.0`: ends when it has discovered a fraction of the positive ratings equal to `end-condition`.
+       - `end-condition > 1.0`: executes it for a number of iterations equal to `end-condition`
+   - `resume`: if we have to recover recommendations from a previous execution.
+   - `training`: the route to a recommendation file containing the warm-up data. The format of the file must be the same as the one for recommendation output files.
+   - `partition-params`: A series of parameters related to the partitioning of the warm-up data. The partition of this data is always temporal, i.e. it considers the order of appearance of the (user, item) pairs in the `training` file. The first registers are taken as input for the different recommendation algorithms, and some of the rest as test. The parameters are the following:
+       - `test-type`: it determines how much ratings in `training` we take as the validation set. If it takes the `fixed` value, every rating in the warm-up which is not used as training data is used as test. If it is equal to `variable` we divide the warm-up data in equal parts. Then, we take the first part, and we split it in training and validation to form the first split. Then, we take the first and the second parts together, and we split them in training and validation to form the second split. The procedure continues until we take the whole data, and we divide it in training and test to form the last split.
+       - `numParts`: the number of partitions to consider. In case this value is negative, we consider the set of positively-rated user-item pairs to apply the partition. (for example, when, `test-type` is `variable`, we divide the warm-up data so, each split, we add the same amount of positively-rated user-item pairs). 
+       - `percTrain`: it determines the amount of registers on each split that we take as training, and we use the rest as test. In case `numParts` is negative, this percentage is determined so that `percTrain` of the positive ratings in the split are in the training set, and the rest in the validation set.
+     
+     For example, if `testType = fixed`, `numParts = 5` and `percTrain = 0.1`, then, we shall obtain five partitions, taking 10%,20%,30%,40% and 50% of the warm-up data as training, and the remaining 90%,80%,70%,60% and 50% of the data as the validation set. Otherwise, if `testType = variable`, `numParts = 5` and `percTrain = 0.1`, then, we shall obtain five partitions, containing 20%,40%,60%,80% and 100% of the warm-up data, respectively, and 10% of each partition shall be used as warm-up data, and the rest as the validation set. When `numParts` is negative, the previous amounts are always computed over the set of positive ratings (all negative ratings between ratings go to one set or another depending on where the next positive rating belongs).
+
+   - `dataset-related-arguments`: see earlier.
+   - (Optional) `-k times`: the number of times each recommendation might be executed.
+   - (Optional) `-type type`: In order to update the algorithms, we can decide whether to use only known data (i.e. data present in the original dataset) or all data.
+       -  `onlyratings`: removes all user-item pairs in the warm-up which do not appear in the original dataset.
+       -  `full`: uses the warm-up data as it is.   
+
+The output of this program is identical to that of the Validation one, with the exception that a new directory is created for each partition (identified by number).
+
+### Recommendation with warm-up
+This program is similar to the Recommendation one, but it takes some warm-up data. It is executed as:
+```
+java -jar IRBandits.jar warmup-rec type-of-dataset algorithms input output end-condition resume training numParts dataset-related-arguments (-k times -percTrain percTrain -type type -interval interval)
+```
+where the command line arguments are:
+   - `type-of-dataset`: see the earlier type of dataset configuration.
+   - `algorithms`: a JSON file containing the possible hyperparameter configurations of algorithms to consider. In this case, the JSON needs to have an array of JSON arrays. Each array contains the configuration of the algorithms that shall be executed for each one of the splits.
+   - `input`: file containing the dataset.
+   - `output`: the directory in which to store the output.
+   - `end-condition`: the end condition for the recommendation. Depending on its value, several possibilities:
+       - `end-condition = 0.0`: ends when no user can be recommended anything.
+       - `0.0 < end-condition < 1.0`: ends when it has discovered a fraction of the positive ratings equal to `end-condition`.
+       - `end-condition > 1.0`: executes it for a number of iterations equal to `end-condition`
+   - `resume`: if we have to recover recommendations from a previous execution.
+   - `training`: the route to a recommendation file containing the warm-up data. The format of the file must be the same as the one for recommendation output files.
+   - `numParts`: the number of partitions to consider. In case this value is negative, we consider the set of positively-rated user-item pairs to apply the partition. 
+   - `dataset-related-arguments`: see earlier.
+   - (Optional) `-k times`: the number of times each recommendation might be executed.
+   - (Optional) `-interval interval`: this program produces a summary file for each recommendation. This value establishes the amount of iterations between each recorded point in the summary. By default, it records a register in the summary file each 10,000 iterations.
+   - (Optional) `-type type`: In order to update the algorithms, we can decide whether to use only known data (i.e. data present in the original dataset) or all data.
+       -  `onlyratings`: removes all user-item pairs in the warm-up which do not appear in the original dataset.
+       -  `full`: uses the warm-up data as it is.    
+   - (Optional) `-percTrain percTrain`: By default, the data from the warm-up file is equally divided in `numParts`, and, for each partition `j`, parts `0` to `j` are taken as training. However, if this parameter is present and takes values between 0 and 1, partition `0` shall contain the first `percTrain` user-item pairs, partition `j` shall contain the first `(j+1)*percTrain` fraction of user-item pairs in the warm-up data (with `j` going from `0` to `numParts-1`). If `numParts` is negative, `percTrain` refers to the fraction of positively rated user-item pairs.
+
+The output of this program is identical to that of the Recommendation one, with the exception that a new directory is created for each partition (identified by number).
+
+### Training statistics
+This program obtains the statistics for the training data (and the partitions).
+It is executed as:
+```
+java -jar IRBandits.jar train-stats type-of-dataset input training numParts dataset-related-arguments (-percTrain percTrain)
 ```
 where
-  - `algorithmsFile`: A file indicating which algorithms have to be executed
-  - `dataFile`: The graph data, including one edge per line with the format: `originUser \t destUser \t weight`.
-  - `outputFolder`: The directory where the output files will be stored.
-  - `numIter`: The number of iterations to run for each algorithm. Use value `0` for running until no new items can be recommended.
-  - `directed`: Set value to `true` if the social network is directed, `false` otherwise.
-  - `resume`: Set value to `true` to resume execution following up from the output of a previous execution (if any) or `false` to overwrite and start the interactive recommendation cycle from scratch.
-  - `notReciprocal`: Set value to `true` if the algorithms should not recommend reciprocal links, `false` otherwise.
-  
-For reproducing the exact experiments of the paper, the arguments are:
- - `numIter = 5000000`.
- - `directed = true`.
- - `notReciprocal = true`.
- 
+   - `input`: file containing the dataset.
+   - `training`: the route to a recommendation file containing the warm-up data. The format of the file must be the same as the one for recommendation output files.
+   - `numParts`: the number of partitions to consider. In case this value is negative, we consider the set of positively-rated user-item pairs to apply the partition. 
+   - `dataset-related-arguments`: see earlier.
+   - (Optional) `-percTrain percTrain`: By default, the data from the warm-up file is equally divided in `numParts`, and, for each partition `j`, parts `0` to `j` are taken as training. However, if this parameter is present and takes values between 0 and 1, partition `0` shall contain the first `percTrain` user-item pairs, partition `j` shall contain the first `(j+1)*percTrain` fraction of user-item pairs in the warm-up data (with `j` going from `0` to `numParts-1`). If `numParts` is negative, `percTrain` refers to the fraction of positively rated user-item pairs.
+
+In this case, the output is displayed on the standard output. It shows a table containing a) the general information for the dataset (number of users, items, ratings and relevant ratings), and b) for each split, the split number, the number of recommendations, the number of ratings and the number of relevant ratings.
+
 ### Algorithm files
-In order to execute different configurations, we include in the `config` folder the optimal configurations for the different datasets we used in the paper. Each row represents the configuration for a single algorithm.
+In order to execute different configurations, we include in the `config` folder examples of configuration files for the different algorithms. In this case, we use JSON files. We include an example for each algorithm, which can be consulted.
 
-Example:
-```
-popularity
-random
-average
-ubknn-100
-knnbandit-1-1-10
-mf-10-fastimf-10-10-20
-itembandit-epsilon-0.2-stationary
-itembandit-thompson-1-100
-```
-
-In the above configuration file example, we choose different algorithms ot be run (each with specific parameter settings): popularity, random recommendation, average rating, myopic user-based kNN, kNN bandit, matrix factorization, &epsilon;-greedy and thompson sampling.
-
-#### Testing different configurations for the kNN bandit
-To test the different settings for this algorithm, the format of the line to add in the configuration file is:
-
-   knnbandit-`k`-`alpha`-`beta`
-   
-where:
- - `k` is the number of neighbors to use.
- - `alpha` is the initial number of hits of the algorithm (high value for optimistic start).
- - `beta` is the initial number of errors of the algorithm (high value for pessimistic start).
-  
 ### Random seed
-It is possible to set a random seed for the experiments, so that the selection of users and other random choices are the same when the experiment is repeated. For that purpose, in the output directory, just add a file named `rngseed` (without any file extension) containing the seed in the first line, and set the parameter `resume` to true. We include the random seeds we used in our experiments in the rng-seeds folder. In order to use them, they have to be renamed when added to the output directory.
+It is possible to set a random seed for the experiments, so that the selection of users and other random choices are the same when the experiment is repeated. For that purpose, in the output directory, just add a file named `rngseedlist` (without any file extension) containing the a list of seeds (must be equal to the optional `k` value in the different programs), and set the parameter `resume` to true.
 
 ### Output format
 The output of both programs is the same: for each algorithm in the comparison, a file will be created. The name of the file will be the same as the chosen algorithm configuration. Each of the output files has the following format: separated by tabs, the first line contains the header of the file. Then, each row contains the information of a single iteration: the number of the iteration, the selected user, the selected item, the value of the metrics and the time taken to execute the iteration (in ms.)
