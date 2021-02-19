@@ -1,0 +1,10 @@
+[
+	{
+		"name" : "random",
+		"params" : [{}]
+	},
+	{
+		"name" : "popularity",
+		"params" : [{}]
+	}
+] 

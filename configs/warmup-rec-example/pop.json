@@ -1,0 +1,718 @@
+[
+	[
+		{
+			"name" : "random",
+			"params" : [{}]
+		},
+		{
+			"name" : "popularity",
+			"params" : [{}]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "epsilon",
+						"params" : 
+						[
+							{
+								"epsilon" : "0.5",
+								"updateFunc" : 
+								{
+									"function" : "stationary"
+								}
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "thompson",
+						"params" : 
+						[
+							{
+								"alpha" : "1.0",
+								"beta"  : "100.0"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "ub",
+			"params" : 
+			[
+				{
+					"variant" : "last",
+					"ignoreUnknown" : "false",
+					"ignoreZeroes" : "true",
+					"k" : "100"
+				}
+			]
+		},
+		{
+			"name" : "ub-bandit",
+			"params" :
+			[
+				{
+					"variant" : "last",
+					"k" : "1",
+					"alpha" : "10.0",
+					"beta" : "100.0"
+				},
+				{
+					"variant" : "last",
+					"k" : "100",
+					"alpha" : "100.0",
+					"beta" : "100.0"
+				}
+			]
+		},
+		{
+			"name" : "mf",
+			"params" :
+			[
+				{
+					"variant" : "basic",
+					"ignoreUnknown" : "true",
+					"k" : "20",
+					"factorizer" : 
+					{
+						"name" : "fastimf",
+						"params" : 
+						[
+							{
+								"alpha" : "10",
+								"lambda" : "0.1",
+								"numIter" : "20",
+								"useZeroes" : "true"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "club-erdos",
+			"params" : 
+			[
+				{
+					"alpha" : "0.01",
+					"alpha2" : "5.0",
+					"ignoreUnknown" : "false"
+				}
+			]
+		},
+		{
+			"name" : "inter-pmf",
+			"params" : 
+			[
+				{
+					"k" : "3",
+					"lambdaP" : "10.0",
+					"lambdaQ" : "0.1",
+					"stdev" : "1.0",
+					"numIter" : "20",
+					"ignoreUnknown" : "true",
+					"variant" : 
+					{
+						"name" : "epsilon",
+						"params" :
+						[ 
+							{
+
+								"epsilon" : "0.05"
+							}
+						]
+					}
+				}
+			]
+		}
+	],
+	[
+		{
+			"name" : "random",
+			"params" : [{}]
+		},
+		{
+			"name" : "popularity",
+			"params" : [{}]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "epsilon",
+						"params" : 
+						[
+							{
+								"epsilon" : "0.5",
+								"updateFunc" : 
+								{
+									"function" : "stationary"
+								}
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "thompson",
+						"params" : 
+						[
+							{
+								"alpha" : "1.0",
+								"beta"  : "100.0"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "ub",
+			"params" : 
+			[
+				{
+					"variant" : "last",
+					"ignoreUnknown" : "false",
+					"ignoreZeroes" : "true",
+					"k" : "100"
+				}
+			]
+		},
+		{
+			"name" : "ub-bandit",
+			"params" :
+			[
+				{
+					"variant" : "last",
+					"k" : "1",
+					"alpha" : "1.0",
+					"beta" : "100.0"
+				},
+				{
+					"variant" : "last",
+					"k" : "10",
+					"alpha" : "10.0",
+					"beta" : "100.0"
+				}
+			]
+		},
+		{
+			"name" : "mf",
+			"params" :
+			[
+				{
+					"variant" : "basic",
+					"ignoreUnknown" : "true",
+					"k" : "20",
+					"factorizer" : 
+					{
+						"name" : "fastimf",
+						"params" : 
+						[
+							{
+								"alpha" : "1.0",
+								"lambda" : "1.0",
+								"numIter" : "20",
+								"useZeroes" : "true"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "club-erdos",
+			"params" : 
+			[
+				{
+					"alpha" : "0.01",
+					"alpha2" : "5.0",
+					"ignoreUnknown" : "false"
+				}
+			]
+		},
+		{
+			"name" : "inter-pmf",
+			"params" : 
+			[
+				{
+					"k" : "3",
+					"lambdaP" : "0.1",
+					"lambdaQ" : "1.0",
+					"stdev" : "0.1",
+					"numIter" : "20",
+					"ignoreUnknown" : "true",
+					"variant" : 
+					{
+						"name" : "epsilon",
+						"params" :
+						[ 
+							{
+
+								"epsilon" : "0.05"
+							}
+						]
+					}
+				}
+			]
+		}
+	],
+	[
+		{
+			"name" : "random",
+			"params" : [{}]
+		},
+		{
+			"name" : "popularity",
+			"params" : [{}]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "epsilon",
+						"params" : 
+						[
+							{
+								"epsilon" : "0.05",
+								"updateFunc" : 
+								{
+									"function" : "stationary"
+								}
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "thompson",
+						"params" : 
+						[
+							{
+								"alpha" : "1.0",
+								"beta"  : "100.0"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "ub",
+			"params" : 
+			[
+				{
+					"variant" : "last",
+					"ignoreUnknown" : "false",
+					"ignoreZeroes" : "true",
+					"k" : "100"
+				}
+			]
+		},
+		{
+			"name" : "ub-bandit",
+			"params" :
+			[
+				{
+					"variant" : "last",
+					"k" : "1",
+					"alpha" : "10.0",
+					"beta" : "100.0"
+				},
+				{
+					"variant" : "last",
+					"k" : "100",
+					"alpha" : "1.0",
+					"beta" : "100.0"
+				}
+			]
+		},
+		{
+			"name" : "mf",
+			"params" :
+			[
+				{
+					"variant" : "basic",
+					"ignoreUnknown" : "true",
+					"k" : "20",
+					"factorizer" : 
+					{
+						"name" : "fastimf",
+						"params" : 
+						[
+							{
+								"alpha" : "40.0",
+								"lambda" : "100.0",
+								"numIter" : "20",
+								"useZeroes" : "true"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "club-erdos",
+			"params" : 
+			[
+				{
+					"alpha" : "0.01",
+					"alpha2" : "1.0",
+					"ignoreUnknown" : "false"
+				}
+			]
+		},
+		{
+			"name" : "inter-pmf",
+			"params" : 
+			[
+				{
+					"k" : "3",
+					"lambdaP" : "1.0",
+					"lambdaQ" : "10.0",
+					"stdev" : "0.1",
+					"numIter" : "20",
+					"ignoreUnknown" : "true",
+					"variant" : 
+					{
+						"name" : "epsilon",
+						"params" :
+						[ 
+							{
+
+								"epsilon" : "0.05"
+							}
+						]
+					}
+				}
+			]
+		}
+	],
+	[
+		{
+			"name" : "random",
+			"params" : [{}]
+		},
+		{
+			"name" : "popularity",
+			"params" : [{}]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "epsilon",
+						"params" : 
+						[
+							{
+								"epsilon" : "0.7",
+								"updateFunc" : 
+								{
+									"function" : "stationary"
+								}
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "thompson",
+						"params" : 
+						[
+							{
+								"alpha" : "1.0",
+								"beta"  : "100.0"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "ub",
+			"params" : 
+			[
+				{
+					"variant" : "last",
+					"ignoreUnknown" : "false",
+					"ignoreZeroes" : "true",
+					"k" : "100"
+				}
+			]
+		},
+		{
+			"name" : "ub-bandit",
+			"params" :
+			[
+				{
+					"variant" : "last",
+					"k" : "1",
+					"alpha" : "1.0",
+					"beta" : "100.0"
+				},
+				{
+					"variant" : "last",
+					"k" : "10",
+					"alpha" : "10.0",
+					"beta" : "10.0"
+				}
+			]
+		},
+		{
+			"name" : "mf",
+			"params" :
+			[
+				{
+					"variant" : "basic",
+					"ignoreUnknown" : "true",
+					"k" : "10",
+					"factorizer" : 
+					{
+						"name" : "fastimf",
+						"params" : 
+						[
+							{
+								"alpha" : "1.0",
+								"lambda" : "10.0",
+								"numIter" : "20",
+								"useZeroes" : "true"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "club-erdos",
+			"params" : 
+			[
+				{
+					"alpha" : "0.01",
+					"alpha2" : "1.0",
+					"ignoreUnknown" : "false"
+				}
+			]
+		},
+		{
+			"name" : "inter-pmf",
+			"params" : 
+			[
+				{
+					"k" : "3",
+					"lambdaP" : "1.0",
+					"lambdaQ" : "10.0",
+					"stdev" : "0.1",
+					"numIter" : "20",
+					"ignoreUnknown" : "true",
+					"variant" : 
+					{
+						"name" : "epsilon",
+						"params" :
+						[ 
+							{
+
+								"epsilon" : "0.05"
+							}
+						]
+					}
+				}
+			]
+		}
+	],
+	[
+		{
+			"name" : "random",
+			"params" : [{}]
+		},
+		{
+			"name" : "popularity",
+			"params" : [{}]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "epsilon",
+						"params" : 
+						[
+							{
+								"epsilon" : "0.7",
+								"updateFunc" : 
+								{
+									"function" : "stationary"
+								}
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "itembandit",
+			"params" : 
+			[
+				{
+					"ignoreUnknown" : "false",
+					"bandit" : 
+					{
+						"name" : "thompson",
+						"params" : 
+						[
+							{
+								"alpha" : "1.0",
+								"beta"  : "100.0"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "ub",
+			"params" : 
+			[
+				{
+					"variant" : "last",
+					"ignoreUnknown" : "false",
+					"ignoreZeroes" : "true",
+					"k" : "100"
+				}
+			]
+		},
+		{
+			"name" : "ub-bandit",
+			"params" :
+			[
+				{
+					"variant" : "last",
+					"k" : "1",
+					"alpha" : "1.0",
+					"beta" : "10.0"
+				},
+				{
+					"variant" : "last",
+					"k" : "100",
+					"alpha" : "1.0",
+					"beta" : "1.0"
+				}
+			]
+		},
+		{
+			"name" : "mf",
+			"params" :
+			[
+				{
+					"variant" : "basic",
+					"ignoreUnknown" : "true",
+					"k" : "10",
+					"factorizer" : 
+					{
+						"name" : "fastimf",
+						"params" : 
+						[
+							{
+								"alpha" : "10.0",
+								"lambda" : "150.0",
+								"numIter" : "20",
+								"useZeroes" : "true"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name" : "club-erdos",
+			"params" : 
+			[
+				{
+					"alpha" : "0.01",
+					"alpha2" : "5.0",
+					"ignoreUnknown" : "false"
+				}
+			]
+		},
+		{
+			"name" : "inter-pmf",
+			"params" : 
+			[
+				{
+					"k" : "3",
+					"lambdaP" : "0.1",
+					"lambdaQ" : "1.0",
+					"stdev" : "1.0",
+					"numIter" : "20",
+					"ignoreUnknown" : "true",
+					"variant" : 
+					{
+						"name" : "epsilon",
+						"params" :
+						[ 
+							{
+
+								"epsilon" : "0.1"
+							}
+						]
+					}
+				}
+			]
+		}
+	]
+
+] 

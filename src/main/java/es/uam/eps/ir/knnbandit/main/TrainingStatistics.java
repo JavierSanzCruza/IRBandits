@@ -32,8 +32,9 @@ public abstract class TrainingStatistics<U,I>
      * @param training the file containing the training data.
      * @param partition the partition strategy.
      * @param numSplits the number of splits.
+     * @param percTrain the percentage of the warm-up data to use as training.
      */
-    public void statistics(String training, Partition partition, int numSplits)
+    public void statistics(String training, Partition partition, int numSplits, double percTrain)
     {
         // Read the training data.
         Reader reader = new Reader();
@@ -50,7 +51,19 @@ public abstract class TrainingStatistics<U,I>
         System.out.println("Training");
         System.out.println("Num.Split\tNum.Recs\tRatings\tRel.Ratings");
 
-        List<Integer> splitPoints = partition.split(dataset, train, numSplits);
+        List<Integer> splitPoints;
+        if(Double.isNaN(percTrain) || percTrain <= 0.0 || percTrain >= 1.0)
+        {
+            splitPoints = partition.split(dataset, train, numSplits);
+        }
+        else
+        {
+            splitPoints = new ArrayList<>();
+            for(int i = 0; i < numSplits; ++i)
+            {
+                splitPoints.add(partition.split(dataset, train, percTrain*(i+1.0)));
+            }
+        }
 
         for (int part = 0; part < numSplits; ++part)
         {

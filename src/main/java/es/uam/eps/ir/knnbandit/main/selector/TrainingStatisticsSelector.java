@@ -16,6 +16,7 @@ import es.uam.eps.ir.knnbandit.main.withknowledge.WithKnowledgeTrainingStatistic
 import es.uam.eps.ir.knnbandit.partition.Partition;
 import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
 import es.uam.eps.ir.knnbandit.partition.UniformPartition;
+import es.uam.eps.ir.knnbandit.warmup.WarmupType;
 import org.ranksys.formats.parsing.Parsers;
 
 import java.io.IOException;
@@ -45,22 +46,26 @@ public class TrainingStatisticsSelector
 
         int firstIndex;
         int length;
+        int lastIndex;
 
         switch(type)
         {
             case GENERAL:
                 length = 6;
                 firstIndex = 1;
+                lastIndex = 6;
                 break;
             case CONTACT:
             case KNOWLEDGE:
                 length = 5;
                 firstIndex = 0;
+                lastIndex = 7;
                 break;
             case STREAM:
             default:
                 length = args.length;
                 firstIndex = 0;
+                lastIndex = 0;
         }
 
         if(args.length < length)
@@ -76,7 +81,16 @@ public class TrainingStatisticsSelector
         int auxNumParts = Parsers.ip.parse(execArgs[2]);
         int numParts = Math.abs(auxNumParts);
         Partition partition = (auxNumParts > 0) ? new UniformPartition() : new RelevantPartition();
+        double percTrain = Double.NaN;
+        for (int i = lastIndex; i < execArgs.length; ++i)
+        {
+            if("-perctrain".equals(args[i]))
+            {
+                ++i;
+                percTrain = Parsers.dp.parse(args[i]);
+            }
 
+        }
         switch(type)
         {
             case GENERAL:
@@ -87,12 +101,12 @@ public class TrainingStatisticsSelector
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
                     GeneralTrainingStatistics<Long, Long> stats = new GeneralTrainingStatistics<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings);
-                    stats.statistics(training, partition, numParts);
+                    stats.statistics(training, partition, numParts, percTrain);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
                     GeneralTrainingStatistics<Long, String> stats = new GeneralTrainingStatistics<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings);
-                    stats.statistics(training, partition, numParts);
+                    stats.statistics(training, partition, numParts, percTrain);
                 }
                 break;
             }
@@ -102,7 +116,7 @@ public class TrainingStatisticsSelector
                 boolean notReciprocal = execArgs[4].equalsIgnoreCase("true");
 
                 ContactTrainingStatistics<Long> stats = new ContactTrainingStatistics<>(input, "\t", Parsers.lp, directed, notReciprocal);
-                stats.statistics(training, partition, numParts);
+                stats.statistics(training, partition, numParts, percTrain);
 
                 break;
             }
@@ -112,7 +126,7 @@ public class TrainingStatisticsSelector
                 boolean useRatings = execArgs[4].equalsIgnoreCase("true");
 
                 WithKnowledgeTrainingStatistics<Long, Long> stats = new WithKnowledgeTrainingStatistics<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings);
-                stats.statistics(training, partition, numParts);
+                stats.statistics(training, partition, numParts, percTrain);
                 break;
 
             }
