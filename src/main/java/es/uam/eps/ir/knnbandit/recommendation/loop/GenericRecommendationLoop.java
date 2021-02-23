@@ -10,14 +10,17 @@ package es.uam.eps.ir.knnbandit.recommendation.loop;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
+import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendation;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
+import es.uam.eps.ir.knnbandit.recommendation.loop.Recommendation;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.selection.Selection;
 import es.uam.eps.ir.knnbandit.recommendation.loop.update.UpdateStrategy;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -72,6 +75,11 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     protected final List<String> metricNames;
 
     /**
+     * The cutoff of the recommendation ranking. By default, equal to 1.
+     */
+    protected final int cutoff;
+
+    /**
      * Constructor
      * @param dataset the dataset for retrieving the data and ratings.
      * @param selection selects the target user and candidate items for the recommendation.
@@ -79,7 +87,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
      * @param update the update strategy.
      * @param endcond the condition to end the loop
      * @param metrics the metrics to consider
-     *
+     * @param rngSeed random number generator seed.
      */
     public GenericRecommendationLoop(Dataset<U,I> dataset, Selection<U,I> selection, InteractiveRecommenderSupplier<U,I> provider, UpdateStrategy<U,I> update, EndCondition endcond, Map<String, CumulativeMetric<U,I>> metrics, int rngSeed)
     {
@@ -93,6 +101,34 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
         this.update = update;
         Collections.sort(metricNames);
         this.hasEnded = false;
+        this.cutoff = 1;
+    }
+
+    /**
+     * Constructor
+     * @param dataset the dataset for retrieving the data and ratings.
+     * @param selection selects the target user and candidate items for the recommendation.
+     * @param provider a provider for the interactive recommendation approach
+     * @param update the update strategy.
+     * @param endcond the condition to end the loop
+     * @param metrics the metrics to consider
+     * @param cutoff the cutoff of the recommendation ranking
+     * @param rngSeed random number generator seed.
+     *
+     */
+    public GenericRecommendationLoop(Dataset<U,I> dataset, Selection<U,I> selection, InteractiveRecommenderSupplier<U,I> provider, UpdateStrategy<U,I> update, EndCondition endcond, Map<String, CumulativeMetric<U,I>> metrics, int cutoff, int rngSeed)
+    {
+        this.dataset = dataset;
+        this.selection = selection;
+        this.recommender = provider.apply(dataset, dataset, rngSeed);
+        this.endCond = endcond;
+        this.metrics = metrics;
+        this.numIter = 0;
+        this.metricNames = new ArrayList<>(metrics.keySet());
+        this.update = update;
+        Collections.sort(metricNames);
+        this.hasEnded = false;
+        this.cutoff = cutoff;
     }
 
     @Override
@@ -132,6 +168,17 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     }
 
     @Override
+    public FastRecommendation fastNextIterationList()
+    {
+        FastRecommendation rec = fastNextRecommendationList();
+        if(rec != null)
+        {
+            this.fastUpdate(rec);
+        }
+        return rec;
+    }
+
+    @Override
     public Tuple2<U, I> nextRecommendation()
     {
         Pair<Integer> pair = this.fastNextRecommendation();
@@ -142,6 +189,20 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             tuple = new Tuple2<>(dataset.uidx2user(pair.v1()), dataset.iidx2item(pair.v1()));
         }
         return tuple;
+    }
+
+    @Override
+    public Recommendation<U, I> nextRecommendationList()
+    {
+        FastRecommendation rec = this.fastNextRecommendationList();
+        if(rec != null)
+        {
+            U u = dataset.uidx2user(rec.getUidx());
+            List<I> list = new ArrayList<>();
+            rec.getIidxs().forEach(iidx -> list.add(dataset.iidx2item(iidx)));
+            return new Recommendation<>(u, list);
+        }
+        return null;
     }
 
     @Override
@@ -163,6 +224,28 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             }
         }
         return pair;
+    }
+
+    @Override
+    public FastRecommendation fastNextRecommendationList()
+    {
+        IntList list = null;
+        if(!this.hasEnded)
+        {
+            int uidx = selection.selectTarget();
+            IntList candidates = selection.selectCandidates(uidx);
+            if(uidx >= 0 && candidates != null && !candidates.isEmpty())
+            {
+                list = this.recommender.next(uidx, candidates, cutoff);
+            }
+            else
+            {
+                this.hasEnded = true;
+            }
+
+            return new FastRecommendation(uidx, list);
+        }
+        return null;
     }
 
     @Override
@@ -188,11 +271,39 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     }
 
     @Override
+    public void fastUpdate(FastRecommendation rec)
+    {
+        int uidx = rec.getUidx();
+        rec.getIidxs().forEach(iidx -> this.fastUpdate(uidx,iidx));
+    }
+
+    @Override
     public Tuple2<U,I> nextIteration()
     {
         Pair<Integer> rec = this.fastNextRecommendation();
         if(rec == null) return null;
         else return new Tuple2<>(this.dataset.uidx2user(rec.v1()), this.dataset.iidx2item(rec.v2()));
+    }
+
+    @Override
+    public Recommendation<U,I> nextIterationList()
+    {
+        FastRecommendation rec = this.fastNextRecommendationList();
+        if(rec == null) return null;
+        else
+        {
+            U u = this.dataset.uidx2user(rec.getUidx());
+            List<I> items = new ArrayList<>();
+            rec.getIidxs().forEach(iidx -> items.add(dataset.iidx2item(iidx)));
+            return new Recommendation<>(u, items);
+        }
+    }
+
+    @Override
+    public void update(Recommendation<U,I> rec)
+    {
+        U u = rec.getUser();
+        rec.getItems().forEach(i -> this.update(u,i));
     }
 
     @Override

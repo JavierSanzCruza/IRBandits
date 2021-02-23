@@ -39,10 +39,16 @@ public interface RecommendationLoop<U,I>
 
     /**
      * Executes the complete following iteration of the recommendation loop.
-     * @return a triplet indicating: the selected user, the item id, and the payoff of the recommendation if the algorithm
+     * @return a tuple indicating: the selected user and the recommended item id if the algorithm
      * is able to generate a recommendation, null otherwise.
      */
     Tuple2<U,I> nextIteration();
+
+    /**
+     * Executes the complete following interation of the recommendation loop. It returns a list of items.
+     * @return the recommendation if it is able to generate it, null otherwise.
+     */
+    Recommendation<U,I> nextIterationList();
 
     /**
      * Obtains the result of a recommendation for the recommendation loop.
@@ -51,11 +57,23 @@ public interface RecommendationLoop<U,I>
     Tuple2<U,I> nextRecommendation();
 
     /**
+     * Obtains the result of a recommendation for the recommendation loop.
+     * @return A recommendation.
+     */
+    Recommendation<U,I> nextRecommendationList();
+
+    /**
      * Updates the algorithms and metrics after receiving a metric
      * @param u the identifier of the user.
      * @param i the identifier of the items.
      */
     void update(U u, I i);
+
+    /**
+     * Updates the algorithms and metrics after receiving a recommendation list.
+     * @param rec the recommendation list.
+     */
+    void update(Recommendation<U,I> rec);
 
     /**
      * Checks whether a recommendation loop has ended or not.
