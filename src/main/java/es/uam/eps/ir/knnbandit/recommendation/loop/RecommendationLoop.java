@@ -39,7 +39,7 @@ public interface RecommendationLoop<U,I>
 
     /**
      * Executes the complete following iteration of the recommendation loop.
-     * @return a triplet indicating: the selected user, the item id, and the payoff of the recommendation if the algorithm
+     * @return a tuple indicating: the selected user and the recommended item id if the algorithm
      * is able to generate a recommendation, null otherwise.
      */
     Tuple2<U,I> nextIteration();

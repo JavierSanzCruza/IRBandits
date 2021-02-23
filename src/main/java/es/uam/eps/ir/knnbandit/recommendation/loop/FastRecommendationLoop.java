@@ -24,13 +24,13 @@ public interface FastRecommendationLoop<U,I> extends RecommendationLoop<U,I>
 {
     /**
      * Executes the complete following iteration of the recommendation loop.
-     * @return a triplet indicating: the selected user index, the item index, and the payoff of the recommendation if the algorithm
+     * @return a tuple indicating: the selected user index and the item index if the algorithm
      * is able to generate a recommendation, null otherwise.
      */
     Pair<Integer> fastNextIteration();
     /**
      * Obtains the result of a recommendation for the recommendation loop.
-     * @return a triplet indicating: the selected user index, the item index, and the payoff of the recommendation if the algorithm
+     * @return a tuple indicating: the selected user index, the item index if the algorithm
      * is able to generate a recommendation, null otherwise.
      */
     Pair<Integer> fastNextRecommendation();
