@@ -13,7 +13,10 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.ranksys.core.util.tuples.Tuple2id;
 
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.stream.IntStream;
 
 /**
@@ -97,6 +100,46 @@ public abstract class AbstractBasicInteractiveRecommender<U, I> extends Interact
             }
 
             return nextItem;
+        }
+    }
+
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+        else
+        {
+            IntList top = new IntArrayList();
+
+            int num = Math.min(availability.size(), k);
+            PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+
+            for (int iidx : availability)
+            {
+                if(queue.size() < num)
+                {
+                    queue.add(new Tuple2id(iidx, values[iidx]));
+                }
+                else
+                {
+                    Tuple2id newTuple = new Tuple2id(iidx, values[iidx]);
+                    if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                    {
+                        queue.poll();
+                        queue.add(newTuple);
+                    }
+                }
+            }
+
+            while(!queue.isEmpty())
+            {
+                top.add(0, queue.poll().v1);
+            }
+
+            return top;
         }
     }
 }

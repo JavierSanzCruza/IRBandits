@@ -18,6 +18,10 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.ranksys.core.util.tuples.Tuple2id;
+
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
 
 /**
@@ -130,6 +134,56 @@ public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFReco
         }
     }
 
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+
+        DoubleMatrix1D pu = this.P.viewRow(uidx);
+        DoubleMatrix2D sigmau = this.stdevP[uidx];
+
+        IntList top = new IntArrayList();
+
+        int num = Math.min(k, availability.size());
+        PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+        for (int iidx : availability)
+        {
+            DoubleMatrix1D qi = this.Q.viewRow(iidx);
+            DoubleMatrix1D aux = new DenseDoubleMatrix1D(this.k);
+
+            sigmau.zMult(qi, aux);
+
+            // x_ui = alpha*||q_i||_{2,\Sigma_{u,t}}
+            double extra = ALG.mult(qi, aux);
+
+            // score = p_u^t q_i + x_ui
+            double val = ALG.mult(pu, qi) + this.alpha * Math.sqrt(extra);
+
+            if(queue.size() < num)
+            {
+                queue.add(new Tuple2id(iidx, val));
+            }
+            else
+            {
+                Tuple2id newTuple = new Tuple2id(iidx, val);
+                if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                {
+                    queue.poll();
+                    queue.add(newTuple);
+                }
+            }
+
+            while(!queue.isEmpty())
+            {
+                top.add(0, queue.poll().v1);
+            }
+        }
+
+        return top;
+    }
 
     @Override
     public void update(int uidx, int iidx, double value)

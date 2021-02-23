@@ -13,6 +13,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
 
@@ -83,6 +84,24 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
         {
             return availability.get(rng.nextInt(availability.size()));
         }
+    }
+
+    @Override
+    public IntList next(int uidx, IntList available, int k)
+    {
+        IntList avCopy = new IntArrayList();
+        available.forEach(avCopy::add);
+
+        IntList list = new IntArrayList();
+        int num = Math.min(available.size(), k);
+        for(int i = 0; i < num; ++i)
+        {
+            int elem = this.next(uidx, avCopy);
+            list.add(elem);
+            avCopy.remove(avCopy.indexOf(elem));
+        }
+
+        return list;
     }
 
     @Override

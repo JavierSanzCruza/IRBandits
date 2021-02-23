@@ -22,7 +22,10 @@ import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
+import org.ranksys.core.util.tuples.Tuple2id;
 
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.stream.Stream;
 
 
@@ -176,6 +179,63 @@ public class GeneralizedLinearUCBPMFInteractiveRecommender<U, I> extends Interac
             return top.get(idx);
         }
     }
+
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+
+        DoubleMatrix1D pu = this.P.viewRow(uidx);
+        DoubleMatrix2D sigmau = this.stdevP[uidx];
+
+        double utemp = Math.log(this.counters.get(uidx));
+        IntList top = new IntArrayList();
+
+        int num = Math.min(k, availability.size());
+        PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+        for (int iidx : availability)
+        {
+            DoubleMatrix1D qi = this.Q.viewRow(iidx);
+            DoubleMatrix1D aux = new DenseDoubleMatrix1D(this.k);
+
+            sigmau.zMult(qi, aux);
+
+            // x_ui = \sqrt(log t)||q_i||_{2,\Sigma_{u,t}}
+            double extra = Math.log(utemp) * ALG.mult(qi, aux);
+
+            // rho(p_u^t q_i) = \frac{1}{1 + e^{- p_u^t q_i}}
+            double rho = ALG.mult(pu, qi);
+            rho = 1.0 / (1.0 + Math.exp(-rho));
+
+            // score = rho(p_u^t q_i) + x_ui
+            double val = rho + this.alpha * Math.sqrt(extra);
+
+            if(queue.size() < num)
+            {
+                queue.add(new Tuple2id(iidx, val));
+            }
+            else
+            {
+                Tuple2id newTuple = new Tuple2id(iidx, val);
+                if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                {
+                    queue.poll();
+                    queue.add(newTuple);
+                }
+            }
+
+            while(!queue.isEmpty())
+            {
+                top.add(0, queue.poll().v1);
+            }
+        }
+
+        return top;
+    }
+
 
     @Override
     public void update(int uidx, int iidx, double value)

@@ -258,6 +258,98 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         return top.get(rng.nextInt(topSize));
     }
 
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+
+        IntList top = new IntArrayList();
+        int num = Math.min(availability.size(), k);
+
+        // Shuffle the order of users.
+        Collections.shuffle(userList, neighborUntie);
+
+        // Obtain the top-k best neighbors for user uidx.
+        PriorityQueue<Tuple2id> neighborHeap = new PriorityQueue<>(k, comp);
+        this.sim.similarElems(uidx).forEach(vidx ->
+        {
+            double s = vidx.v2;
+            if (neighborHeap.size() < k)
+            {
+                neighborHeap.add(new Tuple2id(vidx.v1, vidx.v2));
+            }
+            else
+            {
+                assert neighborHeap.peek() != null;
+                if (neighborHeap.peek().v2 <= s)
+                {
+                    neighborHeap.poll();
+                    neighborHeap.add(new Tuple2id(vidx.v1, s));
+                }
+            }
+        });
+
+        // If no neighbor has been selected, then, select an item at random.
+        if (!neighborHeap.isEmpty())
+        {
+            // Generate the scores for the different items.
+            Int2DoubleOpenHashMap itemScores = new Int2DoubleOpenHashMap();
+            itemScores.defaultReturnValue(0.0);
+            IntSet availableItems = new IntOpenHashSet(availability);
+
+            // Then, generate scores for the different items.
+            while (!neighborHeap.isEmpty())
+            {
+                Tuple2id neigh = neighborHeap.poll();
+
+                retrievedData.getUidxPreferences(neigh.v1).filter(vs -> availableItems.contains(vs.v1)).forEach(vs ->
+                {
+                    double p = neigh.v2 * this.score(neigh.v1, vs.v2);
+                    if (!ignoreZeros || p > 0)
+                    {
+                        itemScores.addTo(vs.v1, p);
+                    }
+                });
+            }
+
+            PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+            for(int iidx : itemScores.keySet())
+            {
+                double val = itemScores.get(iidx);
+                if(queue.size() < num)
+                {
+                    queue.add(new Tuple2id(iidx, val));
+                }
+                else
+                {
+                    Tuple2id newTuple = new Tuple2id(iidx, val);
+                    if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                    {
+                        queue.poll();
+                        queue.add(newTuple);
+                    }
+                }
+            }
+
+            while(!queue.isEmpty())
+            {
+                top.add(0, queue.poll().v1);
+            }
+        }
+
+        while(top.size() < num)
+        {
+            int idx = rng.nextInt(availability.size());
+            int item = availability.get(idx);
+            if(!top.contains(item)) top.add(item);
+        }
+
+        return top;
+    }
+
     /**
      * Scoring function.
      *

@@ -59,6 +59,16 @@ public abstract class ItemBandit<U, I>
     public abstract int next(int uidx, IntList available, ValueFunction valF);
 
     /**
+     * Selects a list of arms, given that the selection of them is available.
+     * @param uidx          Identifier of the user.
+     * @param availability  The selection of available items.
+     * @param valF      A function that determines the effective value of the arm, given a context.
+     * @param k             The number of items to select.
+     * @return a list of selected items.
+     */
+    public abstract IntList next(int uidx, IntList availability, ValueFunction valF, int k);
+
+    /**
      * Updates the corresponding item, given the reward.
      *
      * @param iidx  The item to update.

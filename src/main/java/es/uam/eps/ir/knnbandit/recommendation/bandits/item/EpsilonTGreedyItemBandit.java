@@ -61,9 +61,9 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
     /**
      * Constructor.
      *
-     * @param alpha
-     * @param numItems
-     * @param updateFunction
+     * @param alpha slope parameter.
+     * @param numItems the number of arms of the bandit.
+     * @param updateFunction the update function for the arms.
      */
     public EpsilonTGreedyItemBandit(double alpha, int numItems, EpsilonGreedyUpdateFunction updateFunction)
     {
@@ -185,6 +185,24 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
                 return iidx;
             }
         }
+    }
+
+    @Override
+    public IntList next(int uidx, IntList available, ValueFunction valFunc, int k)
+    {
+        IntList avCopy = new IntArrayList();
+        available.forEach(avCopy::add);
+
+        IntList list = new IntArrayList();
+        int num = Math.min(available.size(), k);
+        for(int i = 0; i < num; ++i)
+        {
+            int elem = this.next(uidx, avCopy, valFunc);
+            list.add(elem);
+            avCopy.remove(avCopy.indexOf(elem));
+        }
+
+        return list;
     }
 
     @Override

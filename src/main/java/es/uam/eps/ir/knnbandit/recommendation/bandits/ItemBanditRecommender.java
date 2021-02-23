@@ -90,4 +90,10 @@ public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
     {
         return this.itemBandit.next(uidx, availability.toIntArray(), valFunc);
     }
+
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        return this.itemBandit.next(uidx, availability, valFunc, k);
+    }
 }

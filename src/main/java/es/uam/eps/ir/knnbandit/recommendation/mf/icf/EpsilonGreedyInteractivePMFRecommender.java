@@ -145,6 +145,24 @@ public class EpsilonGreedyInteractivePMFRecommender<U, I> extends InteractivePMF
     }
 
     @Override
+    public IntList next(int uidx, IntList available, int k)
+    {
+        IntList avCopy = new IntArrayList();
+        available.forEach(avCopy::add);
+
+        IntList list = new IntArrayList();
+        int num = Math.min(available.size(), k);
+        for(int i = 0; i < num; ++i)
+        {
+            int elem = this.next(uidx, avCopy);
+            list.add(elem);
+            avCopy.remove(avCopy.indexOf(elem));
+        }
+
+        return list;
+    }
+
+    @Override
     public void update(int uidx, int iidx, double value)
     {
         double newValue;

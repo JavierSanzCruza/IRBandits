@@ -165,6 +165,18 @@ public abstract class InteractiveRecommender<U, I>
     public abstract int next(int uidx, IntList available);
 
     /**
+     * Given a user, and the list of available items, returns a top-k recommendation (when possible).
+     * If the algorithm can only recommend l < k items, but there are more available, those are
+     * recommended randomly.
+     *
+     * @param uidx user identifier.
+     * @param available the list of identifiers of the candidate items.
+     * @param k the number of items to recommend.
+     * @return a list of recommended items.
+     */
+    public abstract IntList next(int uidx, IntList available, int k);
+
+    /**
      * Updates the method.
      *
      * @param uidx  User identifier.

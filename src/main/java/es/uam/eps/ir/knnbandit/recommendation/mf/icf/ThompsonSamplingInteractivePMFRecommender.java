@@ -24,10 +24,9 @@ import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
+import org.ranksys.core.util.tuples.Tuple2id;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -227,6 +226,54 @@ public class ThompsonSamplingInteractivePMFRecommender<U, I> extends Interactive
             this.lastqi = itemVectors.get(idx);
             return top.get(idx);
         }
+    }
+
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+
+        // First, we estimate the user vector from a Multivariate Gaussian distribution
+        DoubleMatrix1D originalPU = this.P.viewRow(uidx);
+        DoubleMatrix1D pu = this.sampleMultivariateNormalDistrib(originalPU, this.userDecomposed[uidx], this.userEigenvalues[uidx]);
+
+        IntList top = new IntArrayList();
+
+        int num = Math.min(k, availability.size());
+        PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+        for (int iidx : availability)
+        {
+            DoubleMatrix1D originalQi = this.Q.viewRow(iidx);
+            // First, we sample an item vector, using a Multivariate Gaussian distribution
+            DoubleMatrix1D qi = this.sampleMultivariateNormalDistrib(originalQi, this.itemDecomposed[iidx], this.itemEigenvalues[iidx]);
+
+            // Find the product of the sampled vectors: p_u^t *
+            double val = ALG.mult(pu, qi);
+
+            if(queue.size() < num)
+            {
+                queue.add(new Tuple2id(iidx, val));
+            }
+            else
+            {
+                Tuple2id newTuple = new Tuple2id(iidx, val);
+                if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                {
+                    queue.poll();
+                    queue.add(newTuple);
+                }
+            }
+
+            while(!queue.isEmpty())
+            {
+                top.add(0, queue.poll().v1);
+            }
+        }
+
+        return top;
     }
 
     @Override
