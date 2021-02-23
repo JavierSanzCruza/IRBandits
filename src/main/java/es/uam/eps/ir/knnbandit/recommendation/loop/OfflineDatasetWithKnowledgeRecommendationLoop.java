@@ -48,4 +48,19 @@ public class OfflineDatasetWithKnowledgeRecommendationLoop<U,I> extends GenericR
     {
         super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed), false), recommender, new WithKnowledgeUpdate<>(dataUse), endCondition, metrics, rngSeed);
     }
+
+    /**
+     * Constructor.
+     *
+     * @param dataset      the dataset containing all the information.
+     * @param recommender  the interactive recommendation algorithm.
+     * @param metrics      the set of metrics we want to study.
+     * @param endCondition the condition that establishes whether the loop has finished or not.
+     * @param dataUse      a selection of the subset of the ratings we shall use for updates.
+     * @param rngSeed      a seed for a random number generator
+     */
+    public OfflineDatasetWithKnowledgeRecommendationLoop(DatasetWithKnowledge<U, I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, KnowledgeDataUse dataUse, int rngSeed, int cutoff)
+    {
+        super(dataset, new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed), false), recommender, new WithKnowledgeUpdate<>(dataUse), endCondition, metrics, rngSeed, cutoff);
+    }
 }

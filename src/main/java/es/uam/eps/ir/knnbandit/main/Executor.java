@@ -10,9 +10,14 @@
 package es.uam.eps.ir.knnbandit.main;
 
 import es.uam.eps.ir.knnbandit.io.Writer;
+import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendation;
 import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.formats.parsing.Parsers;
 
@@ -78,20 +83,40 @@ public class Executor<U,I>
 
         try
         {
-            // Step 1: retrieve the previously computed iterations for this algorithm:
-            List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
-            if (resume)
+            Writer writer;
+            if(loop.getCutoff() == 1)
             {
-                list = this.retrievePreviousIterations(file +  ".txt");
+                // Step 1: retrieve the previously computed iterations for this algorithm:
+                List<Tuple3<Integer, Integer, Long>> list = new ArrayList<>();
+                if (resume)
+                {
+                    list = this.retrievePreviousIterations(file);
+                }
+
+                writer = new Writer(file, loop.getMetrics());
+                writer.writeHeader();
+
+                // Step 2: if there are any, we update the loop with such values.
+                if (resume && !list.isEmpty())
+                {
+                    metricValues.putAll(this.updateWithPrevious(loop, list, writer, interval));
+                }
             }
-
-            Writer writer = new Writer(file, loop.getMetrics());
-            writer.writeHeader();
-
-            // Step 2: if there are any, we update the loop with such values.
-            if (resume && !list.isEmpty())
+            else
             {
-                metricValues.putAll(this.updateWithPrevious(loop, list, writer, interval));
+                List<Tuple2<FastRecommendation, Long>> list = new ArrayList<>();
+                if(resume)
+                {
+                    list = this.retrievePreviousIterationsRankings(file);
+                }
+
+                writer = new Writer(file, loop.getMetrics());
+                writer.writeHeader();
+
+                if(resume && !list.isEmpty())
+                {
+                    metricValues.putAll(this.updateWithPreviousRankings(loop, list, writer, interval));
+                }
             }
 
             // Step 3: until the loop ends, we
@@ -104,6 +129,75 @@ public class Executor<U,I>
             System.err.println("ERROR: Some error occurred when executing algorithm " + file);
             return null;
         }
+    }
+
+    /**
+     * Retrieves previous iterations of an execution, when the execution comes in the form of rankings.
+     *
+     * @param filename the name of the file.
+     * @return a list containing the retrieved (recommendation ranking, time) tuples.
+     * @throws IOException if something fails while reading the file.
+     */
+    public List<Tuple2<FastRecommendation, Long>> retrievePreviousIterationsRankings(String filename) throws IOException
+    {
+        List<Tuple2<FastRecommendation, Long>> recovered = new ArrayList<>();
+
+        File f = new File(filename);
+        boolean storeLast = true;
+        if(f.exists() && !f.isDirectory())
+        {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filename))))
+            {
+                String line = br.readLine();
+                int len;
+                if(line != null)
+                {
+                    String[] split = line.split("\t");
+                    len = split.length;
+
+                    int numIter = -1;
+                    int uidx = -1;
+                    long time = -1;
+                    IntList rec = new IntArrayList();
+
+                    // Read each line
+                    while((line = br.readLine()) != null)
+                    {
+                        split = line.split("\t");
+                        if(split.length < len)
+                        {
+                            storeLast = false;
+                        }
+
+                        int currentIter = Parsers.ip.parse(split[0]);
+                        if(numIter == -1 || numIter == currentIter - 1)
+                        {
+                            if(numIter != -1)
+                            {
+                                recovered.add(new Tuple2<>(new FastRecommendation(uidx, rec), time));
+                                rec = new IntArrayList();
+                            }
+
+                            if(!storeLast) break;
+                            numIter = currentIter;
+                            uidx = Parsers.ip.parse(split[1]);
+                            time = Parsers.lp.parse(split[len-1]);
+                        }
+
+                        if(!storeLast) break;
+                        int iidx = Parsers.ip.parse(split[2]);
+                        rec.add(iidx);
+                    }
+
+                    if(storeLast)
+                    {
+                        recovered.add(new Tuple2<>(new FastRecommendation(uidx, rec), time));
+                    }
+                }
+            }
+        }
+
+        return recovered;
     }
 
     /**
@@ -154,6 +248,53 @@ public class Executor<U,I>
 
         return recovered;
     }
+
+    /**
+     * Given the list of recovered ranking-time tuples, updates the recommendation loop.
+     *
+     * @param loop      the recommendation loop.
+     * @param recovered the list of recovered (ranking, time) tuples.
+     * @param writer    a writer for storing the recommendation loop in a file.
+     * @param interval  the interval between different data points.
+     * @return a map containing the values of the metrics in certain time points.
+     * @throws IOException if something fails while writing.
+     */
+    public Map<String, List<Double>> updateWithPreviousRankings(FastRecommendationLoop<U,I> loop, List<Tuple2<FastRecommendation, Long>> recovered, Writer writer, int interval) throws IOException
+    {
+        List<String> metricNames = loop.getMetrics();
+        Map<String, List<Double>> metricValues = new HashMap<>();
+
+        for(String name : metricNames)
+        {
+            metricValues.put(name, new ArrayList<>());
+        }
+
+        for(Tuple2<FastRecommendation, Long> tuple : recovered)
+        {
+            FastRecommendation rec = tuple.v1;
+            long time = tuple.v2;
+
+            loop.fastUpdate(rec);
+            loop.increaseIteration();
+
+            int iter = loop.getCurrentIter();
+
+            Map<String, Double> metricVals = loop.getMetricValues();
+            writer.writeRanking(iter, rec, metricVals, time);
+
+            if(iter % interval == 0)
+            {
+                for(String name : metricNames)
+                {
+                    double value = metricVals.get(name);
+                    metricValues.get(name).add(value);
+                }
+            }
+        }
+
+        return metricValues;
+    }
+
 
     /**
      * Given the list of recovered triplets, updates the recommendation loop.
@@ -212,24 +353,45 @@ public class Executor<U,I>
     public int executeRemaining(FastRecommendationLoop<U, I> loop, Writer writer, int interval, Map<String, List<Double>> metricValues) throws IOException
     {
         List<String> metricNames = loop.getMetrics();
+        boolean ranking = loop.getCutoff() > 1;
 
         // Apply it until the end.
         while (!loop.hasEnded())
         {
-            long aa = System.currentTimeMillis();
-            Pair<Integer> rating = loop.fastNextIteration();
-            long bb = System.currentTimeMillis();
+            Map<String, Double> metrics;
+            int numIter;
+            long time;
+            if(ranking)
+            {
+                long aa = System.currentTimeMillis();
+                Pair<Integer> rating = loop.fastNextIteration();
+                long bb = System.currentTimeMillis();
 
-            if(rating == null)
-                break; // Everything has finished
+                if (rating == null)
+                    break; // Everything has finished
 
-            int uidx = rating.v1();
-            int iidx = rating.v2();
-            long time = bb - aa;
-            int numIter = loop.getCurrentIter();
-            Map<String, Double> metrics = loop.getMetricValues();
+                int uidx = rating.v1();
+                int iidx = rating.v2();
+                time = bb - aa;
+                numIter = loop.getCurrentIter();
+                metrics = loop.getMetricValues();
 
-            writer.writeLine(numIter, uidx, iidx, metrics, time);
+                writer.writeLine(numIter, uidx, iidx, metrics, time);
+            }
+            else
+            {
+                long aa = System.currentTimeMillis();
+                FastRecommendation rec = loop.fastNextIterationList();
+                long bb = System.currentTimeMillis();
+
+                if(rec == null)
+                    break; // Everything has finished
+
+                time = bb-aa;
+                numIter = loop.getCurrentIter();
+                metrics = loop.getMetricValues();
+                writer.writeRanking(numIter, rec, metrics, time);
+            }
 
             if (numIter % interval == 0)
             {

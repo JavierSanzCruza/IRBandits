@@ -48,6 +48,8 @@ public class GeneralValidation<U,I> extends Validation<U,I>
      */
     private final Map<String, Supplier<CumulativeMetric<U,I>>> metrics;
 
+    private final int cutoff;
+
     /**
      * Constructor.
      * @param input file containing the information about the ratings.
@@ -58,17 +60,16 @@ public class GeneralValidation<U,I> extends Validation<U,I>
      * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
      * @throws IOException if something fails while reading the dataset.
      */
-    public GeneralValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings) throws IOException
+    public GeneralValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, int cutoff) throws IOException
     {
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
-        double realThreshold = useRatings ? threshold : 0.5;
 
         dataset = GeneralDataset.load(input, uParser, iParser, separator, weightFunction, relevance);
         this.metrics = new HashMap<>();
         metrics.put("recall", CumulativeRecall::new);
+        this.cutoff = cutoff;
     }
-
 
     @Override
     protected Dataset<U, I> getDataset()
@@ -81,7 +82,7 @@ public class GeneralValidation<U,I> extends Validation<U,I>
     {
         Map<String, CumulativeMetric<U,I>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new GeneralOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed);
+        return new GeneralOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed, cutoff);
     }
 
     @Override

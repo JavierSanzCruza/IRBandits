@@ -60,6 +60,7 @@ public class WithKnowledgeWarmupRecommendation<U,I> extends WarmupRecommendation
      */
     private final KnowledgeDataUse dataUse;
     private final WarmupType warmupType;
+    private final int cutoff;
 
     /**
      * Constructor.
@@ -71,7 +72,7 @@ public class WithKnowledgeWarmupRecommendation<U,I> extends WarmupRecommendation
      * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
      * @throws IOException if something fails while reading the dataset.
      */
-    public WithKnowledgeWarmupRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, WarmupType warmup) throws IOException
+    public WithKnowledgeWarmupRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, WarmupType warmup, int cutoff) throws IOException
     {
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
@@ -81,6 +82,7 @@ public class WithKnowledgeWarmupRecommendation<U,I> extends WarmupRecommendation
         metrics.put("recall", CumulativeRecall::new);
         this.warmupType = warmup;
         this.dataUse = use;
+        this.cutoff = cutoff;
     }
 
 
@@ -95,7 +97,7 @@ public class WithKnowledgeWarmupRecommendation<U,I> extends WarmupRecommendation
     {
         Map<String, CumulativeMetric<U,I>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new OfflineDatasetWithKnowledgeRecommendationLoop<>(dataset, rec, localMetrics, endCond, dataUse, rngSeed);
+        return new OfflineDatasetWithKnowledgeRecommendationLoop<>(dataset, rec, localMetrics, endCond, dataUse, rngSeed, cutoff);
     }
 
     @Override

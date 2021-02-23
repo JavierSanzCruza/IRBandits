@@ -89,6 +89,7 @@ public class WarmupValidationSelector
         Supplier<EndCondition> endCond = EndConditionSelector.select(Parsers.dp.parse(execArgs[3]));
         boolean resume = execArgs[4].equalsIgnoreCase("true");
         int k = 1;
+        int cutoff = 1;
         WarmupType warmup = WarmupType.FULL;
         for (int i = lastIndex; i < execArgs.length; ++i)
         {
@@ -97,10 +98,15 @@ public class WarmupValidationSelector
                 ++i;
                 k = Parsers.ip.parse(args[i]);
             }
-            if("-type".equals(args[i]))
+            else if("-type".equals(args[i]))
             {
                 ++i;
                 warmup = WarmupType.fromString(args[i]);
+            }
+            else if("-cutoff".equals(args[i]))
+            {
+                ++i;
+                cutoff = Parsers.ip.parse(args[i]);
             }
         }
 
@@ -119,12 +125,12 @@ public class WarmupValidationSelector
                 boolean useRatings = execArgs[10].equalsIgnoreCase("true");
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    WarmupValidation<Long, Long> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup);
+                    WarmupValidation<Long, Long> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup, cutoff);
                     valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    WarmupValidation<Long, String> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup);
+                    WarmupValidation<Long, String> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup, cutoff);
                     valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 }
                 break;
@@ -134,7 +140,7 @@ public class WarmupValidationSelector
                 boolean directed = execArgs[9].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[10].equalsIgnoreCase("true");
 
-                WarmupValidation<Long, Long> valid = new ContactWarmupValidation<>(input, "\t", Parsers.lp, directed, notReciprocal, warmup);
+                WarmupValidation<Long, Long> valid = new ContactWarmupValidation<>(input, "\t", Parsers.lp, directed, notReciprocal, warmup, cutoff);
                 valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
 
                 break;
@@ -145,7 +151,7 @@ public class WarmupValidationSelector
                 boolean useRatings = execArgs[10].equalsIgnoreCase("true");
                 KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[11]);
 
-                WarmupValidation<Long, Long> valid = new WithKnowledgeWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, warmup);
+                WarmupValidation<Long, Long> valid = new WithKnowledgeWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, warmup, cutoff);
                 valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 break;
             }
@@ -199,6 +205,7 @@ public class WarmupValidationSelector
 
         builder.append("Optional arguments:\n");
         builder.append("\t-k value : The number of times each individual approach has to be executed (by default: 1)");
+        builder.append("\t-cutoff value : The number of items to recommend on each iteration (by default: 1)");
 
         return builder.toString();
     }

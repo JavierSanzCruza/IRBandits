@@ -98,4 +98,8 @@ public interface RecommendationLoop<U,I>
      * @return a list containing the names of the metrics used in the loop.
      */
     List<String> getMetrics();
+
+    void increaseIteration();
+
+    int getCutoff();
 }

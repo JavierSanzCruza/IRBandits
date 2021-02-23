@@ -8,6 +8,8 @@
  */
 package es.uam.eps.ir.knnbandit.io;
 
+import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendation;
+
 import java.io.BufferedWriter;
 import java.io.*;
 import java.util.List;
@@ -88,6 +90,24 @@ public class Writer
         builder.append("\t");
         builder.append(time);
         bw.write(builder.toString());
+    }
+
+    /**
+     * Writes a recommendation ranking.
+     *
+     * @param numIter   iteration number
+     * @param rec       the recommendation
+     * @param metrics   the metrics
+     * @param time      the time needed to execute this iteration.
+     * @throws IOException if something fails while writing.
+     */
+    public void writeRanking(int numIter, FastRecommendation rec, Map<String, Double> metrics, long time) throws IOException
+    {
+        int uidx = rec.getUidx();
+        for(int iidx : rec.getIidxs())
+        {
+            this.writeLine(numIter, uidx, iidx, metrics, time);
+        }
     }
 
     /**

@@ -163,6 +163,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
         if(rec != null)
         {
             this.fastUpdate(rec.v1(), rec.v2());
+            this.increaseIteration();
         }
         return rec;
     }
@@ -174,6 +175,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
         if(rec != null)
         {
             this.fastUpdate(rec);
+            this.increaseIteration();
         }
         return rec;
     }
@@ -267,7 +269,6 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             metrics.forEach((name, metric) -> metric.update(value.uidx(), value.iidx(),value.value()));
             endCond.update(value.uidx(), value.iidx(),value.value());
         }
-        numIter++;
     }
 
     @Override
@@ -336,5 +337,17 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     public List<String> getMetrics()
     {
         return this.metricNames;
+    }
+
+    @Override
+    public void increaseIteration()
+    {
+        ++this.numIter;
+    }
+
+    @Override
+    public int getCutoff()
+    {
+        return this.cutoff;
     }
 }

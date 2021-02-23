@@ -54,6 +54,9 @@ public class WithKnowledgeValidation<U,I> extends Validation<U,I>
      * Data use.
      */
     private final KnowledgeDataUse dataUse;
+
+    private final int cutoff;
+
     /**
      * Constructor.
      * @param input file containing the information about the ratings.
@@ -65,7 +68,7 @@ public class WithKnowledgeValidation<U,I> extends Validation<U,I>
      * @param use the type of data we are using (according to the whether the user knows or not about the items).
      * @throws IOException if something fails while reading the dataset.
      */
-    public WithKnowledgeValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use) throws IOException
+    public WithKnowledgeValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, int cutoff) throws IOException
     {
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
@@ -76,6 +79,7 @@ public class WithKnowledgeValidation<U,I> extends Validation<U,I>
         metrics.put("known-recall", () -> new CumulativeKnowledgeRecall<>(KnowledgeDataUse.ONLYKNOWN));
         metrics.put("unknown-recall", () -> new CumulativeKnowledgeRecall<>(KnowledgeDataUse.ONLYUNKNOWN));
         this.dataUse = use;
+        this.cutoff = cutoff;
     }
 
 
@@ -90,7 +94,7 @@ public class WithKnowledgeValidation<U,I> extends Validation<U,I>
     {
         Map<String, CumulativeMetric<U,I>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new OfflineDatasetWithKnowledgeRecommendationLoop<>(dataset, rec, localMetrics, endCond, this.dataUse, rngSeed);
+        return new OfflineDatasetWithKnowledgeRecommendationLoop<>(dataset, rec, localMetrics, endCond, this.dataUse, rngSeed, cutoff);
     }
 
     @Override

@@ -56,6 +56,7 @@ public class GeneralWarmupValidation<U,I> extends WarmupValidation<U,I>
      */
     private final Map<String, Supplier<CumulativeMetric<U,I>>> metrics;
     private final WarmupType warmupType;
+    private final int cutoff;
 
     /**
      * Constructor.
@@ -67,7 +68,7 @@ public class GeneralWarmupValidation<U,I> extends WarmupValidation<U,I>
      * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
      * @throws IOException if something fails while reading the dataset.
      */
-    public GeneralWarmupValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, WarmupType warmup) throws IOException
+    public GeneralWarmupValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, WarmupType warmup, int cutoff) throws IOException
     {
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
@@ -76,8 +77,8 @@ public class GeneralWarmupValidation<U,I> extends WarmupValidation<U,I>
         this.metrics = new HashMap<>();
         metrics.put("recall", CumulativeRecall::new);
         this.warmupType = warmup;
+        this.cutoff = cutoff;
     }
-
 
     @Override
     protected Dataset<U, I> getDataset()
@@ -90,7 +91,6 @@ public class GeneralWarmupValidation<U,I> extends WarmupValidation<U,I>
     {
         return GeneralDataset.load(dataset, validationPairs);
     }
-
 
     @Override
     protected FastRecommendationLoop<U, I> getRecommendationLoop(Dataset<U,I> dataset, InteractiveRecommenderSupplier<U,I> rec, EndCondition endCond, int rngSeed)

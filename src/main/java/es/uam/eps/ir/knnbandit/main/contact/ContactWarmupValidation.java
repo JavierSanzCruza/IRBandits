@@ -40,13 +40,15 @@ public class ContactWarmupValidation<U> extends WarmupValidation<U,U>
     private final ContactDataset<U> dataset;
     private final Map<String, Supplier<CumulativeMetric<U,U>>> metrics;
     private final WarmupType warmupType;
+    private final int cutoff;
 
-    public ContactWarmupValidation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, WarmupType warmupType)
+    public ContactWarmupValidation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, WarmupType warmupType, int cutoff)
     {
         dataset = ContactDataset.load(input, directed, notReciprocal, parser, separator);
         this.metrics = new HashMap<>();
         metrics.put("recall", CumulativeRecall::new);
         this.warmupType = warmupType;
+        this.cutoff = cutoff;
     }
 
     @Override
@@ -66,7 +68,7 @@ public class ContactWarmupValidation<U> extends WarmupValidation<U,U>
     {
         Map<String, CumulativeMetric<U,U>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new ContactOfflineDatasetRecommendationLoop<>((ContactDataset<U>) validDataset, rec, localMetrics, endCond, rngSeed);
+        return new ContactOfflineDatasetRecommendationLoop<>((ContactDataset<U>) validDataset, rec, localMetrics, endCond, rngSeed, cutoff);
     }
 
     @Override
