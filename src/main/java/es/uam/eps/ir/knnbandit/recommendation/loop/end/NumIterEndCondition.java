@@ -9,6 +9,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop.end;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 
 /**
  * End condition that establishes the maximum number of iterations to execute.
@@ -51,6 +52,12 @@ public class NumIterEndCondition implements EndCondition
 
     @Override
     public void update(int uidx, int iidx, double value)
+    {
+        actualIter++;
+    }
+
+    @Override
+    public void update(FastRecommendation fastRec)
     {
         actualIter++;
     }

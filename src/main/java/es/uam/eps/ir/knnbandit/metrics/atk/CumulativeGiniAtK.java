@@ -10,8 +10,7 @@ package es.uam.eps.ir.knnbandit.metrics.atk;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex;
-import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
+import es.uam.eps.ir.knnbandit.utils.statistics.FastGiniIndex;
 
 import java.util.List;
 
@@ -29,7 +28,7 @@ public class CumulativeGiniAtK<U, I> extends CumulativeMetricAtK<U, I>
     /**
      * The updateable Gini index.
      */
-    private GiniIndex gini;
+    private FastGiniIndex gini;
 
     /**
      * Constructor.
@@ -44,31 +43,31 @@ public class CumulativeGiniAtK<U, I> extends CumulativeMetricAtK<U, I>
     @Override
     public void initialize(Dataset<U,I> dataset)
     {
-        this.gini = new GiniIndex(dataset.numItems());
+        this.gini = new FastGiniIndex(dataset.numItems());
     }
 
     @Override
     public void initialize(Dataset<U,I> dataset, List<FastRating> warmup)
     {
-        this.gini = new GiniIndex(dataset.numItems());
+        this.gini = new FastGiniIndex(dataset.numItems());
     }
 
     @Override
     public double compute()
     {
-        return this.gini.getValue();
+        return 1.0 - this.gini.getValue();
     }
 
     @Override
     protected void updateAdd(int uidx, int iidx)
     {
-        this.gini.updateFrequency(iidx, 1);
+        this.gini.increaseFrequency(iidx);
     }
 
     @Override
     protected void updateDel(int uidx, int iidx)
     {
-        this.gini.updateFrequency(iidx, -1);
+        this.gini.decreaseFrequency(iidx);
     }
 
     @Override

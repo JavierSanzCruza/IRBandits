@@ -2,15 +2,17 @@ package es.uam.eps.ir.knnbandit.utils.statistics;
 
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
-import it.unimi.dsi.fastutil.longs.*;
+import it.unimi.dsi.fastutil.longs.Long2IntAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.Long2IntMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2IntSortedMap;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
  * Class for computing and updating the Gini index.
  */
-public class GiniIndex2
+public class FastGiniIndex
 {
     /**
      * For each item in the collection, stores the number of times it has been recommended.
@@ -43,7 +45,7 @@ public class GiniIndex2
      *
      * @param numElements the number of elements to consider.
      */
-    public GiniIndex2(int numElements)
+    public FastGiniIndex(int numElements)
     {
         // initialize:
         this.numElements = numElements;
@@ -73,7 +75,7 @@ public class GiniIndex2
      * @param numElements total number of items.
      * @param frequencies frequencies for the different item values.
      */
-    public GiniIndex2(int numElements, Map<Integer, Long> frequencies)
+    public FastGiniIndex(int numElements, Map<Integer, Long> frequencies)
     {
         // Initialize the different variables.
         this.numElements = numElements;
@@ -120,7 +122,7 @@ public class GiniIndex2
      * @param idx the index of the element to increase in a unit.
      * @return true if everything went OK, false otherwise.
      */
-    public boolean updateFrequency(int idx)
+    public boolean increaseFrequency(int idx)
     {
         if (idx < 0 || idx >= this.numElements)
         {
@@ -158,6 +160,57 @@ public class GiniIndex2
 
         return true;
     }
+
+    /**
+     * Updates the different variables for the Gini index, considering
+     * a unit increment on the value. The value cannot descend 0.
+     * @param idx the index of the element to increase in a unit.
+     * @return true if everything went OK, false otherwise.
+     */
+    public boolean decreaseFrequency(int idx)
+    {
+        if (idx < 0 || idx >= this.numElements)
+        {
+            return false;
+        }
+
+
+        long oldFreq = this.frequencies.getOrDefault(idx, this.frequencies.defaultReturnValue());
+        long newFreq = oldFreq - 1;
+        if(newFreq < 0) return false;
+
+        // First, we obtain the indexes:
+        int minOldIndex = this.mins.get(oldFreq);
+        int maxOldIndex = this.maxs.get(oldFreq);
+
+        boolean delete = (minOldIndex == maxOldIndex);
+        boolean add = (!this.mins.containsKey(newFreq));
+
+        if(delete)
+        {
+            this.mins.remove(oldFreq);
+            this.maxs.remove(oldFreq);
+        }
+        else
+        {
+            this.mins.put(oldFreq, minOldIndex+1);
+        }
+
+        this.maxs.put(newFreq, minOldIndex);
+        if(add) this.mins.put(newFreq, minOldIndex);
+
+        this.numSum += (-2.0*minOldIndex + numElements + 1.0);
+        this.freqSum -= 1.0;
+
+        this.frequencies.put(idx, newFreq);
+
+        return true;
+    }
+
+
+
+
+
 
     /**
      * Given a relation of items and frequencies, updates the values of the

@@ -1,3 +1,4 @@
+import es.uam.eps.ir.knnbandit.utils.statistics.FastGiniIndex;
 import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ public class GiniTest
         gini.updateFrequency(0, 1);
         Assertions.assertEquals(1.0, gini.getValue(), 1E-4);
         // 2 0 0
-        gini.updateFrequency(0, 1);
+        gini.updateFrequency(0,1);
         Assertions.assertEquals(1.0, gini.getValue(), 1E-4);
         // 3 0 0
         gini.updateFrequency(0, 1);
@@ -54,8 +55,59 @@ public class GiniTest
         gini.updateFrequency(0, -1);
         Assertions.assertTrue(Double.isNaN(gini.getValue()));
 
-        gini.updateFrequency(0, 1);
-        Assertions.assertEquals(1.0, gini.getValue());
+        gini.updateFrequency(0, -1);
+        Assertions.assertTrue(Double.isNaN(gini.getValue()));
+
+        gini.reset();
+        Assertions.assertTrue(Double.isNaN(gini.getValue()));
+    }
+
+    @Test
+    public void oneStepFast()
+    {
+        int numItems = 3;
+        FastGiniIndex gini = new FastGiniIndex(numItems);
+
+        Assertions.assertTrue(Double.isNaN(gini.getValue()));
+        // 1 0 0
+        gini.increaseFrequency(0);
+        Assertions.assertEquals(1.0, gini.getValue(), 1E-4);
+        // 2 0 0
+        gini.increaseFrequency(0);
+        Assertions.assertEquals(1.0, gini.getValue(), 1E-4);
+        // 3 0 0
+        gini.increaseFrequency(0);
+        Assertions.assertEquals(1.0, gini.getValue(), 1E-4);
+        // 3 1 0
+        gini.increaseFrequency(1);
+        Assertions.assertEquals(0.75, gini.getValue(), 1E-4);
+        // 3 2 0
+        gini.increaseFrequency(1);
+        Assertions.assertEquals(0.6, gini.getValue(), 1E-4);
+        // 3 2 1
+        gini.increaseFrequency(2);
+        Assertions.assertEquals(1.0 / 3.0, gini.getValue(), 1E-4);
+        // 2 2 1
+        gini.decreaseFrequency(0);
+        Assertions.assertEquals(0.2, gini.getValue(), 1E-4);
+        // 2 1 1
+        gini.decreaseFrequency(1);
+        Assertions.assertEquals(0.25, gini.getValue(), 1E-4);
+        // 1 1 1
+        gini.decreaseFrequency(0);
+        Assertions.assertEquals(0.0, gini.getValue(), 1E-4);
+        // 1 1 0
+        gini.decreaseFrequency(2);
+        Assertions.assertEquals(0.5, gini.getValue(), 1E-4);
+        // 1 0 0
+        gini.decreaseFrequency(1);
+        Assertions.assertEquals(1.0, gini.getValue(), 1E-4);
+        // 0 0 0
+        gini.decreaseFrequency(0);
+        Assertions.assertTrue(Double.isNaN(gini.getValue()));
+
+        gini.decreaseFrequency(0);
+        Assertions.assertTrue(Double.isNaN(gini.getValue()));
 
         gini.reset();
         Assertions.assertTrue(Double.isNaN(gini.getValue()));

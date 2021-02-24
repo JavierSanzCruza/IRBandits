@@ -10,10 +10,7 @@
 package es.uam.eps.ir.knnbandit.main;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex;
-import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.ranksys.formats.parsing.Parsers;
 
@@ -32,10 +29,11 @@ import java.util.*;
 public abstract class AdvancedOutputResumer<U,I>
 {
     /**
-     * Summarizes all the executions in a file.
-     * @param input directory containing the recommendation files.
-     * @param points a list of time points to consider.
-     * @param recursive true if we want to make this recursive.
+     * Summarizes the contents of a directory.
+     * @param input     the directory containing the recommendation executions.
+     * @param points    the iterations we select from the summary.
+     * @param recursive true if we want to extend our summary to internal directories of the selected one.
+     * @throws IOException if something fails while reading or writing the files.
      */
     public void summarize(String input, IntList points, boolean recursive) throws IOException
     {
@@ -44,14 +42,20 @@ public abstract class AdvancedOutputResumer<U,I>
         points.sort(Comparator.naturalOrder());
 
         File directory = new File(input);
-        if(!directory.isDirectory())
+        if(!directory.exists())
         {
-            System.err.println("ERROR: " + input + " is not a directory");
-            return;
+            System.err.println("ERROR: Directory " + input + " does not exist.");
         }
-
-        // Read the directory:
-        readDirectory(directory, points, recursive);
+        else if(directory.isDirectory())
+        {
+            this.readDirectory(directory, points, recursive);
+        }
+        else // if it is a file
+        {
+            Map<String, Map<String, Map<Integer, Double>>> res = new HashMap<>();
+            res.put(directory.getName(), this.readFile(directory, points));
+            this.printSummary(res, points, directory.getParentFile());
+        }
     }
 
     /**
@@ -89,33 +93,79 @@ public abstract class AdvancedOutputResumer<U,I>
             }
         }
 
-        // Then, we first read the files:
-        Map<String, Map<String, Map<Integer, Double>>> results = new HashMap<>();
-        for(File f : indivFiles)
+        // If there are individual files to summarize:
+        if(!indivFiles.isEmpty())
         {
-            Map<String, Map<Integer, Double>> map = readFile(f, list);
-            if(map != null)
-                results.put(f.getName(), map);
+            // We first read the file and obtain the values.
+            Map<String, Map<String, Map<Integer, Double>>> results = new HashMap<>();
+            for (File f : indivFiles)
+            {
+                Map<String, Map<Integer, Double>> map = readFile(f, list);
+                if (map != null)
+                    results.put(f.getName(), map);
+            }
+
+            this.printSummary(results, list, directory);
         }
 
+        // If we set this algorithm as recursive, we do repeat for each subdirectory.
+        if(recursive)
+        {
+            for (File dir : directories)
+            {
+                readDirectory(dir, list, true);
+            }
+        }
+        else if(indivFiles.isEmpty())
+        {
+            System.err.println("Nothing found in directory " + directory);
+        }
+
+        long b = System.currentTimeMillis();
+        System.out.println("Exited directory " + directory + " (" + (b - a) + " ms.)");
+    }
+
+    /**
+     * Prints the summary of a directory.
+     * @param results       a map, indexed by algorithm, containing the metric values at the given points.
+     * @param list          the iteration numbers included in the summary.
+     * @param directory     the directory we have analyzed.
+     * @throws IOException  if something fails while writing the files.
+     */
+    private void printSummary(Map<String, Map<String, Map<Integer, Double>>> results, IntList list, File directory) throws IOException
+    {
+        // As a first step, we obtain the corresponding metric names.
         Set<String> metrics = new HashSet<>();
         results.forEach((alg, map) -> metrics.addAll(map.keySet()));
         List<String> metricNames = new ArrayList<>(metrics);
 
+        // Second, we create the directory where we want to print the metric values.
         String outputDir = directory.getAbsolutePath() + File.separator + "metrics" + File.separator;
         File outputFolder = new File(outputDir);
-        outputFolder.mkdir();
+        if(!outputFolder.exists())
+        {
+            boolean check = outputFolder.mkdir();
+            if(!check)
+            {
+                System.err.println("ERROR: Program could not create directory " + outputDir);
+                return;
+            }
+        }
 
+        // And, finally, we do the printing. One file for each metric:
         for (String metricName : metricNames)
         {
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDir + metricName + ".txt"))))
             {
+                // Write the header: algorithm\tmetric at point 1\tmetric at point 2\t....
                 bw.write("algorithm");
                 for (int point : list)
                 {
                     bw.write("\t" + point);
                 }
                 bw.write("\n");
+
+                // For each algorithm:
                 for (String alg : results.keySet())
                 {
                     bw.write(alg);
@@ -146,27 +196,27 @@ public abstract class AdvancedOutputResumer<U,I>
                 }
             }
         }
-
-        if(recursive)
-        {
-            for (File dir : directories)
-            {
-                readDirectory(dir, list, true);
-            }
-        }
-        long b = System.currentTimeMillis();
-        System.out.println("Exited directory " + directory + " (" + (b - a) + " ms.)");
     }
 
+
+
+
+
+    /**
+     * Reads a file, and obtains, for some given iteration numbers, the values of the different metrics.
+     * @param f the file to read.
+     * @param list the list of iteration numbers to consider.
+     * @return a map, indexed by metric, containing the values of the metric for the given point.
+     * @throws IOException if something fails while reading the file.
+     */
     private Map<String, Map<Integer, Double>> readFile(File f, IntList list) throws IOException
     {
-        Dataset<U,I> dataset = this.getDataset();
-        int numItems = dataset.numItems();
         Map<String, Map<Integer, Double>> res = new HashMap<>();
         Map<Integer, String> mapping = new HashMap<>();
 
         try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f))))
         {
+            // First, we do process the corresponding header of the file.
             String header = br.readLine();
             String[] split = header.split("\t");
             if(split.length < 5)
@@ -181,39 +231,26 @@ public abstract class AdvancedOutputResumer<U,I>
                 String metricName = split[i];
                 res.put(metricName, new Int2DoubleOpenHashMap());
                 mapping.put(i, metricName);
-
             }
 
-            res.put("auxIncrGini", new Int2DoubleOpenHashMap());
-            mapping.put(len, "auxIncrGini");
-            res.put("auxGini", new Int2DoubleOpenHashMap());
-            mapping.put(len+1, "auxGini");
-
-            Int2LongOpenHashMap freqs = new Int2LongOpenHashMap();
-            freqs.defaultReturnValue(0);
-            GiniIndex2 giniIndex = new GiniIndex2(dataset.numItems());
-
-            for (int i = 3; i < len - 1; ++i)
-            {
-                String metricName = split[i];
-                res.put(metricName, new Int2DoubleOpenHashMap());
-                mapping.put(i, metricName);
-            }
-
+            // Then, we read the file:
+            int currentIter = -1;
             String line;
-            int numIter = 0;
-            int i = 0;
             int listSize = list.size();
-
+            int i = 0;
+            double time = 0.0;
             while((line = br.readLine()) != null && i < listSize)
             {
+                // We first split the line
                 String[] lineSplit = line.split("\t");
-                int iidx = Parsers.ip.parse(lineSplit[2]);
+                // We obtain the iteration number:
+                int numIter = Parsers.ip.parse(lineSplit[0]);
+                if(currentIter != numIter)
+                {
+                    currentIter = numIter;
+                    time += Parsers.lp.parse(lineSplit[len-1]);
+                }
 
-                freqs.addTo(iidx, 1);
-                giniIndex.updateFrequency(iidx);
-
-                numIter++;
                 if (numIter == list.get(i))
                 {
                     for (int j = 3; j < len - 1; ++j)
@@ -222,15 +259,14 @@ public abstract class AdvancedOutputResumer<U,I>
                         res.get(metricName).put(list.get(i), Double.parseDouble(lineSplit[j]));
                     }
 
-                    String metricName = mapping.get(len);
-                    res.get(metricName).put(list.get(i), giniIndex.getValue());
-                    GiniIndex gi = new GiniIndex(numItems,freqs);
-                    metricName = mapping.get(len+1);
-                    res.get(metricName).put(list.get(i), gi.getValue());
+                    // And we store the accumulated time needed to compute the recommendation.
+                    String timeName = mapping.get(len-1);
+                    res.get(timeName).put(list.get(i), time);
+                    time = 0;
                     ++i;
                 }
             }
-            System.err.println("Finished reading file " + f.getAbsolutePath());
+            System.out.println("Finished reading file " + f.getAbsolutePath());
 
             return res;
         }

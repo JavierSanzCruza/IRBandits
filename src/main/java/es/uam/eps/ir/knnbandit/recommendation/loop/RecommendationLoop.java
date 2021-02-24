@@ -10,6 +10,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import es.uam.eps.ir.ranksys.core.Recommendation;
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;

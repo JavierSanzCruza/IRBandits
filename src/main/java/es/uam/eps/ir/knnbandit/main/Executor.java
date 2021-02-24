@@ -10,15 +10,13 @@
 package es.uam.eps.ir.knnbandit.main;
 
 import es.uam.eps.ir.knnbandit.io.Writer;
-import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendation;
 import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
-import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
+import org.ranksys.core.util.tuples.Tuple2id;
 import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
@@ -158,7 +156,7 @@ public class Executor<U,I>
                     int numIter = -1;
                     int uidx = -1;
                     long time = -1;
-                    IntList rec = new IntArrayList();
+                    List<Tuple2id> rec = new ArrayList<>();
 
                     // Read each line
                     while((line = br.readLine()) != null)
@@ -175,7 +173,7 @@ public class Executor<U,I>
                             if(numIter != -1)
                             {
                                 recovered.add(new Tuple2<>(new FastRecommendation(uidx, rec), time));
-                                rec = new IntArrayList();
+                                rec = new ArrayList<>();
                             }
 
                             if(!storeLast) break;
@@ -186,7 +184,7 @@ public class Executor<U,I>
 
                         if(!storeLast) break;
                         int iidx = Parsers.ip.parse(split[2]);
-                        rec.add(iidx);
+                        rec.add(new Tuple2id(iidx, 1.0/(rec.size()+1.0)));
                     }
 
                     if(storeLast)
@@ -361,7 +359,7 @@ public class Executor<U,I>
             Map<String, Double> metrics;
             int numIter;
             long time;
-            if(ranking)
+            if(!ranking)
             {
                 long aa = System.currentTimeMillis();
                 Pair<Integer> rating = loop.fastNextIteration();

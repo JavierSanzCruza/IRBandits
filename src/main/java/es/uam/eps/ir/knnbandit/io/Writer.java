@@ -8,10 +8,13 @@
  */
 package es.uam.eps.ir.knnbandit.io;
 
-import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendation;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
+import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.io.BufferedWriter;
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 
@@ -104,9 +107,9 @@ public class Writer
     public void writeRanking(int numIter, FastRecommendation rec, Map<String, Double> metrics, long time) throws IOException
     {
         int uidx = rec.getUidx();
-        for(int iidx : rec.getIidxs())
+        for(Tuple2id iidx : rec.getIidxs())
         {
-            this.writeLine(numIter, uidx, iidx, metrics, time);
+            this.writeLine(numIter, uidx, iidx.v1, metrics, time);
         }
     }
 

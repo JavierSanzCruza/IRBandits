@@ -145,6 +145,7 @@ java -jar IRBandits.jar rec type-of-dataset algorithms input output end-conditio
 where the command line arguments are:
    - `type-of-dataset`: see the earlier type of dataset configuration.
    - `algorithms`: a JSON file containing the possible hyperparameter configurations of algorithms to consider.
+   - `input`: file containing the dataset.
    - `output`: the directory in which to store the output.
    - `end-condition`: the end condition for the recommendation. Depending on its value, several possibilities:
        - `end-condition = 0.0`: ends when no user can be recommended anything.
@@ -229,6 +230,27 @@ where the command line arguments are:
 
 The output of this program is identical to that of the Recommendation one, with the exception that a new directory is created for each partition (identified by number).
 
+### Summary
+This program takes earlier executions, and summarizes them. It is executed as:
+```
+java -jar IRBandits.jar summarize type-of-dataset input file/directory time-points dataset-related-arguments (-r)
+```
+where
+   - `input`: file containing the dataset.
+   - `file/directory`: a file (or a directory) to summarize.
+   - `time-points`: a comma-separated list of the iteration numbers we want to include in the summary.
+   - `dataset-related-arguments`: see earlier.
+   - (Optional) `-r`: if we summarize all the files in a directory, and we include this flag, this program is executed recursively in the subdirectories.
+
+On each analyzed directory, this program creates a new directory, named `metrics`, where it stores a file for each metric.
+The format for this file is (tab-separated and containing one register per line):
+```
+algorithm-file point-0 point-1 ... point-N
+```
+where
+ - `algorithm-file` is the name of the summarized file.
+ - `point-X` is the value of the metric at the `X`-th point in `time-points`.
+ 
 ### Training statistics
 This program obtains the statistics for the training data (and the partitions).
 It is executed as:

@@ -10,8 +10,7 @@ package es.uam.eps.ir.knnbandit.metrics;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
-import org.jooq.lambda.tuple.Tuple2;
+import es.uam.eps.ir.knnbandit.utils.statistics.FastGiniIndex;
 
 import java.util.List;
 
@@ -28,7 +27,7 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
     /**
      * The updateable Gini index to compute all the operations.
      */
-    private GiniIndex2 gini;
+    private FastGiniIndex gini;
 
     /**
      * Constructor.
@@ -41,7 +40,7 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
     @Override
     public void initialize(Dataset<U, I> dataset)
     {
-        this.gini = new GiniIndex2(dataset.numItems());
+        this.gini = new FastGiniIndex(dataset.numItems());
     }
 
     @Override
@@ -53,11 +52,11 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
     @Override
     public double compute()
     {
-        return this.gini.getValue();
+        return 1.0 - this.gini.getValue();
     }
 
     @Override
-    public void update(int uidx, int iidx, double value) {this.gini.updateFrequency(iidx);}
+    public void update(int uidx, int iidx, double value) {this.gini.increaseFrequency(1);}
 
     @Override
     public void reset()

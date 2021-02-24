@@ -9,8 +9,8 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
-import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendation;
 import es.uam.eps.ir.knnbandit.utils.Pair;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 
 /**
  * Interface for fast recommendation loops, relying on indexes instead of identifiers to

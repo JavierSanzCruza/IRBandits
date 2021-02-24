@@ -9,6 +9,8 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop.end;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
+import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.function.DoublePredicate;
 
@@ -77,6 +79,18 @@ public class PercentagePositiveRatingsEndCondition implements EndCondition
         if (threshold.test(value))
         {
             this.currentRel++;
+        }
+    }
+
+    @Override
+    public void update(FastRecommendation fastRec)
+    {
+        for(Tuple2id item : fastRec.getIidxs())
+        {
+            if(threshold.test(item.v2))
+            {
+                this.currentRel++;
+            }
         }
     }
 }

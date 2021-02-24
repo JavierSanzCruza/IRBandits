@@ -10,21 +10,20 @@
 package es.uam.eps.ir.knnbandit.main.selector;
 
 import es.uam.eps.ir.knnbandit.main.Recommendation;
-import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.main.contact.ContactRecommendation;
 import es.uam.eps.ir.knnbandit.main.general.GeneralRecommendation;
 import es.uam.eps.ir.knnbandit.main.stream.ReplayerRecommendation;
-import es.uam.eps.ir.knnbandit.main.stream.ReplayerValidation;
 import es.uam.eps.ir.knnbandit.main.withknowledge.WithKnowledgeRecommendation;
 import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
 import org.ranksys.formats.parsing.Parsers;
-import static es.uam.eps.ir.knnbandit.main.selector.DatasetType.*;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Supplier;
+
+import static es.uam.eps.ir.knnbandit.main.selector.DatasetType.*;
 
 /**
  * Main class for determining the type of dataset / execution we are using
@@ -134,7 +133,7 @@ public class RecommendationSelector
                 boolean directed = execArgs[5].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[6].equalsIgnoreCase("true");
 
-                Recommendation<Long, Long> rec = new ContactRecommendation<>(input, "::", Parsers.lp, directed, notReciprocal, cutoff);
+                Recommendation<Long, Long> rec = new ContactRecommendation<>(input, "\t", Parsers.lp, directed, notReciprocal, cutoff);
                 rec.recommend(algorithms, output, endCond, resume, k, interval);
 
                 break;

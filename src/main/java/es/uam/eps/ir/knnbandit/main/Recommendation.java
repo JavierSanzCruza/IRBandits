@@ -164,7 +164,6 @@ public abstract class Recommendation<U,I>
                 {
                     bw.write("\t" + metric);
                 }
-                System.out.println("Size: " + size);
 
                 for(int i = 0; i < size; ++i)
                 {

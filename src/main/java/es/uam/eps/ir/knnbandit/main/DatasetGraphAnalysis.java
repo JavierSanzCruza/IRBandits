@@ -15,7 +15,7 @@ import es.uam.eps.ir.knnbandit.graph.fast.FastUndirectedWeightedGraph;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.ClusteringAlgorithm;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.Clusters;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.ConnectedComponents;
-import es.uam.eps.ir.knnbandit.utils.statistics.GiniIndex2;
+import es.uam.eps.ir.knnbandit.utils.statistics.FastGiniIndex;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -142,7 +142,7 @@ public abstract class DatasetGraphAnalysis<U,I>
             // Find the Gini coefficient.
             Int2LongOpenHashMap sizes = new Int2LongOpenHashMap();
             c.getClusters().forEach(cc -> sizes.put(c.getNumElems(cc), (long) sizes.getOrDefault(c.getNumElems(cc), 1L)));
-            GiniIndex2 gini = new GiniIndex2(c.getNumClusters(), sizes);
+            FastGiniIndex gini = new FastGiniIndex(c.getNumClusters(), sizes);
             compSizeGini.add(gini.getValue());
 
             System.out.println("------- Finished " + i + " graph");
@@ -204,7 +204,7 @@ public abstract class DatasetGraphAnalysis<U,I>
             // Find the Gini coefficient.
             Int2LongOpenHashMap sizes = new Int2LongOpenHashMap();
             c.getClusters().forEach(cc -> sizes.put(c.getNumElems(cc), (long) sizes.getOrDefault(c.getNumElems(cc), 1L)));
-            GiniIndex2 gini = new GiniIndex2(c.getNumClusters(), sizes);
+            FastGiniIndex gini = new FastGiniIndex(c.getNumClusters(), sizes);
             compSizeGini.add(gini.getValue());
 
             System.out.println("------- Finished " + w + " graph");

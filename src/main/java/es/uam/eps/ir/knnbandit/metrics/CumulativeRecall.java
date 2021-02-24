@@ -9,7 +9,6 @@
 package es.uam.eps.ir.knnbandit.metrics;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.data.datasets.OfflineDataset;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 
 import java.util.List;
