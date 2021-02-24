@@ -14,6 +14,8 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.selection.Selection;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
+import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +61,12 @@ public class ReplayerUpdate<U,I> implements UpdateStrategy<U,I>
         }
 
         return new Pair<>(list, metricList);
+    }
+
+    @Override
+    public Tuple2<List<FastRating>, FastRecommendation> selectUpdate(FastRecommendation fastRec, Selection<U, I> selection)
+    {
+        throw new UnsupportedOperationException("Recommendations with cut-off are not currently supported by the Replayer update");
     }
 
     @Override

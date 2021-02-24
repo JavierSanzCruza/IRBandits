@@ -1,7 +1,11 @@
 package es.uam.eps.ir.knnbandit.recommendation.bandits.item;
 
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
+import it.unimi.dsi.fastutil.PriorityQueue;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
+import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.Arrays;
 
@@ -155,6 +159,24 @@ public class MLECategoricalItemBandit<U,I> extends ItemBandit<U,I>
 
             return available.getInt(available.size()-1);
         }
+    }
+
+    @Override
+    public IntList next(int uidx, IntList available, ValueFunction valFunc, int k)
+    {
+        IntList avCopy = new IntArrayList();
+        available.forEach(avCopy::add);
+
+        IntList list = new IntArrayList();
+        int num = Math.min(available.size(), k);
+        for(int i = 0; i < num; ++i)
+        {
+            int elem = this.next(uidx, avCopy, valFunc);
+            list.add(elem);
+            avCopy.remove(avCopy.indexOf(elem));
+        }
+
+        return list;
     }
 
     @Override

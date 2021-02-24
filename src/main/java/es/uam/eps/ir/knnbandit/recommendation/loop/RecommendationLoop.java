@@ -10,6 +10,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import es.uam.eps.ir.ranksys.core.Recommendation;
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
@@ -45,10 +46,22 @@ public interface RecommendationLoop<U,I>
     Tuple2<U,I> nextIteration();
 
     /**
+     * Executes the complete following interation of the recommendation loop. It returns a list of items.
+     * @return the recommendation if it is able to generate it, null otherwise.
+     */
+    Recommendation<U,I> nextIterationList();
+
+    /**
      * Obtains the result of a recommendation for the recommendation loop.
      * @return A triplet, containing three values: the userId, the itemId, and the payoff of the recommendation.
      */
     Tuple2<U,I> nextRecommendation();
+
+    /**
+     * Obtains the result of a recommendation for the recommendation loop.
+     * @return A recommendation.
+     */
+    Recommendation<U,I> nextRecommendationList();
 
     /**
      * Updates the algorithms and metrics after receiving a metric
@@ -56,6 +69,12 @@ public interface RecommendationLoop<U,I>
      * @param i the identifier of the items.
      */
     void update(U u, I i);
+
+    /**
+     * Updates the algorithms and metrics after receiving a recommendation list.
+     * @param rec the recommendation list.
+     */
+    void update(Recommendation<U,I> rec);
 
     /**
      * Checks whether a recommendation loop has ended or not.
@@ -80,4 +99,8 @@ public interface RecommendationLoop<U,I>
      * @return a list containing the names of the metrics used in the loop.
      */
     List<String> getMetrics();
+
+    void increaseIteration();
+
+    int getCutoff();
 }

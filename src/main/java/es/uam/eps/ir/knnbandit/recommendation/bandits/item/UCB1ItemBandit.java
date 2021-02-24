@@ -10,8 +10,13 @@
 package es.uam.eps.ir.knnbandit.recommendation.bandits.item;
 
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
+import it.unimi.dsi.fastutil.PriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
+import org.ranksys.core.util.tuples.Tuple2id;
+
+import java.util.Comparator;
 
 /**
  * Item bandit using the UCB1 algorithm.
@@ -160,6 +165,58 @@ public class UCB1ItemBandit<U, I> extends ItemBandit<U, I>
             return item;
         }
     }
+
+    @Override
+    public IntList next(int uidx, IntList available, ValueFunction valFunc, int k)
+    {
+        if (available == null || available.isEmpty())
+        {
+            return new IntArrayList();
+        }
+        else
+        {
+            int num = Math.min(k, available.size());
+            IntList top = new IntArrayList();
+
+            PriorityQueue<Tuple2id> queue = new ObjectHeapPriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+
+            for(int i : available)
+            {
+                double val;
+                if(this.numTimes[i] == 0)
+                    val = Double.POSITIVE_INFINITY;
+                else
+                    val = valFunc.apply(uidx, i, values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i])), numTimes[i]);
+
+                if(queue.size() < num)
+                {
+                    queue.enqueue(new Tuple2id(i, val));
+                }
+                else
+                {
+                    Tuple2id topElem = queue.dequeue();
+                    Tuple2id newElem = new Tuple2id(i, val);
+                    if(queue.comparator().compare(topElem, newElem) >= 0)
+                    {
+                        queue.enqueue(topElem);
+                    }
+                    else
+                    {
+                        queue.enqueue(newElem);
+                    }
+                }
+
+            }
+
+            while(!queue.isEmpty())
+            {
+                top.add(0, queue.dequeue().v1);
+            }
+
+            return top;
+        }
+    }
+
 
     @Override
     public void update(int i, double value)

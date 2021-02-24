@@ -182,6 +182,24 @@ public class EpsilonGreedyItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
+    public IntList next(int uidx, IntList available, ValueFunction valFunc, int k)
+    {
+        IntList avCopy = new IntArrayList();
+        available.forEach(avCopy::add);
+
+        IntList list = new IntArrayList();
+        int num = Math.min(available.size(), k);
+        for(int i = 0; i < num; ++i)
+        {
+            int elem = this.next(uidx, avCopy, valFunc);
+            list.add(elem);
+            avCopy.remove(avCopy.indexOf(elem));
+        }
+
+        return list;
+    }
+
+    @Override
     public void update(int i, double value)
     {
         double oldSum = this.sumValues;

@@ -18,10 +18,9 @@ import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.ranksys.core.util.tuples.Tuple2id;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -162,6 +161,52 @@ public class ParticleThompsonSamplingMF<U, I> extends InteractiveRecommender<U, 
             int iidx = rng.nextInt(top.size());
             return top.get(iidx);
         }
+    }
+
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        // First, we obtain the list of available items.
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+
+        // Then, we randomly select a particle:
+        int idx = ptsrng.nextInt(numParticles);
+        Particle<U, I> current = particleList.get(idx);
+
+        // Then, using that particle, for each item:
+        double max = Double.NEGATIVE_INFINITY;
+        IntList top = new IntArrayList();
+        int num = Math.min(k, availability.size());
+        PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+
+        for (int iidx : availability)
+        {
+            double val = current.getEstimatedReward(uidx, iidx);
+
+            if(queue.size() < num)
+            {
+                queue.add(new Tuple2id(iidx, val));
+            }
+            else
+            {
+                Tuple2id newTuple = new Tuple2id(iidx, val);
+                if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                {
+                    queue.poll();
+                    queue.add(newTuple);
+                }
+            }
+        }
+
+        while(!queue.isEmpty())
+        {
+            top.add(0, queue.poll().v1);
+        }
+
+        return top;
     }
 
 

@@ -23,10 +23,9 @@ import es.uam.eps.ir.knnbandit.recommendation.clusters.ClustersImpl;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.ConnectedComponents;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.*;
+import org.ranksys.core.util.tuples.Tuple2id;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -294,6 +293,56 @@ public abstract class AbstractCOFIBA<U,I> extends InteractiveRecommender<U,I>
             return top.get(0);
         }
         return top.get(rng.nextInt(topSize));
+    }
+
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        // We first check if there is a recommendable item.
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+
+        // First, we do have to get the cluster of user u
+        IntList top = new IntArrayList();
+        int num = Math.min(availability.size(), k);
+        PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+
+        // Then, select the top value
+        for (int iidx : availability)
+        {
+            // Identify the item cluster:
+            int itemCluster = this.itemClusters.getCluster(iidx);
+            // Then, identify the user cluster for uidx and this item:
+            int userCluster = this.userClusters.get(itemCluster).getCluster(uidx);
+
+            double clusterB = this.clustB.get(itemCluster).get(userCluster).getOrDefault(iidx, 0.0);
+            double clusterM = this.clustM.get(itemCluster).get(userCluster).getOrDefault(iidx, 0.0) + 1.0;
+
+            double val = clusterB / clusterM + alpha1*Math.sqrt(Math.log(this.iter + 1.0)/clusterM);
+
+            if(queue.size() < num)
+            {
+                queue.add(new Tuple2id(iidx, val));
+            }
+            else
+            {
+                Tuple2id newTuple = new Tuple2id(iidx, val);
+                if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                {
+                    queue.poll();
+                    queue.add(newTuple);
+                }
+            }
+        }
+
+        while(!queue.isEmpty())
+        {
+            top.add(0, queue.poll().v1);
+        }
+
+        return top;
     }
 
     @Override

@@ -13,6 +13,8 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.selection.Selection;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
+import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
 
@@ -45,6 +47,15 @@ public interface UpdateStrategy<U,I>
      * for updating the metric values.
      */
     Pair<List<FastRating>> selectUpdate(int uidx, int iidx, Selection<U,I> selection);
+
+    /**
+     * Selects the (user, item, rating) triplets which shall be applied for updating the recommendation loop.
+     * @param fastRec the fast recommendation.
+     * @param selection a selection mechanism for checking the availability of the (uidx, iidx) pairs.
+     * @return a tuple containing a) the ratings for updating the interactive recommender and selection mechanisms and b)
+     * a fast recommendation containing the relevance values for the different items in the recommendation.
+     */
+    Tuple2<List<FastRating>, FastRecommendation> selectUpdate(FastRecommendation fastRec, Selection<U,I> selection);
 
     /**
      * Given a warmup, gets the whole rating list.

@@ -10,6 +10,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
 import es.uam.eps.ir.knnbandit.utils.Pair;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 
 /**
  * Interface for fast recommendation loops, relying on indexes instead of identifiers to
@@ -34,6 +35,17 @@ public interface FastRecommendationLoop<U,I> extends RecommendationLoop<U,I>
      * is able to generate a recommendation, null otherwise.
      */
     Pair<Integer> fastNextRecommendation();
+    /**
+     * Executes the complete following iteration of the recommendation loop. It returns a ranking of items.
+     * @return a recommendation ranking.
+     */
+    FastRecommendation fastNextIterationList();
+
+    /**
+     * Obtains the result of a recommendation for the recommendation loop.
+     * @return a recommendation ranking.
+     */
+    FastRecommendation fastNextRecommendationList();
 
     /**
      * Updates the algorithms and metrics after receiving a metric
@@ -41,5 +53,10 @@ public interface FastRecommendationLoop<U,I> extends RecommendationLoop<U,I>
      * @param iidx the index identifier of the item.
      */
     void fastUpdate (int uidx, int iidx);
+    /**
+     * Updates the algorithms and metrics after receiving a metric
+     * @param rec the recommendation ranking.
+     */
+    void fastUpdate(FastRecommendation rec);
 
 }

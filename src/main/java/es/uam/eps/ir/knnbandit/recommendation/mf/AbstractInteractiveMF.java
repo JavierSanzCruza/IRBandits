@@ -21,9 +21,12 @@ import es.uam.eps.ir.ranksys.mf.Factorization;
 import es.uam.eps.ir.ranksys.mf.Factorizer;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.ranksys.core.util.tuples.Tuple2id;
 
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.stream.Stream;
@@ -183,6 +186,63 @@ public abstract class AbstractInteractiveMF<U, I> extends InteractiveRecommender
         {
             return top.get(rng.nextInt(top.size()));
         }
+    }
+
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+
+        IntList top = new IntArrayList();
+        int num = Math.min(k, availability.size());
+
+        DoubleMatrix1D pu = factorization.getUserVector(uIndex.uidx2user(uidx));
+        if (pu != null)
+        {
+            DoubleMatrix2D itemMatrix = factorization.getItemMatrix();
+            PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+            for (int iidx : availability)
+            {
+                double val = itemMatrix.viewRow(iidx).zDotProduct(pu);
+                if (Double.isNaN(val))
+                {
+                    val = Double.NEGATIVE_INFINITY;
+                }
+
+                if(queue.size() < num)
+                {
+                    queue.add(new Tuple2id(iidx, val));
+                }
+                else
+                {
+                    Tuple2id newTuple = new Tuple2id(iidx, val);
+                    if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                    {
+                        queue.poll();
+                        queue.add(newTuple);
+                    }
+                }
+            }
+
+            while(!queue.isEmpty())
+            {
+                top.add(0, queue.poll().v1);
+            }
+        }
+        else
+        {
+            while(top.size() < num)
+            {
+                int idx = rng.nextInt(availability.size());
+                int item = availability.get(idx);
+                if(!top.contains(item)) top.add(item);
+            }
+        }
+
+        return top;
     }
 
     @Override

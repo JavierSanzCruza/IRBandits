@@ -14,6 +14,9 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.selection.Selection;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
+import org.jooq.lambda.tuple.Tuple2;
+import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +53,27 @@ public class GeneralUpdate<U,I> implements UpdateStrategy<U,I>
             return new Pair<>(list, list);
         }
         return new Pair<>(new ArrayList<>(), new ArrayList<>());
+    }
+
+    @Override
+    public Tuple2<List<FastRating>, FastRecommendation> selectUpdate(FastRecommendation fastRec, Selection<U, I> selection)
+    {
+        List<FastRating> fastRatingList = new ArrayList<>();
+        List<Tuple2id> ranking = new ArrayList<>();
+
+        int uidx = fastRec.getUidx();
+        for(Tuple2id item : fastRec.getIidxs())
+        {
+            int iidx = item.v1;
+            if(selection.isAvailable(uidx, item.v1))
+            {
+                Optional<Double> value = dataset.getPreference(uidx, iidx);
+                fastRatingList.add(new FastRating(uidx, iidx, value.orElse(Double.NaN)));
+                ranking.add(new Tuple2id(iidx, value.orElse(Double.NaN)));
+            }
+        }
+
+        return new Tuple2<>(fastRatingList, new FastRecommendation(uidx, ranking));
     }
 
     @Override

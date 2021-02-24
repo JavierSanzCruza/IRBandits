@@ -35,13 +35,15 @@ public class ContactRecommendation<U> extends Recommendation<U,U>
 {
     private final ContactDataset<U> dataset;
     private final Map<String, Supplier<CumulativeMetric<U,U>>> metrics;
+    private final int cutoff;
 
-    public ContactRecommendation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal)
+    public ContactRecommendation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, int cutoff)
     {
         dataset = ContactDataset.load(input, directed, notReciprocal, parser, separator);
         this.metrics = new HashMap<>();
         metrics.put("recall", CumulativeRecall::new);
         metrics.put("gini", CumulativeGini::new);
+        this.cutoff = cutoff;
     }
 
 
@@ -56,7 +58,7 @@ public class ContactRecommendation<U> extends Recommendation<U,U>
     {
         Map<String, CumulativeMetric<U,U>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new ContactOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed);
+        return new ContactOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed, cutoff);
     }
 
     @Override

@@ -44,4 +44,18 @@ public class ContactOfflineDatasetRecommendationLoop<U> extends GenericRecommend
     {
         super(dataset,new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed), true), recommender, new ContactUpdate<>(), endCondition, metrics, rngSeed);
     }
+
+    /**
+     * Constructor.
+     *
+     * @param dataset       the dataset containing all the information.
+     * @param recommender   the interactive recommendation algorithm.
+     * @param metrics       the set of metrics we want to study.
+     * @param endCondition  the condition that establishes whether the loop has finished or not.
+     * @param rngSeed       a random number generator seed.
+     */
+    public ContactOfflineDatasetRecommendationLoop(ContactDataset<U> dataset, InteractiveRecommenderSupplier<U, U> recommender, Map<String, CumulativeMetric<U, U>> metrics, EndCondition endCondition, int rngSeed, int cutoff)
+    {
+        super(dataset,new NonSequentialSelection<>(rngSeed, new RandomUserSelector(rngSeed), true), recommender, new ContactUpdate<>(), endCondition, metrics, rngSeed, cutoff);
+    }
 }

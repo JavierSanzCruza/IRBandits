@@ -9,6 +9,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.loop.end;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 
 /**
  * Interface for the classes that check whether a recommendation loop has finished or not.
@@ -31,11 +32,18 @@ public interface EndCondition
     boolean hasEnded();
 
     /**
-     * Updates the condition
+     * Updates the condition.
      *
      * @param uidx  last recommended user
      * @param iidx  last recommended item
      * @param value the value.
      */
     void update(int uidx, int iidx, double value);
+
+    /**
+     * Updates the condition.
+     *
+     * @param fastRec the recommendation made in the last iteration.
+     */
+    void update(FastRecommendation fastRec);
 }

@@ -10,6 +10,9 @@ package es.uam.eps.ir.knnbandit.metrics;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
+import org.ranksys.core.util.tuples.Tuple2id;
+
 import java.util.List;
 
 /**
@@ -52,6 +55,22 @@ public interface CumulativeMetric<U, I>
      * @param iidx Item identifier.
      */
     void update(int uidx, int iidx, double value);
+
+    /**
+     * Updates the current value of the metric.
+     * @param rec a FastRecommendation object, containing the relevance values of the
+     *            elements as values for each item.
+     */
+    default void update(FastRecommendation rec)
+    {
+        int uidx = rec.getUidx();
+        for(Tuple2id item : rec.getIidxs())
+        {
+            int iidx = item.v1;
+            double val = item.v2;
+            this.update(uidx, iidx, val);
+        }
+    }
 
     /**
      * Resets the metric.

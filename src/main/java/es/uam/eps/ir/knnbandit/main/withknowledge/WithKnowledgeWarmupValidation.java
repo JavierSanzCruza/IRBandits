@@ -61,6 +61,7 @@ public class WithKnowledgeWarmupValidation<U,I> extends WarmupValidation<U,I>
      */
     private final KnowledgeDataUse dataUse;
     private final WarmupType warmupType;
+    private final int cutoff;
 
     /**
      * Constructor.
@@ -72,7 +73,7 @@ public class WithKnowledgeWarmupValidation<U,I> extends WarmupValidation<U,I>
      * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
      * @throws IOException if something fails while reading the dataset.
      */
-    public WithKnowledgeWarmupValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, WarmupType warmup) throws IOException
+    public WithKnowledgeWarmupValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, WarmupType warmup, int cutoff) throws IOException
     {
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
@@ -82,6 +83,7 @@ public class WithKnowledgeWarmupValidation<U,I> extends WarmupValidation<U,I>
         metrics.put("recall", CumulativeRecall::new);
         this.warmupType = warmup;
         this.dataUse = use;
+        this.cutoff = cutoff;
     }
 
 
@@ -103,7 +105,7 @@ public class WithKnowledgeWarmupValidation<U,I> extends WarmupValidation<U,I>
     {
         Map<String, CumulativeMetric<U,I>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new OfflineDatasetWithKnowledgeRecommendationLoop<>((DatasetWithKnowledge<U,I>) validDataset, rec, localMetrics, endCond, dataUse, rngSeed);
+        return new OfflineDatasetWithKnowledgeRecommendationLoop<>((DatasetWithKnowledge<U,I>) validDataset, rec, localMetrics, endCond, dataUse, rngSeed, cutoff);
     }
 
     @Override

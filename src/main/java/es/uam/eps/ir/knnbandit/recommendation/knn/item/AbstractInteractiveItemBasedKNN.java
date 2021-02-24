@@ -24,6 +24,7 @@ import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jooq.lambda.tuple.Tuple;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2id;
 
@@ -269,6 +270,122 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
         return top.get(rng.nextInt(topSize));
     }
 
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+
+        IntList top = new IntArrayList();
+        int num = Math.min(k, availability.size());
+
+        // Shuffle the order of the items.
+        Collections.shuffle(itemList, neighborUntie);
+        PriorityQueue<Tuple2id> firstHeap = new PriorityQueue<>(this.numItems(), comp);
+
+        if (this.userK == 0)
+        {
+            this.retrievedData.getUidxPreferences(uidx).filter(iv -> !ignoreZeros || iv.v2 > 0).forEach(firstHeap::add);
+        }
+        else
+        {
+            this.retrievedData.getUidxPreferences(uidx).forEach(iv ->
+            {
+                if (!this.ignoreZeros || iv.v2 > 0.0)
+                {
+                    if (firstHeap.size() == userK)
+                    {
+                        firstHeap.add(iv);
+                        firstHeap.poll();
+                    }
+                    else
+                    {
+                        firstHeap.add(iv);
+                    }
+                }
+            });
+        }
+
+        if (!firstHeap.isEmpty())
+        {
+
+            Int2DoubleOpenHashMap map = new Int2DoubleOpenHashMap();
+            map.defaultReturnValue(0.0);
+            firstHeap.forEach(iv ->
+            {
+                int jidx = iv.v1;
+                double ruj = iv.v2;
+
+                PriorityQueue<Tuple2id> heap = new PriorityQueue<>(itemK, comp);
+                this.sim.similarElems(jidx).forEach(jv ->
+                {
+                    if (availability.contains(jv.v1))
+                    {
+                        if (heap.size() == itemK)
+                        {
+                            heap.add(jv);
+                            heap.poll();
+                        }
+                        else
+                        {
+                            heap.add(jv);
+                        }
+                    }
+                });
+
+                for (Tuple2id jv : heap)
+                {
+                    map.addTo(jv.v1, jv.v2 * ruj);
+                }
+            });
+
+            // Select the best item.
+            double max = Double.NEGATIVE_INFINITY;
+
+            PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+
+            for (int iidx : map.keySet())
+            {
+                double val = map.get(iidx);
+                if (!availability.contains(iidx))
+                {
+                    continue;
+                }
+
+                if(queue.size() < num)
+                {
+                    queue.add(new Tuple2id(iidx, val));
+                }
+                else
+                {
+                    Tuple2id newTuple = new Tuple2id(iidx, val);
+                    if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                    {
+                        queue.poll();
+                        queue.add(newTuple);
+                    }
+                }
+            }
+
+            while(!queue.isEmpty())
+            {
+                top.add(queue.poll().v1);
+            }
+        }
+
+        while(top.size() < num)
+        {
+            int idx = rng.nextInt(availability.size());
+            int item = availability.get(idx);
+            if(!top.contains(item)) top.add(item);
+        }
+
+        return top;
+    }
+
+
     /**
      * Scoring function.
      *
@@ -288,8 +405,6 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
             newValue = Constants.NOTRATEDNOTIGNORED;
         else
             return;
-
-
 
         boolean hasRating = false;
         double oldValue = 0;

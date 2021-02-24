@@ -14,6 +14,9 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.selection.Selection;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
+import org.jooq.lambda.tuple.Tuple2;
+import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +69,42 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
     {
         this.dataset = ((ContactDataset<U>) dataset);
         this.notReciprocal = !this.dataset.useReciprocal();
+    }
+
+    @Override
+    public Tuple2<List<FastRating>, FastRecommendation> selectUpdate(FastRecommendation fastRec, Selection<U, U> selection)
+    {
+        List<FastRating> fastRatingList = new ArrayList<>();
+        List<Tuple2id> ranking = new ArrayList<>();
+
+        int uidx = fastRec.getUidx();
+        for(Tuple2id item : fastRec.getIidxs())
+        {
+            int iidx = item.v1;
+            if(selection.isAvailable(uidx, item.v1))
+            {
+                Optional<Double> value = dataset.getPreference(uidx, iidx);
+                fastRatingList.add(new FastRating(uidx, iidx, value.orElse(Double.NaN)));
+                ranking.add(new Tuple2id(iidx, value.orElse(Double.NaN)));
+
+                if(value.isPresent())
+                {
+                    if (!dataset.isDirected())
+                    {
+                        FastRating pair = new FastRating(iidx, uidx, value.get());
+                        fastRatingList.add(pair);
+                    }
+                    else if (this.notReciprocal && selection.isAvailable(iidx, uidx))
+                    {
+                        value = dataset.getPreference(iidx, uidx);
+                        FastRating pair = new FastRating(iidx, uidx, value.orElse(Double.NaN));
+                        fastRatingList.add(pair);
+                    }
+                }
+            }
+        }
+
+        return new Tuple2<>(fastRatingList, new FastRecommendation(uidx, ranking));
     }
 
     @Override

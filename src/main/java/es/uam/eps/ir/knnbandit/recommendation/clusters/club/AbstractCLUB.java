@@ -22,11 +22,9 @@ import es.uam.eps.ir.knnbandit.recommendation.clusters.ClustersImpl;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.ConnectedComponents;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.*;
+import org.ranksys.core.util.tuples.Tuple2id;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -188,12 +186,6 @@ public abstract class AbstractCLUB<U ,I> extends InteractiveRecommender<U,I>
         values.forEach(t -> this.update(t.uidx(), t.iidx(), t.value()));
     }
 
-    /*@Override
-    public void init(FastPreferenceData<U, I> prefData)
-    {
-        this.init();
-    }*/
-
     @Override
     public int next(int uidx, IntList availability)
     {
@@ -241,6 +233,56 @@ public abstract class AbstractCLUB<U ,I> extends InteractiveRecommender<U,I>
             return top.get(0);
         }
         return top.get(rng.nextInt(topSize));
+    }
+
+    @Override
+    public IntList next(int uidx, IntList availability, int k)
+    {
+        // We first check if there is a recommendable item.
+        if (availability == null || availability.isEmpty())
+        {
+            return new IntArrayList();
+        }
+
+        // First, we do have to get the cluster of user u
+        int cluster = clusters.getCluster(uidx);
+
+        Int2DoubleMap auxM = clustM.get(cluster);
+        Int2DoubleMap auxB = clustB.get(cluster);
+
+        IntList top = new IntArrayList();
+        int num = Math.min(availability.size(), k);
+        PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
+
+        // Then, select the top value
+        for (int iidx : availability)
+        {
+            double bVal = auxB.getOrDefault(iidx, 0.0);
+            double mVal = auxM.getOrDefault(iidx, 0.0);
+
+            double val = bVal/(mVal + 1.0) + alpha1*Math.sqrt(1.0/(mVal+1.0) * Math.log(this.iter + 1.0));
+
+            if(queue.size() < num)
+            {
+                queue.add(new Tuple2id(iidx, val));
+            }
+            else
+            {
+                Tuple2id newTuple = new Tuple2id(iidx, val);
+                if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                {
+                    queue.poll();
+                    queue.add(newTuple);
+                }
+            }
+        }
+
+        while(!queue.isEmpty())
+        {
+            top.add(0, queue.poll().v1);
+        }
+
+        return top;
     }
 
     @Override

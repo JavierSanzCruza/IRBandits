@@ -107,7 +107,7 @@ Next, we detail the arguments and utilities of the different programs:
 ### Validation
 Given no warmup, this program executes validation to search for the optimal parameters for a recommendation algorithm. It is executed as:
 ```
-java -jar IRBandits.jar valid type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times)
+java -jar IRBandits.jar valid type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times -cutoff cutoff)
 ```
 where the command line arguments are:
    - `type-of-dataset`: see the earlier type of dataset configuration.
@@ -121,6 +121,7 @@ where the command line arguments are:
    - `resume`: if we have to recover recommendations from a previous execution.
    - `dataset-related-arguments`: see earlier.
    - (Optional) `-k times`: the number of times each recommendation might be executed 
+   - (Optional) `-cutoff cutoff`: the number of items to recommend each time.
 
 With these parameters, the different algorithms execute, and the following output is produced:
    - A recommendation file for each recommendation loop execution. The name format for this file is: ` algorithmname-iter.txt`, where algorithm name shows the used algorithm and its parameters. In case the optional parameter `k` is not used, the `iter` value shall be equal to `0`. If `k`is used (and each algorithm is executed several times), it represents the execution number for that algorithm.
@@ -139,11 +140,12 @@ club-erdos-0.1-2.0-ignore	0.0039402985074626865
 ### Recommendation
 Given no warmup, this program executes a set of recommendation algorithms. It is executed as:
 ```
-java -jar IRBandits.jar rec type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times -interval interval)
+java -jar IRBandits.jar rec type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times -interval interval -cutoff cutoff)
 ```
 where the command line arguments are:
    - `type-of-dataset`: see the earlier type of dataset configuration.
    - `algorithms`: a JSON file containing the possible hyperparameter configurations of algorithms to consider.
+   - `input`: file containing the dataset.
    - `output`: the directory in which to store the output.
    - `end-condition`: the end condition for the recommendation. Depending on its value, several possibilities:
        - `end-condition = 0.0`: ends when no user can be recommended anything.
@@ -153,6 +155,8 @@ where the command line arguments are:
    - `dataset-related-arguments`: see earlier.
    - (Optional) `-k times`: the number of times each recommendation might be executed.
    - (Optional) `-interval interval`: this program produces a summary file for each recommendation. This value establishes the amount of iterations between each recorded point in the summary. By default, it records a register in the summary file each 10,000 iterations.
+   - (Optional) `-cutoff cutoff`: the number of items to recommend each time.
+
 
 With these parameters, the different algorithms execute, and the following output is produced:
    - A recommendation file for each recommendation loop execution. The name format for this file is: ` algorithmname-iter.txt`, where algorithm name shows the used algorithm and its parameters. In case the optional parameter `k` is not used, the `iter` value shall be equal to `0`. If `k`is used (and each algorithm is executed several times), it represents the execution number for that algorithm.
@@ -169,7 +173,7 @@ Iteration	recall	gini
 ### Validation with warm-up
 This program is similar to the Validation one, but it takes some warm-up data. It is executed as:
 ```
-java -jar IRBandits.jar warmup-valid type-of-dataset algorithms input output end-condition resume training partition-params dataset-related-arguments (-k times - type type)
+java -jar IRBandits.jar warmup-valid type-of-dataset algorithms input output end-condition resume training partition-params dataset-related-arguments (-k times - type type -cutoff cutoff)
 ```
 where the command line arguments are:
    - `type-of-dataset`: see the earlier type of dataset configuration.
@@ -194,13 +198,14 @@ where the command line arguments are:
    - (Optional) `-type type`: In order to update the algorithms, we can decide whether to use only known data (i.e. data present in the original dataset) or all data.
        -  `onlyratings`: removes all user-item pairs in the warm-up which do not appear in the original dataset.
        -  `full`: uses the warm-up data as it is.   
+   - (Optional) `-cutoff cutoff`: the number of items to recommend each time.
 
 The output of this program is identical to that of the Validation one, with the exception that a new directory is created for each partition (identified by number).
 
 ### Recommendation with warm-up
 This program is similar to the Recommendation one, but it takes some warm-up data. It is executed as:
 ```
-java -jar IRBandits.jar warmup-rec type-of-dataset algorithms input output end-condition resume training numParts dataset-related-arguments (-k times -percTrain percTrain -type type -interval interval)
+java -jar IRBandits.jar warmup-rec type-of-dataset algorithms input output end-condition resume training numParts dataset-related-arguments (-k times -percTrain percTrain -type type -interval interval -cutoff cutoff)
 ```
 where the command line arguments are:
    - `type-of-dataset`: see the earlier type of dataset configuration.
@@ -221,9 +226,31 @@ where the command line arguments are:
        -  `onlyratings`: removes all user-item pairs in the warm-up which do not appear in the original dataset.
        -  `full`: uses the warm-up data as it is.    
    - (Optional) `-percTrain percTrain`: By default, the data from the warm-up file is equally divided in `numParts`, and, for each partition `j`, parts `0` to `j` are taken as training. However, if this parameter is present and takes values between 0 and 1, partition `0` shall contain the first `percTrain` user-item pairs, partition `j` shall contain the first `(j+1)*percTrain` fraction of user-item pairs in the warm-up data (with `j` going from `0` to `numParts-1`). If `numParts` is negative, `percTrain` refers to the fraction of positively rated user-item pairs.
+   - (Optional) `-cutoff cutoff`: the number of items to recommend each time.
 
 The output of this program is identical to that of the Recommendation one, with the exception that a new directory is created for each partition (identified by number).
 
+### Summary
+This program takes earlier executions, and summarizes them. It is executed as:
+```
+java -jar IRBandits.jar summarize type-of-dataset input file/directory time-points dataset-related-arguments (-r)
+```
+where
+   - `input`: file containing the dataset.
+   - `file/directory`: a file (or a directory) to summarize.
+   - `time-points`: a comma-separated list of the iteration numbers we want to include in the summary.
+   - `dataset-related-arguments`: see earlier.
+   - (Optional) `-r`: if we summarize all the files in a directory, and we include this flag, this program is executed recursively in the subdirectories.
+
+On each analyzed directory, this program creates a new directory, named `metrics`, where it stores a file for each metric.
+The format for this file is (tab-separated and containing one register per line):
+```
+algorithm-file point-0 point-1 ... point-N
+```
+where
+ - `algorithm-file` is the name of the summarized file.
+ - `point-X` is the value of the metric at the `X`-th point in `time-points`.
+ 
 ### Training statistics
 This program obtains the statistics for the training data (and the partitions).
 It is executed as:
@@ -265,6 +292,7 @@ iter	user	item	recall	gini	time
 11	1615	7493	0.0	0.999822167615106	2
 12	1481	58528	0.0	0.9998060010346611	0
 ```
+In case we choose a cutoff for the recommendation greater than one, the format is similar: now, the iteration number can be repeated, and the value for the different metrics will be the same for all the recommendations in an iteration.
 
 ## References
 1. Sanz-Cruzado, J., Castells, P., López, E. (2019).  A Simple Multi-Armed Nearest-Neighbor Bandit for Interactive Recommendation. In 13th ACM Conference on Recommender Systems (RecSys 2019). Copenhagen, Denmark, September 2019, pp. 358–362.

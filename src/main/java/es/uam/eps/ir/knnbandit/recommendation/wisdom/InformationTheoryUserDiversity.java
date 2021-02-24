@@ -10,7 +10,10 @@ import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.ranksys.core.util.tuples.Tuple2id;
 
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.function.DoublePredicate;
 import java.util.stream.Stream;
 
@@ -107,6 +110,42 @@ public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<
             return top.get(0);
         else
             return top.get(rng.nextInt(topSize));
+    }
+
+    @Override
+    public IntList next(int uidx, IntList available, int k)
+    {
+        if(available == null || available.isEmpty()) return new IntArrayList();
+
+        double max = Double.NEGATIVE_INFINITY;
+        IntList top = new IntArrayList();
+
+        int n = Math.min(available.size(), k);
+        PriorityQueue<Tuple2id> queue = new PriorityQueue<>(n, Comparator.comparingDouble(x -> x.v2));
+        for(int iidx : available)
+        {
+            double val = this.retrievedData.getIidxPreferences(iidx).filter(u -> predicate.test(u.v2())).mapToDouble(u -> Math.log(den.get(u.v1)) - Math.log(num.get(u.v1))).sum();
+            if(queue.size() < n)
+            {
+                queue.add(new Tuple2id(iidx, val));
+            }
+            else
+            {
+                Tuple2id newTuple = new Tuple2id(iidx, val);
+                if(queue.comparator().compare(queue.peek(), newTuple) < 0)
+                {
+                    queue.poll();
+                    queue.add(newTuple);
+                }
+            }
+        }
+
+        while(!queue.isEmpty())
+        {
+            top.add(0, queue.poll().v1);
+        }
+
+        return top;
     }
 
     @Override

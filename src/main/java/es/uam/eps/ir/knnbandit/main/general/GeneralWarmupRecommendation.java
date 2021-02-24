@@ -58,6 +58,8 @@ public class GeneralWarmupRecommendation<U,I> extends WarmupRecommendation<U,I>
      */
     private final WarmupType warmupType;
 
+    private final int cutoff;
+
     /**
      * Constructor.
      * @param input file containing the information about the ratings.
@@ -68,7 +70,7 @@ public class GeneralWarmupRecommendation<U,I> extends WarmupRecommendation<U,I>
      * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
      * @throws IOException if something fails while reading the dataset.
      */
-    public GeneralWarmupRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, WarmupType warmup) throws IOException
+    public GeneralWarmupRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, WarmupType warmup, int cutoff) throws IOException
     {
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
@@ -79,6 +81,7 @@ public class GeneralWarmupRecommendation<U,I> extends WarmupRecommendation<U,I>
         metrics.put("gini", CumulativeGini::new);
 
         this.warmupType = warmup;
+        this.cutoff = cutoff;
     }
 
 
@@ -93,7 +96,7 @@ public class GeneralWarmupRecommendation<U,I> extends WarmupRecommendation<U,I>
     {
         Map<String, CumulativeMetric<U,I>> localMetrics = new HashMap<>();
         metrics.forEach((name, supplier) -> localMetrics.put(name, supplier.get()));
-        return new GeneralOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed);
+        return new GeneralOfflineDatasetRecommendationLoop<>(dataset, rec, localMetrics, endCond, rngSeed, cutoff);
     }
 
     @Override

@@ -140,21 +140,27 @@ public class GiniIndex
             return false;
         }
 
-        this.freqSum += increment;
-        if (increment > 0) // Increment the frequency of the element.
+        if(this.freqSum + increment >= 0)
         {
-            return this.updateFrequencyIncrease(idx, increment);
+            this.freqSum += increment;
+            if (increment > 0) // Increment the frequency of the element.
+            {
+                return this.updateFrequencyIncrease(idx, increment);
+            }
+            else if (increment < 0) // Decrease the frequency of the element
+            {
+                return this.updateFrequencyDecrease(idx, -increment);
+            }
+            // In case increment == 0
+            return true;
         }
-        else if (increment < 0) // Decrease the frequency of the element
-        {
-            return this.updateFrequencyDecrease(idx, -increment);
-        }
-        // In case increment == 0
-        return true;
+
+        return false;
     }
 
     /**
      * Updates the value for the Gini index if the frequency of an element decreases.
+     * A value cannot descend lower than 0.
      *
      * @param idx       the identifier of the element.
      * @param decrement the decrement.
@@ -166,6 +172,7 @@ public class GiniIndex
         // First, get the frequency of item iidx.
         long oldFreq = this.frequencies.get(idx);
         long newFreq = oldFreq - decrement;
+        if(newFreq < 0) return false;
         this.frequencies.put(idx, newFreq);
 
         // Obtain the minimum and maximum indexes for the old value.
