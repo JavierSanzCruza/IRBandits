@@ -145,15 +145,14 @@ public abstract class WarmupRecommendation<U,I>
                 System.out.println("Training recommendations: " + splitPoints.get(part) + " (" + (part + 1) + "/" + numParts + ")");
                 System.out.println("Relevant recommendations (with training): " + (dataset.getNumRel() - notRel));
 
-                // Store the values for each algorithm.
-                Map<String, List<Double>> averagedValues = new HashMap<>();
-                IntList counter = new IntArrayList();
-
-                this.getMetrics().keySet().forEach(metricName -> averagedValues.put(metricName, new ArrayList<>()));
-
                 // Run each algorithm
                 recs.forEach((name, rec) ->
                 {
+                    // Store the values for each algorithm.
+                    Map<String, List<Double>> averagedValues = new HashMap<>();
+                    IntList counter = new IntArrayList();
+                    this.getMetrics().keySet().forEach(metricName -> averagedValues.put(metricName, new ArrayList<>()));
+
                     // Get the recommender:
                     // Obtain the corresponding random numbers:
                     UntieRandomNumberReader rngSeedGen = new UntieRandomNumberReader();

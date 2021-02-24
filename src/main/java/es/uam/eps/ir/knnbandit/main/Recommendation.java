@@ -146,7 +146,6 @@ public abstract class Recommendation<U,I>
                                     double oldM = oldVals.get(j);
                                     double averaged = oldM + (newVals.get(j) - oldM) / (counter.get(j));
                                     oldVals.set(j, averaged);
-                                    counter.set(j, counter.get(j)+1);
                                 }
                             }
                         }
