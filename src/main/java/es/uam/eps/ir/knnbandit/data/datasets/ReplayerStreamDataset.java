@@ -17,6 +17,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.fast.index.FastItemIndex;
 import es.uam.eps.ir.ranksys.fast.index.FastUserIndex;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -260,5 +261,11 @@ public class ReplayerStreamDataset<U,I> implements StreamDataset<U,I>
     public int getNumRatings()
     {
         return 0;
+    }
+
+    @Override
+    public Dataset<U, I> load(List<Pair<Integer>> pairs)
+    {
+        throw new UnsupportedOperationException("ERROR: This function is not available for the stream dataset");
     }
 }

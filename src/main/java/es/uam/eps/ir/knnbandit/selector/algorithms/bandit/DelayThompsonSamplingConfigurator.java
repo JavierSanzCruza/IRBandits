@@ -1,7 +1,7 @@
 package es.uam.eps.ir.knnbandit.selector.algorithms.bandit;
 
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ItemBandit;
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ThompsonSamplingItemBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.AbstractMultiArmedBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.ThompsonSamplingItemBandit;
 import org.json.JSONObject;
 
 public class DelayThompsonSamplingConfigurator<U,I> extends AbstractBanditConfigurator<U,I>
@@ -11,15 +11,15 @@ public class DelayThompsonSamplingConfigurator<U,I> extends AbstractBanditConfig
     private final static String DELAY = "delay";
 
     @Override
-    public BanditSupplier<U, I> getBandit(JSONObject object)
+    public BanditSupplier getBandit(JSONObject object)
     {
         double alpha = object.getDouble(ALPHA);
         double beta = object.getDouble(BETA);
         int delay = object.getInt(DELAY);
-        return new DelayThompsonSamplingBanditSupplier<>(alpha, beta, delay);
+        return new DelayThompsonSamplingBanditSupplier(alpha, beta, delay);
     }
 
-    private static class DelayThompsonSamplingBanditSupplier<U,I> implements BanditSupplier<U,I>
+    private static class DelayThompsonSamplingBanditSupplier implements BanditSupplier
     {
         private final double alpha;
         private final double beta;
@@ -33,9 +33,9 @@ public class DelayThompsonSamplingConfigurator<U,I> extends AbstractBanditConfig
         }
 
         @Override
-        public ItemBandit<U, I> apply(int numItems)
+        public AbstractMultiArmedBandit apply(int numItems)
         {
-            return new ThompsonSamplingItemBandit<>(numItems, alpha, beta);
+            return new ThompsonSamplingItemBandit(numItems, alpha, beta);
         }
 
         @Override

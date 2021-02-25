@@ -42,8 +42,8 @@ public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
             BanditConfigurator<U,I> banditConfigurator = this.selectBanditConfigurator(name);
             if(banditConfigurator == null) return null;
 
-            List<BanditSupplier<U,I>> banditSuppliers = banditConfigurator.getBandits(bandit.getJSONArray(PARAMS));
-            for(BanditSupplier<U,I> supplier : banditSuppliers)
+            List<BanditSupplier> banditSuppliers = banditConfigurator.getBandits(bandit.getJSONArray(PARAMS));
+            for(BanditSupplier supplier : banditSuppliers)
             {
                 list.add(new ItemBanditInteractiveRecommenderSupplier<>(supplier, ignoreUnknown));
             }
@@ -65,7 +65,7 @@ public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
         BanditConfigurator<U,I> banditConfigurator = this.selectBanditConfigurator(name);
         if(banditConfigurator == null) return null;
 
-        BanditSupplier<U,I> banditSupplier = banditConfigurator.getBandit(bandit.getJSONObject(PARAMS));
+        BanditSupplier banditSupplier = banditConfigurator.getBandit(bandit.getJSONObject(PARAMS));
         return new ItemBanditInteractiveRecommenderSupplier<>(banditSupplier, ignoreUnknown);
     }
 
@@ -97,10 +97,10 @@ public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
 
     private static class ItemBanditInteractiveRecommenderSupplier<U,I> implements InteractiveRecommenderSupplier<U,I>
     {
-        BanditSupplier<U,I> banditSupplier;
+        BanditSupplier banditSupplier;
         boolean ignoreUnknown;
 
-        public ItemBanditInteractiveRecommenderSupplier(BanditSupplier<U,I> supplier, boolean ignoreUnknown)
+        public ItemBanditInteractiveRecommenderSupplier(BanditSupplier supplier, boolean ignoreUnknown)
         {
             this.banditSupplier = supplier;
             this.ignoreUnknown = ignoreUnknown;
@@ -110,7 +110,7 @@ public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
         public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
             ValueFunction valueFunction = ValueFunctions.identity();
-            return new ItemBanditRecommender<>(userIndex, itemIndex, ignoreUnknown, banditSupplier.apply(itemIndex.numItems()), valueFunction);
+            return new ItemBanditRecommender<>(userIndex, itemIndex, ignoreUnknown, banditSupplier, valueFunction);
         }
 
         @Override

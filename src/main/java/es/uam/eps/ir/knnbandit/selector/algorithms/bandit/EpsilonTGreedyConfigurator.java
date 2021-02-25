@@ -1,6 +1,6 @@
 package es.uam.eps.ir.knnbandit.selector.algorithms.bandit;
 
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.*;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.*;
 import org.jooq.lambda.tuple.Tuple2;
 import org.json.JSONObject;
 
@@ -12,7 +12,7 @@ public class EpsilonTGreedyConfigurator<U,I> extends AbstractBanditConfigurator<
     private final static String ALPHA = "alpha";
 
     @Override
-    public BanditSupplier<U, I> getBandit(JSONObject object)
+    public BanditSupplier getBandit(JSONObject object)
     {
         double alpha = object.getDouble(ALPHA);
         JSONObject function = object.getJSONObject(UPDATEFUNC);
@@ -24,7 +24,7 @@ public class EpsilonTGreedyConfigurator<U,I> extends AbstractBanditConfigurator<
         return new EpsilonTGreedyBanditSupplier<>(alpha, functionName, updateFunction);
     }
 
-    private static class EpsilonTGreedyBanditSupplier<U,I> implements BanditSupplier<U,I>
+    private static class EpsilonTGreedyBanditSupplier<U,I> implements BanditSupplier
     {
         private final double alpha;
         private final EpsilonGreedyUpdateFunction updateFunction;
@@ -38,9 +38,9 @@ public class EpsilonTGreedyConfigurator<U,I> extends AbstractBanditConfigurator<
         }
 
         @Override
-        public ItemBandit<U, I> apply(int numItems)
+        public AbstractMultiArmedBandit apply(int numItems)
         {
-            return new EpsilonTGreedyItemBandit<>(alpha, numItems, updateFunction);
+            return new EpsilonTGreedyItemBandit(numItems, alpha, updateFunction);
         }
 
         @Override

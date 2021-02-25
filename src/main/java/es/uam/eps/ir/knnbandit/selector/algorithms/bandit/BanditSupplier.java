@@ -1,10 +1,10 @@
 package es.uam.eps.ir.knnbandit.selector.algorithms.bandit;
 
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ItemBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.AbstractMultiArmedBandit;
 
-public interface BanditSupplier<U,I>
+public interface BanditSupplier
 {
-    ItemBandit<U,I> apply(int numItems);
+    AbstractMultiArmedBandit apply(int numItems);
 
     String getName();
 }

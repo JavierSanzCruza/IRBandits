@@ -2,7 +2,9 @@ package es.uam.eps.ir.knnbandit.data.datasets;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.DoublePredicate;
 
@@ -43,4 +45,11 @@ public interface Dataset<U,I> extends FastUpdateableUserIndex<U>, FastUpdateable
      * @return the number of total ratings if information is available, 0 otherwise.
      */
     int getNumRatings();
+
+    /**
+     * Subsamples a dataset.
+     * @param pairs the list of pairs to keep.
+     * @return the reduced dataset.
+     */
+    Dataset<U,I> load(List<Pair<Integer>> pairs);
 }

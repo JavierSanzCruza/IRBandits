@@ -24,6 +24,6 @@ public class ValueFunctions
      */
     public static ValueFunction identity()
     {
-        return (int uidx, int iidx, double currentValue, double numTimes) -> currentValue;
+        return (int iidx, double currentValue, double numTimes) -> currentValue;
     }
 }

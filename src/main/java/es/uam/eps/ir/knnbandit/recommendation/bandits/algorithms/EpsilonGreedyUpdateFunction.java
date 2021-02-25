@@ -7,7 +7,7 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.recommendation.bandits.item;
+package es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms;
 
 /**
  * Functions that update the arm values in an epsilon-greedy bandit.

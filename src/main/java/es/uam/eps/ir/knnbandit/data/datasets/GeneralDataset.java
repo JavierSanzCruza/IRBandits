@@ -138,6 +138,12 @@ public class GeneralDataset<U,I> implements OfflineDataset<U,I>
     }
 
     @Override
+    public Dataset<U, I> load(List<Pair<Integer>> pairs)
+    {
+        return GeneralDataset.load(this, pairs);
+    }
+
+    @Override
     public int getNumRel(List<Tuple2<Integer, Integer>> list)
     {
         return list.stream().mapToInt(t ->

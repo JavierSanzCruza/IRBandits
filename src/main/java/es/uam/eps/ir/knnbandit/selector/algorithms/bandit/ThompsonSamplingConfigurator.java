@@ -1,7 +1,7 @@
 package es.uam.eps.ir.knnbandit.selector.algorithms.bandit;
 
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ItemBandit;
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ThompsonSamplingItemBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.AbstractMultiArmedBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.ThompsonSamplingItemBandit;
 import org.json.JSONObject;
 
 public class ThompsonSamplingConfigurator<U,I> extends AbstractBanditConfigurator<U,I>
@@ -10,14 +10,14 @@ public class ThompsonSamplingConfigurator<U,I> extends AbstractBanditConfigurato
     private final static String BETA = "beta";
 
     @Override
-    public BanditSupplier<U, I> getBandit(JSONObject object)
+    public BanditSupplier getBandit(JSONObject object)
     {
         double alpha = object.getDouble(ALPHA);
         double beta = object.getDouble(BETA);
-        return new ThompsonSamplingBanditSupplier<>(alpha, beta);
+        return new ThompsonSamplingBanditSupplier(alpha, beta);
     }
 
-    private static class ThompsonSamplingBanditSupplier<U,I> implements BanditSupplier<U,I>
+    private static class ThompsonSamplingBanditSupplier implements BanditSupplier
     {
         private final double alpha;
         private final double beta;
@@ -29,9 +29,9 @@ public class ThompsonSamplingConfigurator<U,I> extends AbstractBanditConfigurato
         }
 
         @Override
-        public ItemBandit<U, I> apply(int numItems)
+        public AbstractMultiArmedBandit apply(int numItems)
         {
-            return new ThompsonSamplingItemBandit<>(numItems, alpha, beta);
+            return new ThompsonSamplingItemBandit(numItems, alpha, beta);
         }
 
         @Override

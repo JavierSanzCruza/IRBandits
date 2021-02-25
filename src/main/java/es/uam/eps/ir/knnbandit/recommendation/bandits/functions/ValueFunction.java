@@ -21,11 +21,10 @@ public interface ValueFunction
     /**
      * Applies the function.
      *
-     * @param uidx         Identifier of the user.
-     * @param iidx         Identifier of the item.
+     * @param iidx         Identifier of the arm.
      * @param currentValue Current value of the arm.
      * @param numTimes     Number of times the arm has been selected.
      * @return the value of the arm in our context.
      */
-    double apply(int uidx, int iidx, double currentValue, double numTimes);
+    double apply(int iidx, double currentValue, double numTimes);
 }

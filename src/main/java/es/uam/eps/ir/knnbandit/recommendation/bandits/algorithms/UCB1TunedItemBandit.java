@@ -7,9 +7,10 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.recommendation.bandits.item;
+package es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms;
 
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import it.unimi.dsi.fastutil.PriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -19,14 +20,12 @@ import org.ranksys.core.util.tuples.Tuple2id;
 import java.util.Comparator;
 
 /**
- * Item bandit using the UCB1-tuned algorithm.
+ * Simple multi-armed bandit using the UCB1-tuned algorithm.
  *
- * @param <U> User type.
- * @param <I> Item type.
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class UCB1TunedItemBandit<U, I> extends ItemBandit<U, I>
+public class UCB1TunedItemBandit extends AbstractMultiArmedBandit
 {
     /**
      * The values for each arm.
@@ -39,32 +38,28 @@ public class UCB1TunedItemBandit<U, I> extends ItemBandit<U, I>
     /**
      * The number of times each item has been selected.
      */
-    double[] numTimes;
+    int[] numTimes;
     /**
      * The number of iterations.
      */
     int numIter;
-    /**
-     * The number of items.
-     */
-    int numItems;
 
     /**
      * Constructor.
      *
-     * @param numItems the number of items.
+     * @param numArms the number of arms.
      */
-    public UCB1TunedItemBandit(int numItems)
+    public UCB1TunedItemBandit(int numArms)
     {
-        this.numItems = numItems;
-        this.values = new double[numItems];
-        this.numTimes = new double[numItems];
-        this.variances = new double[numItems];
+        super(numArms);
+        this.values = new double[numArms];
+        this.numTimes = new int[numArms];
+        this.variances = new double[numArms];
         this.numIter = 0;
     }
 
     @Override
-    public int next(int uidx, int[] available, ValueFunction valF)
+    public int next(int[] available, ValueFunction valF)
     {
         if (available == null || available.length == 0)
         {
@@ -87,8 +82,8 @@ public class UCB1TunedItemBandit<U, I> extends ItemBandit<U, I>
                 }
                 else
                 {
-                    double ucb = this.variances[i] - values[i] * values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i]));
-                    val = valF.apply(uidx, i, values[i] + Math.sqrt((Math.log(numIter + 1) / numTimes[i]) * Math.min(0.25, ucb)), numTimes[i]);
+                    double ucb = this.variances[i] - values[i] * values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i]+0.0));
+                    val = valF.apply(i, values[i] + Math.sqrt((Math.log(numIter + 1) / numTimes[i]+0.0) * Math.min(0.25, ucb)), numTimes[i]+0.0);
                 }
 
                 if (val > max)
@@ -118,7 +113,7 @@ public class UCB1TunedItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
-    public int next(int uidx, IntList available, ValueFunction valF)
+    public int next(IntList available, ValueFunction valF)
     {
         if (available == null || available.isEmpty())
         {
@@ -141,8 +136,8 @@ public class UCB1TunedItemBandit<U, I> extends ItemBandit<U, I>
                 }
                 else
                 {
-                    double ucb = this.variances[i] - values[i] * values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i]));
-                    val = valF.apply(uidx, i, values[i] + Math.sqrt((Math.log(numIter + 1) / numTimes[i]) * Math.min(0.25, ucb)), numTimes[i]);
+                    double ucb = this.variances[i] - values[i] * values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i]+0.0));
+                    val = valF.apply(i, values[i] + Math.sqrt((Math.log(numIter + 1) / numTimes[i]+0.0) * Math.min(0.25, ucb)), numTimes[i]+0.0);
                 }
 
                 if (val > max)
@@ -172,7 +167,7 @@ public class UCB1TunedItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
-    public IntList next(int uidx, IntList available, ValueFunction valFunc, int k)
+    public IntList next(IntList available, ValueFunction valFunc, int k)
     {
         if (available == null || available.isEmpty())
         {
@@ -194,8 +189,8 @@ public class UCB1TunedItemBandit<U, I> extends ItemBandit<U, I>
                 }
                 else
                 {
-                    double ucb = this.variances[i] - values[i] * values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i]));
-                    val = valFunc.apply(uidx, i, values[i] + Math.sqrt((Math.log(numIter + 1) / numTimes[i]) * Math.min(0.25, ucb)), numTimes[i]);
+                    double ucb = this.variances[i] - values[i] * values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i]+0.0));
+                    val = valFunc.apply(i, values[i] + Math.sqrt((Math.log(numIter + 1) / numTimes[i]+0.0) * Math.min(0.25, ucb)), numTimes[i]+0.0);
                 }
 
                 if(queue.size() < num)
@@ -235,20 +230,29 @@ public class UCB1TunedItemBandit<U, I> extends ItemBandit<U, I>
         numTimes[i]++;
         numIter++;
 
-        values[i] = oldM + (value - oldM) / (numTimes[i]);
-        variances[i] = oldS + (value - oldM) * (value - values[i]);
+        values[i] = oldM + (value - oldM) / (numTimes[i]+0.0);
+        variances[i] = oldS + (value - oldM) * (value - values[i]+0.0);
     }
 
     @Override
     public void reset()
     {
         numIter = 0;
-        for (int i = 0; i < numItems; ++i)
+        for (int i = 0; i < numArms; ++i)
         {
             this.values[i] = 0.0;
-            this.numTimes[i] = 0.0;
+            this.numTimes[i] = 0;
             this.variances[i] = 0.0;
         }
+    }
+
+    @Override
+    public Pair<Integer> getStats(int arm)
+    {
+        if(arm < 0 || arm >= numArms) return null;
+
+        int numHits = Double.valueOf(numTimes[arm]*values[arm]).intValue();
+        return new Pair<>(numHits, numTimes[arm] - numHits);
     }
 
 }

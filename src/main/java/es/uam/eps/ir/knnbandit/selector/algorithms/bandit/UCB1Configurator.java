@@ -1,22 +1,22 @@
 package es.uam.eps.ir.knnbandit.selector.algorithms.bandit;
 
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.*;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.*;
 import org.json.JSONObject;
 
 public class UCB1Configurator<U,I> extends AbstractBanditConfigurator<U,I>
 {
     @Override
-    public BanditSupplier<U, I> getBandit(JSONObject object)
+    public BanditSupplier getBandit(JSONObject object)
     {
         return new UCB1BanditSupplier<>();
     }
 
-    private static class UCB1BanditSupplier<U,I> implements BanditSupplier<U,I>
+    private static class UCB1BanditSupplier<U,I> implements BanditSupplier
     {
         @Override
-        public ItemBandit<U, I> apply(int numItems)
+        public AbstractMultiArmedBandit apply(int numItems)
         {
-            return new UCB1ItemBandit<>(numItems);
+            return new UCB1ItemBandit(numItems);
         }
 
         @Override

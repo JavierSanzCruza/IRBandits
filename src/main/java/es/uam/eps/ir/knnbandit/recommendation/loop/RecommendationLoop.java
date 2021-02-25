@@ -100,7 +100,14 @@ public interface RecommendationLoop<U,I>
      */
     List<String> getMetrics();
 
+    /**
+     * Increase the iteration number.
+     */
     void increaseIteration();
 
+    /**
+     * Get the cutoff for the recommendations.
+     * @return the cutoff.
+     */
     int getCutoff();
 }

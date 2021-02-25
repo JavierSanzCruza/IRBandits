@@ -1,7 +1,7 @@
 package es.uam.eps.ir.knnbandit.selector.algorithms.bandit;
 
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ItemBandit;
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.MLECategoricalItemBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.AbstractMultiArmedBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.MLECategoricalItemBandit;
 import org.json.JSONObject;
 
 public class MLECategoricalItemBanditConfigurator<U,I> extends AbstractBanditConfigurator<U,I>
@@ -9,13 +9,13 @@ public class MLECategoricalItemBanditConfigurator<U,I> extends AbstractBanditCon
     private final static String ALPHA = "alpha";
 
     @Override
-    public BanditSupplier<U, I> getBandit(JSONObject object)
+    public BanditSupplier getBandit(JSONObject object)
     {
         double alpha = object.getDouble(ALPHA);
-        return new MLECategoricalItemBanditSupplier<>(alpha);
+        return new MLECategoricalItemBanditSupplier(alpha);
     }
 
-    private static class MLECategoricalItemBanditSupplier<U,I> implements BanditSupplier<U,I>
+    private static class MLECategoricalItemBanditSupplier implements BanditSupplier
     {
         private final double alpha;
 
@@ -25,9 +25,9 @@ public class MLECategoricalItemBanditConfigurator<U,I> extends AbstractBanditCon
         }
 
         @Override
-        public ItemBandit<U, I> apply(int numItems)
+        public AbstractMultiArmedBandit apply(int numItems)
         {
-            return new MLECategoricalItemBandit<>(numItems, alpha);
+            return new MLECategoricalItemBandit(numItems, alpha);
         }
 
         @Override

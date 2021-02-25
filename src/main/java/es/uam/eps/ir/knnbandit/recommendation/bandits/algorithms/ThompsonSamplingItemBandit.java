@@ -7,64 +7,62 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.recommendation.bandits.item;
+package es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms;
 
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
 import es.uam.eps.ir.knnbandit.stats.BetaDistribution;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import it.unimi.dsi.fastutil.PriorityQueue;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
 import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.Comparator;
 
 /**
- * Item bandit using the Thompson sampling algorithm, delaying the updates
+ * Multi-armed bandit using the Thompson sampling algorithm.
+ * It considers that rewards of each arm follow a Bernoulli distribution.
  *
- * @param <U> User type.
- * @param <I> Item type.
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
+public class ThompsonSamplingItemBandit extends AbstractMultiArmedBandit
 {
     /**
-     * A Beta distribution for each possible item.
+     * A Beta distribution for each possible arm.
      */
     private final BetaDistribution[] betas;
 
-
-    private final Int2IntMap delays;
-    private final Int2DoubleMap currentScores;
-    private final int delay;
     /**
-     * The number of items.
+     * The initial alphas for each arm.
      */
-    private final int numItems;
-
     private final double[] initialAlphas;
+    /**
+     * The initial betas for each arm.
+     */
     private final double[] initialBetas;
+    /**
+     * The unique initial alpha value for all the arms.
+     */
     private final double initialAlpha;
+    /**
+     * The unique initial beta value for all the arms.
+     */
     private final double initialBeta;
 
     /**
      * Constructor.
      *
-     * @param numItems The number of items.
-     * @param delay    The time.
+     * @param numArms The number of arms.
      */
-    public DelayedThompsonSamplingItemBandit(int numItems, int delay)
+    public ThompsonSamplingItemBandit(int numArms)
     {
-        this.numItems = numItems;
-        this.betas = new BetaDistribution[numItems];
-        this.delays = new Int2IntOpenHashMap();
-        this.currentScores = new Int2DoubleOpenHashMap();
-        this.delay = delay;
-        for (int i = 0; i < numItems; ++i)
+        super(numArms);
+        this.betas = new BetaDistribution[numArms];
+        for (int i = 0; i < numArms; ++i)
         {
             betas[i] = new BetaDistribution(1.0, 1.0);
-            this.delays.put(i, delay);
-            this.currentScores.put(i, betas[i].sample());
         }
 
         this.initialAlpha = 1.0;
@@ -76,22 +74,17 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
     /**
      * Constructor.
      *
-     * @param numItems     Number of items.
+     * @param numArms      Number of arms.
      * @param initialAlpha The initial value for the alpha parameter of Beta distributions.
      * @param initialBeta  The initial value for the beta parameter of the Beta distributions.
      */
-    public DelayedThompsonSamplingItemBandit(int numItems, double initialAlpha, double initialBeta, int delay)
+    public ThompsonSamplingItemBandit(int numArms, double initialAlpha, double initialBeta)
     {
-        this.numItems = numItems;
-        this.betas = new BetaDistribution[numItems];
-        this.delays = new Int2IntOpenHashMap();
-        this.currentScores = new Int2DoubleOpenHashMap();
-        this.delay = delay;
-        for (int i = 0; i < numItems; ++i)
+        super(numArms);
+        this.betas = new BetaDistribution[numArms];
+        for (int i = 0; i < numArms; ++i)
         {
             betas[i] = new BetaDistribution(initialAlpha, initialBeta);
-            this.delays.put(i, delay);
-            this.currentScores.put(i, betas[i].sample());
         }
 
         this.initialAlpha = initialAlpha;
@@ -103,22 +96,17 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
     /**
      * Constructor.
      *
-     * @param numItems      Number of items.
+     * @param numArms       Number of arms.
      * @param initialAlphas The initial values for the alpha parameters of Beta distributions.
      * @param initialBetas  The initial values for the beta parameters of Beta distributions.
      */
-    public DelayedThompsonSamplingItemBandit(int numItems, double[] initialAlphas, double[] initialBetas, int delay)
+    public ThompsonSamplingItemBandit(int numArms, double[] initialAlphas, double[] initialBetas)
     {
-        this.numItems = numItems;
-        this.betas = new BetaDistribution[numItems];
-        this.delays = new Int2IntOpenHashMap();
-        this.currentScores = new Int2DoubleOpenHashMap();
-        this.delay = delay;
-        for (int i = 0; i < numItems; ++i)
+        super(numArms);
+        this.betas = new BetaDistribution[numArms];
+        for (int i = 0; i < numArms; ++i)
         {
             betas[i] = new BetaDistribution(initialAlphas[i], initialBetas[i]);
-            this.delays.put(i, delay);
-            this.currentScores.put(i, betas[i].sample());
         }
 
         this.initialAlpha = 1.0;
@@ -128,7 +116,7 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
-    public int next(int uidx, int[] available, ValueFunction valF)
+    public int next(int[] available, ValueFunction valF)
     {
         if (available == null || available.length == 0)
         {
@@ -144,21 +132,7 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
             IntList top = new IntArrayList();
             for (int i : available)
             {
-                int currentDelay = this.delays.get(i);
-                double val;
-                if (currentDelay > 0)
-                {
-                    val = valF.apply(uidx, i, this.currentScores.get(i), 0);
-                    this.delays.put(i, currentDelay - 1);
-                }
-                else
-                {
-                    double aux = this.betas[i].sample();
-                    this.delays.put(i, delay);
-                    this.currentScores.put(i, aux);
-                    val = valF.apply(uidx, i, this.currentScores.get(i), 0);
-                }
-
+                double val = valF.apply(i, this.betas[i].sample(), 0);
                 if (val > max)
                 {
                     max = val;
@@ -184,7 +158,7 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
-    public int next(int uidx, IntList available, ValueFunction valF)
+    public int next(IntList available, ValueFunction valF)
     {
         if (available == null || available.isEmpty())
         {
@@ -200,21 +174,7 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
             IntList top = new IntArrayList();
             for (int i : available)
             {
-                int currentDelay = this.delays.get(i);
-                double val;
-                if (currentDelay > 0)
-                {
-                    val = valF.apply(uidx, i, this.currentScores.get(i), 0);
-                    this.delays.put(i, currentDelay - 1);
-                }
-                else
-                {
-                    double aux = this.betas[i].sample();
-                    this.delays.put(i, delay);
-                    this.currentScores.put(i, aux);
-                    val = valF.apply(uidx, i, this.currentScores.get(i), 0);
-                }
-
+                double val = valF.apply(i, this.betas[i].sample(), 0);
                 if (val > max)
                 {
                     max = val;
@@ -240,7 +200,7 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
-    public IntList next(int uidx, IntList available, ValueFunction valFunc, int k)
+    public IntList next(IntList available, ValueFunction valFunc, int k)
     {
         if (available == null || available.isEmpty())
         {
@@ -255,20 +215,7 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
 
             for(int i : available)
             {
-                int currentDelay = this.delays.get(i);
-                double val;
-                if (currentDelay > 0)
-                {
-                    val = valFunc.apply(uidx, i, this.currentScores.get(i), 0);
-                    this.delays.put(i, currentDelay - 1);
-                }
-                else
-                {
-                    double aux = this.betas[i].sample();
-                    this.delays.put(i, delay);
-                    this.currentScores.put(i, aux);
-                    val = valFunc.apply(uidx, i, this.currentScores.get(i), 0);
-                }
+                double val = valFunc.apply(i, this.betas[i].sample(), 0);
                 if(queue.size() < num)
                 {
                     queue.enqueue(new Tuple2id(i, val));
@@ -298,35 +245,47 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
         }
     }
 
-
     @Override
     public void update(int i, double value)
     {
         this.betas[i].updateAdd(value, (1.0 - value));
-        this.currentScores.put(i, this.betas[i].sample());
-        this.delays.put(i, delay);
     }
 
     @Override
     public void reset()
     {
-        if (initialAlphas == null)
+        if (initialAlphas == null || initialBetas == null)
         {
-            for (int i = 0; i < numItems; ++i)
+            for (int i = 0; i < numArms; ++i)
             {
                 betas[i] = new BetaDistribution(initialAlpha, initialBeta);
-                this.currentScores.put(i, betas[i].sample());
-                this.delays.put(i, delay);
             }
         }
         else
         {
-            for (int i = 0; i < numItems; ++i)
+            for (int i = 0; i < numArms; ++i)
             {
                 betas[i] = new BetaDistribution(initialAlphas[i], initialBetas[i]);
-                this.currentScores.put(i, betas[i].sample());
-                this.delays.put(i, delay);
             }
+        }
+    }
+
+    @Override
+    public Pair<Integer> getStats(int arm)
+    {
+        if(arm < 0 || arm >= numArms) return null;
+
+        if(initialAlphas == null || initialBetas == null)
+        {
+            int numHits = Double.valueOf(this.betas[arm].getAlpha() - initialAlpha).intValue();
+            int numMisses = Double.valueOf(this.betas[arm].getBeta() - initialBeta).intValue();
+            return new Pair<>(numHits, numMisses);
+        }
+        else
+        {
+            int numHits = Double.valueOf(this.betas[arm].getAlpha() - initialAlphas[arm]).intValue();
+            int numMisses = Double.valueOf(this.betas[arm].getBeta() - initialBetas[arm]).intValue();
+            return new Pair<>(numHits, numMisses);
         }
     }
 }

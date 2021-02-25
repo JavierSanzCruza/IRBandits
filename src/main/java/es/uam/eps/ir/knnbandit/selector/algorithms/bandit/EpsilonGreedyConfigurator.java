@@ -1,9 +1,9 @@
 package es.uam.eps.ir.knnbandit.selector.algorithms.bandit;
 
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.EpsilonGreedyItemBandit;
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.EpsilonGreedyUpdateFunction;
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.EpsilonGreedyUpdateFunctions;
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ItemBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.EpsilonGreedyItemBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.EpsilonGreedyUpdateFunction;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.EpsilonGreedyUpdateFunctions;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.AbstractMultiArmedBandit;
 import es.uam.eps.ir.knnbandit.selector.EpsilonGreedyUpdateFunctionIdentifiers;
 import org.jooq.lambda.tuple.Tuple2;
 import org.json.JSONObject;
@@ -17,7 +17,7 @@ public class EpsilonGreedyConfigurator<U,I> extends AbstractBanditConfigurator<U
     private final static String ALPHA = "alpha";
 
     @Override
-    public BanditSupplier<U, I> getBandit(JSONObject object)
+    public BanditSupplier getBandit(JSONObject object)
     {
         double epsilon = object.getDouble(EPSILON);
         JSONObject function = object.getJSONObject(UPDATEFUNC);
@@ -26,7 +26,7 @@ public class EpsilonGreedyConfigurator<U,I> extends AbstractBanditConfigurator<U
 
         String functionName = updFunction.v1;
         EpsilonGreedyUpdateFunction updateFunction = updFunction.v2;
-        return new EpsilonGreedyBanditSupplier<>(epsilon, functionName, updateFunction);
+        return new EpsilonGreedyBanditSupplier(epsilon, functionName, updateFunction);
     }
 
     /**
@@ -53,7 +53,7 @@ public class EpsilonGreedyConfigurator<U,I> extends AbstractBanditConfigurator<U
         }
     }
 
-    private static class EpsilonGreedyBanditSupplier<U,I> implements BanditSupplier<U,I>
+    private static class EpsilonGreedyBanditSupplier implements BanditSupplier
     {
         private final double epsilon;
         private final EpsilonGreedyUpdateFunction updateFunction;
@@ -67,9 +67,9 @@ public class EpsilonGreedyConfigurator<U,I> extends AbstractBanditConfigurator<U
         }
 
         @Override
-        public ItemBandit<U, I> apply(int numItems)
+        public AbstractMultiArmedBandit apply(int numItems)
         {
-            return new EpsilonGreedyItemBandit<>(epsilon, numItems, updateFunction);
+            return new EpsilonGreedyItemBandit(numItems, epsilon, updateFunction);
         }
 
         @Override
