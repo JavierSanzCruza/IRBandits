@@ -11,12 +11,12 @@ package es.uam.eps.ir.knnbandit.main.general;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Recommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
-import es.uam.eps.ir.knnbandit.recommendation.loop.ContactOfflineDatasetRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.GeneralOfflineDatasetRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
@@ -62,8 +62,10 @@ public class GeneralRecommendation<U,I> extends Recommendation<U,I>
      * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
      * @throws IOException if something fails while reading the dataset.
      */
-    public GeneralRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, int cutoff) throws IOException
+    public GeneralRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, int cutoff, IOType type, boolean gzipped) throws IOException
     {
+        super(type, gzipped);
+
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
 

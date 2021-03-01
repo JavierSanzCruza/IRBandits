@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.main.withknowledge;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.DatasetWithKnowledge;
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.WarmupRecommendation;
 import es.uam.eps.ir.knnbandit.main.WarmupValidation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -72,8 +73,9 @@ public class WithKnowledgeWarmupRecommendation<U,I> extends WarmupRecommendation
      * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
      * @throws IOException if something fails while reading the dataset.
      */
-    public WithKnowledgeWarmupRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, WarmupType warmup, int cutoff) throws IOException
+    public WithKnowledgeWarmupRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, WarmupType warmup, int cutoff, IOType ioType, boolean gzipped) throws IOException
     {
+        super(ioType, gzipped);
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
 

@@ -12,6 +12,8 @@ package es.uam.eps.ir.knnbandit.main;
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.io.*;
+import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.partition.Partition;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
@@ -19,7 +21,6 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
-import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import org.jooq.lambda.tuple.Tuple2;
@@ -42,6 +43,25 @@ public abstract class WarmupValidation<U,I>
 {
     private static final String FIXED = "fixed";
     private static final String VARIABLE = "variable";
+
+    /**
+     * The input-output type.
+     */
+    private final IOType ioType;
+    /**
+     * If the files have to be read/written in a compressed manner.
+     */
+    private final boolean gzipped;
+
+    /**
+     * Constructor.
+     * @param ioType input-output type for the reader / writer.
+     */
+    public WarmupValidation(IOType ioType, boolean gzipped)
+    {
+        this.ioType = ioType;
+        this.gzipped = gzipped;
+    }
 
     /**
      * Applies validation over a set of algorithms when some warmup is available.
@@ -185,8 +205,8 @@ public abstract class WarmupValidation<U,I>
                     FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(validDataset, rec, endCond.get(), rngSeed);
 
                     // Execute the loop:
-                    Executor<U, I> executor = new Executor<>();
-                    String fileName = currentOutputFolder + name + "_" + i + ".txt";
+                    Executor<U, I> executor = new Executor<>(this.getWriter(), this.getReader(), gzipped);
+                    String fileName = currentOutputFolder + name + "_" + i + ".txt" + ((gzipped) ? ".gz" : "");
                     executor.executeWithWarmup(loop, fileName, resume, interval, warmup);
                     int currentIter = loop.getCurrentIter();
                     if (currentIter > 0) // if at least one iteration has been recorded:
@@ -285,4 +305,40 @@ public abstract class WarmupValidation<U,I>
      * @return the warmup.
      */
     protected abstract Warmup getWarmup(Dataset<U,I> validDataset, List<Pair<Integer>> trainData);
+
+    /**
+     * Obtains a writer.
+     * @return the writer if everything is ok, null otherwise.
+     */
+    protected WriterInterface getWriter()
+    {
+        switch (ioType)
+        {
+            case BINARY:
+                return new BinaryWriter();
+            case TEXT:
+                return new TextWriter();
+            case ERROR:
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Obtains a reader.
+     * @return the reader if everything is ok, null otherwise.
+     */
+    protected ReaderInterface getReader()
+    {
+        switch (ioType)
+        {
+            case BINARY:
+                return new BinaryReader();
+            case TEXT:
+                return new TextReader();
+            case ERROR:
+            default:
+                return null;
+        }
+    }
 }

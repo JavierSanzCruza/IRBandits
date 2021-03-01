@@ -12,6 +12,7 @@ package es.uam.eps.ir.knnbandit.main;
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.io.*;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
@@ -37,6 +38,25 @@ import java.util.stream.IntStream;
  */
 public abstract class Recommendation<U,I>
 {
+    /**
+     * The input-output type.
+     */
+    private final IOType ioType;
+    /**
+     * If the files have to be read/written in a compressed manner.
+     */
+    private final boolean gzipped;
+
+    /**
+     * Constructor.
+     * @param ioType input-output type for the reader / writer.
+     */
+    public Recommendation(IOType ioType, boolean gzipped)
+    {
+        this.ioType = ioType;
+        this.gzipped = gzipped;
+    }
+
     /**
      * Applies an interactive recommendation loop for different algorithms.
      * @param algorithms a file containing the algorithm configuration.
@@ -107,8 +127,8 @@ public abstract class Recommendation<U,I>
                 // Create the recommendation loop: in this case, a general offline dataset loop
                 FastRecommendationLoop<U,I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
                 // Execute the loop:
-                Executor<U, I> executor = new Executor<>();
-                String fileName = outputFolder + name + "_" + i + ".txt";
+                Executor<U, I> executor = new Executor<>(this.getWriter(), this.getReader(), gzipped);
+                String fileName = outputFolder + name + "_" + i + ".txt" + ((gzipped) ? ".gz" : "");
                 Map<String, List<Double>> metricValues = executor.executeWithoutWarmup(loop, fileName, resume, interval);
                 int currentIter = loop.getCurrentIter();
                 if(currentIter > 0) // if at least one iteration has been recorded:
@@ -182,6 +202,42 @@ public abstract class Recommendation<U,I>
             long bbb = System.nanoTime();
             System.out.println("Algorithm " + name + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
         });
+    }
+
+    /**
+     * Obtains a writer.
+     * @return the writer if everything is ok, null otherwise.
+     */
+    protected WriterInterface getWriter()
+    {
+        switch (ioType)
+        {
+            case BINARY:
+                return new BinaryWriter();
+            case TEXT:
+                return new TextWriter();
+            case ERROR:
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Obtains a reader.
+     * @return the reader if everything is ok, null otherwise.
+     */
+    protected ReaderInterface getReader()
+    {
+        switch (ioType)
+        {
+            case BINARY:
+                return new BinaryReader();
+            case TEXT:
+                return new TextReader();
+            case ERROR:
+            default:
+                return null;
+        }
     }
 
     /**

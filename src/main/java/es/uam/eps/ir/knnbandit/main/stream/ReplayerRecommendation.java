@@ -12,6 +12,7 @@ package es.uam.eps.ir.knnbandit.main.stream;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.ReplayerStreamDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.StreamDataset;
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Recommendation;
 import es.uam.eps.ir.knnbandit.metrics.ClickthroughRate;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeCounter;
@@ -62,8 +63,10 @@ public class ReplayerRecommendation<U,I> extends Recommendation<U,I>
      * @param uParser a parser for reading the users.
      * @param iParser a parser for reading the items.
      */
-    public ReplayerRecommendation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser)
+    public ReplayerRecommendation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser, IOType type, boolean gzipped)
     {
+        super(type, gzipped);
+
         this.input = input;
         this.separator = separator;
         this.userIndex = userIndex;

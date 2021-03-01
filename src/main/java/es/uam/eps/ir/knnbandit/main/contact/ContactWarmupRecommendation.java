@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.main.contact;
 
 import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.WarmupRecommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -43,8 +44,9 @@ public class ContactWarmupRecommendation<U> extends WarmupRecommendation<U,U>
     private final WarmupType warmupType;
     private final int cutoff;
 
-    public ContactWarmupRecommendation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, WarmupType warmupType, int cutoff)
+    public ContactWarmupRecommendation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, WarmupType warmupType, int cutoff, IOType ioType, boolean gzipped)
     {
+        super(ioType, gzipped);
         dataset = ContactDataset.load(input, directed, notReciprocal, parser, separator);
         this.metrics = new HashMap<>();
         metrics.put("recall", CumulativeRecall::new);

@@ -9,6 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.main.selector;
 
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.main.contact.ContactValidation;
 import es.uam.eps.ir.knnbandit.main.general.GeneralValidation;
@@ -92,6 +93,8 @@ public class ValidationSelector
         boolean resume = execArgs[4].equalsIgnoreCase("true");
         int k = 1;
         int cutoff = 1;
+        IOType iotype = IOType.TEXT;
+        boolean gzipped = false;
         // And the common (optional) arguments.
         for (int i = lastIndex; i < execArgs.length; ++i)
         {
@@ -105,6 +108,15 @@ public class ValidationSelector
                 ++i;
                 cutoff = Parsers.ip.parse(args[i]);
             }
+            else if("-io-type".equals(args[i]))
+            {
+                ++i;
+                iotype = IOType.fromString(args[i]);
+            }
+            else if("--gzipped".equals(args[i]))
+            {
+                gzipped = true;
+            }
         }
 
         // Then, we identify the specific algorithms, and select the types.
@@ -117,12 +129,12 @@ public class ValidationSelector
 
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    Validation<Long, Long> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, cutoff);
+                    Validation<Long, Long> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, cutoff, iotype, gzipped);
                     valid.validate(algorithms, output, endCond, resume, k);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    Validation<Long, String> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, cutoff);
+                    Validation<Long, String> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, cutoff, iotype, gzipped);
                     valid.validate(algorithms, output, endCond, resume, k);
                 }
                 break;
@@ -132,7 +144,7 @@ public class ValidationSelector
                 boolean directed = execArgs[5].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[6].equalsIgnoreCase("true");
 
-                Validation<Long, Long> valid = new ContactValidation<>(input, "\t", Parsers.lp, directed, notReciprocal, cutoff);
+                Validation<Long, Long> valid = new ContactValidation<>(input, "\t", Parsers.lp, directed, notReciprocal, cutoff, iotype, gzipped);
                 valid.validate(algorithms, output, endCond, resume, k);
 
                 break;
@@ -143,7 +155,7 @@ public class ValidationSelector
                 boolean useRatings = execArgs[6].equalsIgnoreCase("true");
                 KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[7]);
 
-                Validation<Long, Long> valid = new WithKnowledgeValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, cutoff);
+                Validation<Long, Long> valid = new WithKnowledgeValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, cutoff, iotype, gzipped);
                 valid.validate(algorithms, output, endCond, resume, k);
                 break;
 
@@ -154,7 +166,7 @@ public class ValidationSelector
                 String userIndex = execArgs[6];
                 String itemIndex = execArgs[7];
 
-                Validation<Integer, Integer> valid = new ReplayerValidation<>(input, "\t", userIndex, itemIndex, threshold, Parsers.ip, Parsers.ip);
+                Validation<Integer, Integer> valid = new ReplayerValidation<>(input, "\t", userIndex, itemIndex, threshold, Parsers.ip, Parsers.ip, iotype, gzipped);
                 valid.validate(algorithms, output,endCond, resume, k);
                 break;
             }

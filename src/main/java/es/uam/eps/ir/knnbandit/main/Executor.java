@@ -9,7 +9,8 @@
  */
 package es.uam.eps.ir.knnbandit.main;
 
-import es.uam.eps.ir.knnbandit.io.Writer;
+import es.uam.eps.ir.knnbandit.io.ReaderInterface;
+import es.uam.eps.ir.knnbandit.io.WriterInterface;
 import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
@@ -17,13 +18,14 @@ import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2id;
-import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Executes a recommendation loop, and writes its values into a file:
@@ -36,6 +38,17 @@ import java.util.Map;
  */
 public class Executor<U,I>
 {
+    private final WriterInterface writer;
+    private final ReaderInterface reader;
+    private final boolean gzipped;
+
+    public Executor(WriterInterface writer, ReaderInterface reader, boolean gzipped)
+    {
+        this.writer = writer;
+        this.reader = reader;
+        this.gzipped = gzipped;
+    }
+
     /**
      * Executes the full recommendation loop for a single algorithm.
      * @param loop the recommendation loop.
@@ -81,7 +94,6 @@ public class Executor<U,I>
 
         try
         {
-            Writer writer;
             if(loop.getCutoff() == 1)
             {
                 // Step 1: retrieve the previously computed iterations for this algorithm:
@@ -91,13 +103,14 @@ public class Executor<U,I>
                     list = this.retrievePreviousIterations(file);
                 }
 
-                writer = new Writer(file, loop.getMetrics());
+                OutputStream stream = gzipped ? new GZIPOutputStream(new FileOutputStream(file)) : new FileOutputStream(file);
+                writer.initialize(stream);
                 writer.writeHeader();
 
                 // Step 2: if there are any, we update the loop with such values.
                 if (resume && !list.isEmpty())
                 {
-                    metricValues.putAll(this.updateWithPrevious(loop, list, writer, interval));
+                    metricValues.putAll(this.updateWithPrevious(loop, list, interval));
                 }
             }
             else
@@ -108,17 +121,17 @@ public class Executor<U,I>
                     list = this.retrievePreviousIterationsRankings(file);
                 }
 
-                writer = new Writer(file, loop.getMetrics());
+                writer.initialize(file);
                 writer.writeHeader();
 
                 if(resume && !list.isEmpty())
                 {
-                    metricValues.putAll(this.updateWithPreviousRankings(loop, list, writer, interval));
+                    metricValues.putAll(this.updateWithPreviousRankings(loop, list, interval));
                 }
             }
 
             // Step 3: until the loop ends, we
-            int currentIter = this.executeRemaining(loop, writer, interval, metricValues);
+            int currentIter = this.executeRemaining(loop, interval, metricValues);
             writer.close();
             return metricValues;
         }
@@ -141,58 +154,22 @@ public class Executor<U,I>
         List<Tuple2<FastRecommendation, Long>> recovered = new ArrayList<>();
 
         File f = new File(filename);
-        boolean storeLast = true;
         if(f.exists() && !f.isDirectory())
         {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filename))))
+            InputStream stream = gzipped ? new GZIPInputStream(new FileInputStream(filename)) : new FileInputStream(filename);
+
+            reader.initialize(stream);
+            reader.readHeader();
+
+            Tuple3<Integer, FastRecommendation, Long> line;
+
+            // Read each line
+            while((line = reader.readIteration()) != null)
             {
-                String line = br.readLine();
-                int len;
-                if(line != null)
-                {
-                    String[] split = line.split("\t");
-                    len = split.length;
-
-                    int numIter = -1;
-                    int uidx = -1;
-                    long time = -1;
-                    List<Tuple2id> rec = new ArrayList<>();
-
-                    // Read each line
-                    while((line = br.readLine()) != null)
-                    {
-                        split = line.split("\t");
-                        if(split.length < len)
-                        {
-                            storeLast = false;
-                        }
-
-                        int currentIter = Parsers.ip.parse(split[0]);
-                        if(numIter == -1 || numIter == currentIter - 1)
-                        {
-                            if(numIter != -1)
-                            {
-                                recovered.add(new Tuple2<>(new FastRecommendation(uidx, rec), time));
-                                rec = new ArrayList<>();
-                            }
-
-                            if(!storeLast) break;
-                            numIter = currentIter;
-                            uidx = Parsers.ip.parse(split[1]);
-                            time = Parsers.lp.parse(split[len-1]);
-                        }
-
-                        if(!storeLast) break;
-                        int iidx = Parsers.ip.parse(split[2]);
-                        rec.add(new Tuple2id(iidx, 1.0/(rec.size()+1.0)));
-                    }
-
-                    if(storeLast)
-                    {
-                        recovered.add(new Tuple2<>(new FastRecommendation(uidx, rec), time));
-                    }
-                }
+                recovered.add(new Tuple2<>(line.v2, line.v3));
             }
+
+            reader.close();
         }
 
         return recovered;
@@ -211,37 +188,25 @@ public class Executor<U,I>
         List<Tuple3<Integer,Integer,Long>> recovered = new ArrayList<>();
 
         File f = new File(filename);
-        if (f.exists() && !f.isDirectory()) // if the file exists, then recover the triplets:
+        if(f.exists() && !f.isDirectory())
         {
-            // Once we know that the file exists, we open it.
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filename))))
+            InputStream stream = gzipped ? new GZIPInputStream(new FileInputStream(filename)) : new FileInputStream(filename);
+
+            reader.initialize(stream);
+            reader.readHeader();
+
+            Tuple3<Integer, FastRecommendation, Long> line;
+
+            // Read each line
+            while((line = reader.readIteration()) != null)
             {
-                String line = br.readLine();
-                int len;
-                if (line != null)
-                {
-                    String[] split = line.split("\t");
-                    len = split.length;
-
-                    // Read each line
-                    while ((line = br.readLine()) != null)
-                    {
-                        split = line.split("\t");
-                        if (split.length < len)
-                        {
-                            break;
-                        }
-
-                        // Obtain the triplet
-                        int uidx = Parsers.ip.parse(split[1]);
-                        int iidx = Parsers.ip.parse(split[2]);
-                        long time = Parsers.lp.parse(split[len - 1]);
-
-                        // Add it to the recovered list.
-                        recovered.add(new Tuple3<>(uidx, iidx, time));
-                    }
-                }
+                int uidx = line.v2.getUidx();
+                long time = line.v3;
+                for(Tuple2id id : line.v2.getIidxs())
+                    recovered.add(new Tuple3<>(uidx, id.v1, time));
             }
+
+            reader.close();
         }
 
         return recovered;
@@ -252,12 +217,11 @@ public class Executor<U,I>
      *
      * @param loop      the recommendation loop.
      * @param recovered the list of recovered (ranking, time) tuples.
-     * @param writer    a writer for storing the recommendation loop in a file.
      * @param interval  the interval between different data points.
      * @return a map containing the values of the metrics in certain time points.
      * @throws IOException if something fails while writing.
      */
-    public Map<String, List<Double>> updateWithPreviousRankings(FastRecommendationLoop<U,I> loop, List<Tuple2<FastRecommendation, Long>> recovered, Writer writer, int interval) throws IOException
+    public Map<String, List<Double>> updateWithPreviousRankings(FastRecommendationLoop<U,I> loop, List<Tuple2<FastRecommendation, Long>> recovered, int interval) throws IOException
     {
         List<String> metricNames = loop.getMetrics();
         Map<String, List<Double>> metricValues = new HashMap<>();
@@ -278,7 +242,7 @@ public class Executor<U,I>
             int iter = loop.getCurrentIter();
 
             Map<String, Double> metricVals = loop.getMetricValues();
-            writer.writeRanking(iter, rec, metricVals, time);
+            writer.writeRanking(iter, rec, time);
 
             if(iter % interval == 0)
             {
@@ -299,12 +263,11 @@ public class Executor<U,I>
      *
      * @param loop      the recommendation loop.
      * @param recovered the list of recovered (uidx, iidx, time) triplets.
-     * @param writer    a writer for storing the recommendation loop in a file.
      * @param interval  the interval between different data points.
      * @return a map containing the values of the metrics in certain time points.
      * @throws IOException if something fails while writing.
      */
-    public Map<String, List<Double>> updateWithPrevious(FastRecommendationLoop<U, I> loop, List<Tuple3<Integer,Integer,Long>> recovered, Writer writer, int interval) throws IOException
+    public Map<String, List<Double>> updateWithPrevious(FastRecommendationLoop<U, I> loop, List<Tuple3<Integer,Integer,Long>> recovered, int interval) throws IOException
     {
         List<String> metricNames = loop.getMetrics();
         Map<String, List<Double>> metricValues = new HashMap<>();
@@ -324,7 +287,7 @@ public class Executor<U,I>
             int iter = loop.getCurrentIter();
 
             Map<String, Double> metricVals = loop.getMetricValues();
-            writer.writeLine(iter, uidx, iidx, metricVals, time);
+            writer.writeLine(iter, uidx, iidx, time);
 
             if(iter % interval == 0)
             {
@@ -343,12 +306,11 @@ public class Executor<U,I>
      * Execute the remaining loop
      *
      * @param loop         the recommendation loop.
-     * @param writer       the writer.
      * @param interval     the interval.
      * @param metricValues the list of metric values.
      * @return the number of iterations for finishing the loop.
      */
-    public int executeRemaining(FastRecommendationLoop<U, I> loop, Writer writer, int interval, Map<String, List<Double>> metricValues) throws IOException
+    public int executeRemaining(FastRecommendationLoop<U, I> loop, int interval, Map<String, List<Double>> metricValues) throws IOException
     {
         List<String> metricNames = loop.getMetrics();
         boolean ranking = loop.getCutoff() > 1;
@@ -374,7 +336,7 @@ public class Executor<U,I>
                 numIter = loop.getCurrentIter();
                 metrics = loop.getMetricValues();
 
-                writer.writeLine(numIter, uidx, iidx, metrics, time);
+                writer.writeLine(numIter, uidx, iidx, time);
             }
             else
             {
@@ -388,7 +350,7 @@ public class Executor<U,I>
                 time = bb-aa;
                 numIter = loop.getCurrentIter();
                 metrics = loop.getMetricValues();
-                writer.writeRanking(numIter, rec, metrics, time);
+                writer.writeRanking(numIter, rec, time);
             }
 
             if (numIter % interval == 0)

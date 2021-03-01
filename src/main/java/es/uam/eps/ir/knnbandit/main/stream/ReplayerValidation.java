@@ -12,6 +12,7 @@ package es.uam.eps.ir.knnbandit.main.stream;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.ReplayerStreamDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.StreamDataset;
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.metrics.ClickthroughRate;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -60,8 +61,9 @@ public class ReplayerValidation<U,I> extends Validation<U,I>
      * @param uParser a parser for reading the users.
      * @param iParser a parser for reading the items.
      */
-    public ReplayerValidation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser)
+    public ReplayerValidation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser, IOType ioType, boolean gzipped)
     {
+        super(ioType, gzipped);
         this.input = input;
         this.separator = separator;
         this.userIndex = userIndex;

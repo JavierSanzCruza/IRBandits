@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.main.withknowledge;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.DatasetWithKnowledge;
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Recommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeKnowledgeRecall;
@@ -68,8 +69,10 @@ public class WithKnowledgeRecommendation<U,I> extends Recommendation<U,I>
      * @param use the type of data we are using (according to the whether the user knows or not about the items).
      * @throws IOException if something fails while reading the dataset.
      */
-    public WithKnowledgeRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, int cutoff) throws IOException
+    public WithKnowledgeRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, int cutoff, IOType type, boolean gzipped) throws IOException
     {
+        super(type, gzipped);
+
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
 

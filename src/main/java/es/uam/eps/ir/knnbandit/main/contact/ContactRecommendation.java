@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.main.contact;
 
 import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Recommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -37,8 +38,9 @@ public class ContactRecommendation<U> extends Recommendation<U,U>
     private final Map<String, Supplier<CumulativeMetric<U,U>>> metrics;
     private final int cutoff;
 
-    public ContactRecommendation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, int cutoff)
+    public ContactRecommendation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, int cutoff, IOType type, boolean gzipped)
     {
+        super(type, gzipped);
         dataset = ContactDataset.load(input, directed, notReciprocal, parser, separator);
         this.metrics = new HashMap<>();
         metrics.put("recall", CumulativeRecall::new);

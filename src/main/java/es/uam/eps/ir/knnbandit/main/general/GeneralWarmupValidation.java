@@ -12,6 +12,7 @@ package es.uam.eps.ir.knnbandit.main.general;
 import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.main.WarmupValidation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -68,8 +69,9 @@ public class GeneralWarmupValidation<U,I> extends WarmupValidation<U,I>
      * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
      * @throws IOException if something fails while reading the dataset.
      */
-    public GeneralWarmupValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, WarmupType warmup, int cutoff) throws IOException
+    public GeneralWarmupValidation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, WarmupType warmup, int cutoff, IOType ioType, boolean gzipped) throws IOException
     {
+        super(ioType, gzipped);
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
 

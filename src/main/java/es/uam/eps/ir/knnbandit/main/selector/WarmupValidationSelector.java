@@ -9,6 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.main.selector;
 
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.WarmupValidation;
 import es.uam.eps.ir.knnbandit.main.contact.ContactWarmupValidation;
 import es.uam.eps.ir.knnbandit.main.general.GeneralWarmupValidation;
@@ -91,6 +92,8 @@ public class WarmupValidationSelector
         int k = 1;
         int cutoff = 1;
         WarmupType warmup = WarmupType.FULL;
+        IOType iotype = IOType.TEXT;
+        boolean gzipped = false;
         for (int i = lastIndex; i < execArgs.length; ++i)
         {
             if ("-k".equals(args[i]))
@@ -107,6 +110,15 @@ public class WarmupValidationSelector
             {
                 ++i;
                 cutoff = Parsers.ip.parse(args[i]);
+            }
+            else if("-io-type".equals(args[i]))
+            {
+                ++i;
+                iotype = IOType.fromString(args[i]);
+            }
+            else if("--gzipped".equals(args[i]))
+            {
+                gzipped = true;
             }
         }
 
@@ -125,12 +137,12 @@ public class WarmupValidationSelector
                 boolean useRatings = execArgs[10].equalsIgnoreCase("true");
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    WarmupValidation<Long, Long> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup, cutoff);
+                    WarmupValidation<Long, Long> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup, cutoff, iotype, gzipped);
                     valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    WarmupValidation<Long, String> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup, cutoff);
+                    WarmupValidation<Long, String> valid = new GeneralWarmupValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup, cutoff, iotype, gzipped);
                     valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 }
                 break;
@@ -140,7 +152,7 @@ public class WarmupValidationSelector
                 boolean directed = execArgs[9].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[10].equalsIgnoreCase("true");
 
-                WarmupValidation<Long, Long> valid = new ContactWarmupValidation<>(input, "\t", Parsers.lp, directed, notReciprocal, warmup, cutoff);
+                WarmupValidation<Long, Long> valid = new ContactWarmupValidation<>(input, "\t", Parsers.lp, directed, notReciprocal, warmup, cutoff, iotype, gzipped);
                 valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
 
                 break;
@@ -151,7 +163,7 @@ public class WarmupValidationSelector
                 boolean useRatings = execArgs[10].equalsIgnoreCase("true");
                 KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[11]);
 
-                WarmupValidation<Long, Long> valid = new WithKnowledgeWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, warmup, cutoff);
+                WarmupValidation<Long, Long> valid = new WithKnowledgeWarmupValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, warmup, cutoff, iotype, gzipped);
                 valid.validate(algorithms, output, endCond, resume, training, partition, testType, numParts, percTrain, k);
                 break;
             }

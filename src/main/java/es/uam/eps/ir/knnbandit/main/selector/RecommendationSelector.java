@@ -9,6 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.main.selector;
 
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Recommendation;
 import es.uam.eps.ir.knnbandit.main.contact.ContactRecommendation;
 import es.uam.eps.ir.knnbandit.main.general.GeneralRecommendation;
@@ -90,6 +91,8 @@ public class RecommendationSelector
         int k = 1;
         int interval = 10000;
         int cutoff = 1;
+        IOType iotype = IOType.TEXT;
+        boolean gzipped = false;
         for (int i = lastIndex; i < execArgs.length; ++i)
         {
             if ("-k".equals(args[i]))
@@ -107,6 +110,15 @@ public class RecommendationSelector
                 ++i;
                 cutoff = Parsers.ip.parse(args[i]);
             }
+            else if("-io-type".equals(args[i]))
+            {
+                ++i;
+                iotype = IOType.fromString(args[i]);
+            }
+            else if("--gzipped".equals(args[i]))
+            {
+                gzipped = true;
+            }
         }
 
         switch(type)
@@ -118,12 +130,12 @@ public class RecommendationSelector
 
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    Recommendation<Long, Long> rec = new GeneralRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, cutoff);
+                    Recommendation<Long, Long> rec = new GeneralRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, cutoff, iotype, gzipped);
                     rec.recommend(algorithms, output, endCond, resume, k, interval);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    Recommendation<Long, String> rec = new GeneralRecommendation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, cutoff);
+                    Recommendation<Long, String> rec = new GeneralRecommendation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, cutoff, iotype, gzipped);
                     rec.recommend(algorithms, output, endCond, resume, k, interval);
                 }
                 break;
@@ -133,7 +145,7 @@ public class RecommendationSelector
                 boolean directed = execArgs[5].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[6].equalsIgnoreCase("true");
 
-                Recommendation<Long, Long> rec = new ContactRecommendation<>(input, "\t", Parsers.lp, directed, notReciprocal, cutoff);
+                Recommendation<Long, Long> rec = new ContactRecommendation<>(input, "\t", Parsers.lp, directed, notReciprocal, cutoff, iotype, gzipped);
                 rec.recommend(algorithms, output, endCond, resume, k, interval);
 
                 break;
@@ -144,7 +156,7 @@ public class RecommendationSelector
                 boolean useRatings = execArgs[6].equalsIgnoreCase("true");
                 KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[7]);
 
-                Recommendation<Long, Long> rec = new WithKnowledgeRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, cutoff);
+                Recommendation<Long, Long> rec = new WithKnowledgeRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, cutoff, iotype, gzipped);
                 rec.recommend(algorithms, output, endCond, resume, k, interval);
                 break;
             }
@@ -154,7 +166,7 @@ public class RecommendationSelector
                 String userIndex = execArgs[6];
                 String itemIndex = execArgs[7];
 
-                Recommendation<Integer, Integer> rec = new ReplayerRecommendation<>(input, "\t", userIndex, itemIndex, threshold, Parsers.ip, Parsers.ip);
+                Recommendation<Integer, Integer> rec = new ReplayerRecommendation<>(input, "\t", userIndex, itemIndex, threshold, Parsers.ip, Parsers.ip, iotype, gzipped);
                 rec.recommend(algorithms, output,endCond, resume, k, interval);
                 break;
             }

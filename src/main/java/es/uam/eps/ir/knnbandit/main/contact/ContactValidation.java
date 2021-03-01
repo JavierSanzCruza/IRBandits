@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.main.contact;
 
 import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
@@ -36,8 +37,9 @@ public class ContactValidation<U> extends Validation<U,U>
     private final Map<String, Supplier<CumulativeMetric<U,U>>> metrics;
     private final int cutoff;
 
-    public ContactValidation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, int cutoff)
+    public ContactValidation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, int cutoff, IOType type, boolean gzipped)
     {
+        super(type, gzipped);
         dataset = ContactDataset.load(input, directed, notReciprocal, parser, separator);
         this.metrics = new HashMap<>();
         metrics.put("recall", CumulativeRecall::new);
