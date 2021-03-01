@@ -15,11 +15,13 @@ import es.uam.eps.ir.knnbandit.io.IOType;
 import es.uam.eps.ir.knnbandit.io.ReaderInterface;
 import es.uam.eps.ir.knnbandit.io.TextReader;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
+import es.uam.eps.ir.knnbandit.partition.Partition;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import es.uam.eps.ir.knnbandit.utils.Pair;
+import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.ranksys.fast.FastRecommendation;
-import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
-import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
 import java.util.*;
@@ -35,10 +37,10 @@ import java.util.zip.GZIPInputStream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public abstract class AdvancedOutputResumer<U,I>
+public abstract class WarmupAdvancedOutputResumer<U,I>
 {
 
-    private final String TIMENAME = "time";
+    private final static String TIMENAME = "time";
     /**
      * The input-output type.
      */
@@ -49,13 +51,24 @@ public abstract class AdvancedOutputResumer<U,I>
     private final boolean gzipped;
 
     /**
+     * The input-output type.
+     */
+    private final IOType warmupIOType;
+    /**
+     * If the files have to be read/written in a compressed manner.
+     */
+    private final boolean gzippedWarmup;
+
+    /**
      * Constructor.
      * @param ioType input-output type for the reader / writer.
      */
-    public AdvancedOutputResumer(IOType ioType, boolean gzipped)
+    public WarmupAdvancedOutputResumer(IOType ioType, boolean gzipped, IOType warmupIOType, boolean gzippedWarmup)
     {
         this.ioType = ioType;
         this.gzipped = gzipped;
+        this.warmupIOType = warmupIOType;
+        this.gzippedWarmup = gzippedWarmup;
     }
 
 
@@ -64,14 +77,33 @@ public abstract class AdvancedOutputResumer<U,I>
      * Summarizes the contents of a directory.
      * @param input     the directory containing the recommendation executions.
      * @param points    the iterations we select from the summary.
-     * @param recursive true if we want to extend our summary to internal directories of the selected one.
      * @throws IOException if something fails while reading or writing the files.
      */
-    public void summarize(String input, IntList points, boolean recursive) throws IOException
+    public void summarize(String input, IntList points, String warmupData, Partition partition, int numParts, double percTrain) throws IOException
     {
         Dataset<U,I> dataset = this.getDataset();
         System.out.println(dataset.toString());
         points.sort(Comparator.naturalOrder());
+
+        // Read the warmup data
+        ReaderInterface warmupReader = this.getWarmupReader();
+        InputStream stream = gzippedWarmup ? new GZIPInputStream(new FileInputStream(warmupData)) : new FileInputStream(warmupData);
+        List<Pair<Integer>> train = warmupReader.readFile(stream);
+
+        List<Integer> splitPoints;
+        if(Double.isNaN(percTrain) || percTrain <= 0.0 || percTrain >= 1.0)
+        {
+            splitPoints = partition.split(dataset, train, numParts);
+        }
+        else
+        {
+            splitPoints = new ArrayList<>();
+            for(int i = 0; i < numParts; ++i)
+            {
+                splitPoints.add(partition.split(dataset, train, percTrain*(i+1.0)));
+            }
+        }
+
 
         File directory = new File(input);
         if(!directory.exists())
@@ -80,13 +112,11 @@ public abstract class AdvancedOutputResumer<U,I>
         }
         else if(directory.isDirectory())
         {
-            this.readDirectory(directory, points, recursive);
+            this.readDirectory(directory, points, numParts, train, splitPoints);
         }
         else // if it is a file
         {
-            Map<String, Map<String, Map<Integer, Double>>> res = new HashMap<>();
-            res.put(directory.getName(), this.readFile(directory, points));
-            this.printSummary(res, points, directory.getParentFile());
+            System.err.println("ERROR: " + input + " is not a directory.");
         }
     }
 
@@ -95,12 +125,51 @@ public abstract class AdvancedOutputResumer<U,I>
      *
      * @param directory the name of the directory.
      * @param list      the number of iterations to measure.
-     * @param recursive the recursive values.
      */
-    private void readDirectory(File directory, IntList list, boolean recursive) throws IOException
+    private void readDirectory(File directory, IntList list, int numParts, List<Pair<Integer>> train, List<Integer> splitPoints) throws IOException
+    {
+        long a = System.currentTimeMillis();
+        System.out.println("Entered directory" + directory.getPath());
+
+        File[] files = directory.listFiles();
+        if(files == null)
+        {
+            System.err.println("Nothing found in directory " + directory);
+            return;
+        }
+
+        for(int i = 0; i < numParts; ++i)
+        {
+            File partDir = new File(directory.getAbsolutePath() + File.separator + i + File.separator);
+            if(!partDir.exists())
+            {
+                System.err.println("ERROR: Directory for split " + i + " does not exist");
+            }
+            else
+            {
+                this.readDirectory(partDir, list, train.subList(0, splitPoints.get(i)));
+            }
+        }
+
+        long b = System.currentTimeMillis();
+        System.out.println("Exited directory " + directory.getPath() + " (" + (b - a) + " ms.)");
+    }
+
+
+    /**
+     * Reads a directory, resuming everything there.
+     *
+     * @param directory the name of the directory.
+     * @param list      the number of iterations to measure.
+     * @param warmupPairs the recursive values.
+     */
+    private void readDirectory(File directory, IntList list, List<Pair<Integer>> warmupPairs) throws IOException
     {
         long a = System.currentTimeMillis();
         System.out.println("Entered directory" + directory);
+
+        Warmup warmup = this.getWarmup(warmupPairs);
+        List<FastRating> warmupList = warmup.getCleanTraining();
 
         File[] files = directory.listFiles();
         if(files == null)
@@ -111,15 +180,10 @@ public abstract class AdvancedOutputResumer<U,I>
 
         // Differentiate between files and directories
         List<File> indivFiles = new ArrayList<>();
-        List<File> directories = new ArrayList<>();
 
         for(File file : files)
         {
-            if(file.isDirectory())
-            {
-                directories.add(file);
-            }
-            else if(!file.getName().contains("rngSeed") && !file.getName().contains("summary"))
+            if(!file.isDirectory() && !file.getName().contains("rngSeed") && !file.getName().contains("summary"))
             {
                 indivFiles.add(file);
             }
@@ -132,30 +196,17 @@ public abstract class AdvancedOutputResumer<U,I>
             Map<String, Map<String, Map<Integer, Double>>> results = new HashMap<>();
             for (File f : indivFiles)
             {
-                Map<String, Map<Integer, Double>> map = readFile(f, list);
-                if (map != null)
-                    results.put(f.getName(), map);
+                Map<String, Map<Integer, Double>> map = readFile(f, list, warmupList);
+                results.put(f.getName(), map);
             }
 
             this.printSummary(results, list, directory);
         }
 
-        // If we set this algorithm as recursive, we do repeat for each subdirectory.
-        if(recursive)
-        {
-            for (File dir : directories)
-            {
-                readDirectory(dir, list, true);
-            }
-        }
-        else if(indivFiles.isEmpty())
-        {
-            System.err.println("Nothing found in directory " + directory);
-        }
-
         long b = System.currentTimeMillis();
         System.out.println("Exited directory " + directory + " (" + (b - a) + " ms.)");
     }
+
 
     /**
      * Prints the summary of a directory.
@@ -237,16 +288,17 @@ public abstract class AdvancedOutputResumer<U,I>
      * @return a map, indexed by metric, containing the values of the metric for the given point.
      * @throws IOException if something fails while reading the file.
      */
-    private Map<String, Map<Integer, Double>> readFile(File f, IntList list) throws IOException
+    private Map<String, Map<Integer, Double>> readFile(File f, IntList list, List<FastRating> warmupPairs) throws IOException
     {
         Map<String, Map<Integer, Double>> res = new HashMap<>();
 
         Map<String, Supplier<CumulativeMetric<U,I>>> metricsSupps = this.getMetrics();
         Map<String, CumulativeMetric<U,I>> metrics = new HashMap<>();
+
         metricsSupps.forEach((name, metric) ->
         {
             CumulativeMetric<U,I> m = metric.get();
-            m.initialize(this.getDataset());
+            m.initialize(this.getDataset(), warmupPairs);
             metrics.put(name, m);
             res.put(name, new HashMap<>());
         });
@@ -313,4 +365,24 @@ public abstract class AdvancedOutputResumer<U,I>
                 return null;
         }
     }
+
+    /**
+     * Obtains a reader.
+     * @return the reader if everything is ok, null otherwise.
+     */
+    protected ReaderInterface getWarmupReader()
+    {
+        switch (warmupIOType)
+        {
+            case BINARY:
+                return new BinaryReader();
+            case TEXT:
+                return new TextReader();
+            case ERROR:
+            default:
+                return null;
+        }
+    }
+
+    protected abstract Warmup getWarmup(List<Pair<Integer>> trainData);
 }

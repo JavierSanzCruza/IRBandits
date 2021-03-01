@@ -1,5 +1,6 @@
 package es.uam.eps.ir.knnbandit.io;
 
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -19,7 +20,15 @@ public class TextReader implements ReaderInterface
      */
     private BufferedReader br;
 
-    String nextLine;
+    /**
+     * The next line to process (if any)
+     */
+    private String nextLine = null;
+
+    /**
+     * The size of a register.
+     */
+    int headerSize = 0;
 
     @Override
     public void initialize(InputStream inputStream) throws IOException
@@ -40,6 +49,7 @@ public class TextReader implements ReaderInterface
     {
         String line = br.readLine();
         String[] split = line.split("\t");
+        headerSize = split.length;
         return new ArrayList<>(Arrays.asList(split));
     }
 
@@ -64,6 +74,7 @@ public class TextReader implements ReaderInterface
         recs.add(iidx);
 
         boolean stop = false;
+        boolean store = true;
 
         while(!stop)
         {
@@ -72,8 +83,17 @@ public class TextReader implements ReaderInterface
             {
                 split = nextLine.split("\t");
                 int iter = Parsers.ip.parse(split[0]);
-                if(iter != currentIter) stop = true;
-                else
+                if(iter != currentIter)
+                {
+                    stop = true;
+                }
+
+                if(split.length < headerSize)
+                {
+                    nextLine = null;
+                    store = stop;
+                }
+                else if(!stop)
                 {
                     iidx = Parsers.ip.parse(split[2]);
                     recs.add(iidx);
@@ -85,15 +105,18 @@ public class TextReader implements ReaderInterface
             }
         }
 
-        List<Tuple2id> rec = new ArrayList<>();
-        for(int i = 0; i < recs.size(); ++i)
+        if(store)
         {
-            rec.add(new Tuple2id(recs.getInt(i), (recs.size()-i+0.0)/(recs.size()+0.0)));
+            List<Tuple2id> rec = new ArrayList<>();
+            for (int i = 0; i < recs.size(); ++i)
+            {
+                rec.add(new Tuple2id(recs.getInt(i), (recs.size() - i + 0.0) / (recs.size() + 0.0)));
+            }
+
+            return new Tuple3<>(currentIter, new FastRecommendation(uidx, rec), time);
         }
 
-        return new Tuple3<>(currentIter, new FastRecommendation(uidx, rec), time);
-
-
+        return null;
     }
 
     @Override
@@ -104,5 +127,47 @@ public class TextReader implements ReaderInterface
             this.br.close();
         }
         this.br = null;
+    }
+
+    @Override
+    public List<Pair<Integer>> readFile(String filename) throws IOException
+    {
+        this.initialize(filename);
+        List<String> header = this.readHeader();
+        List<Pair<Integer>> list = new ArrayList<>();
+        String line;
+        while((line = br.readLine()) != null)
+        {
+            String[] split = line.split("\t");
+            if(split.length < header.size())
+            {
+                break;
+            }
+
+            list.add(new Pair<>(Parsers.ip.parse(split[1]), Parsers.ip.parse(split[2])));
+        }
+        this.close();
+        return list;
+    }
+
+    @Override
+    public List<Pair<Integer>> readFile(InputStream stream) throws IOException
+    {
+        this.initialize(stream);
+        List<String> header = this.readHeader();
+        List<Pair<Integer>> list = new ArrayList<>();
+        String line;
+        while((line = br.readLine()) != null)
+        {
+            String[] split = line.split("\t");
+            if(split.length < header.size())
+            {
+                break;
+            }
+
+            list.add(new Pair<>(Parsers.ip.parse(split[1]), Parsers.ip.parse(split[2])));
+        }
+        this.close();
+        return list;
     }
 }

@@ -1,5 +1,6 @@
 package es.uam.eps.ir.knnbandit.io;
 
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2id;
@@ -76,5 +77,43 @@ public class BinaryReader implements ReaderInterface
     public List<String> readHeader()
     {
         return new ArrayList<>();
+    }
+
+    @Override
+    public List<Pair<Integer>> readFile(String filename) throws IOException
+    {
+        this.initialize(filename);
+        this.readHeader();
+        List<Pair<Integer>> rec = new ArrayList<>();
+        Tuple3<Integer, FastRecommendation, Long> indiv;
+        while((indiv = this.readIteration()) != null)
+        {
+            int uidx = indiv.v2.getUidx();
+            for(Tuple2id tuple : indiv.v2.getIidxs())
+            {
+                rec.add(new Pair<>(uidx, tuple.v1));
+            }
+        }
+        this.close();
+        return rec;
+    }
+
+    @Override
+    public List<Pair<Integer>> readFile(InputStream stream) throws IOException
+    {
+        this.initialize(stream);
+        this.readHeader();
+        List<Pair<Integer>> rec = new ArrayList<>();
+        Tuple3<Integer, FastRecommendation, Long> indiv;
+        while((indiv = this.readIteration()) != null)
+        {
+            int uidx = indiv.v2.getUidx();
+            for(Tuple2id tuple : indiv.v2.getIidxs())
+            {
+                rec.add(new Pair<>(uidx, tuple.v1));
+            }
+        }
+        this.close();
+        return rec;
     }
 }

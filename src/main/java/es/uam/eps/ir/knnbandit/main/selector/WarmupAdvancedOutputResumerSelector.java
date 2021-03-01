@@ -10,17 +10,21 @@
 package es.uam.eps.ir.knnbandit.main.selector;
 
 import es.uam.eps.ir.knnbandit.io.IOType;
-import es.uam.eps.ir.knnbandit.main.AdvancedOutputResumer;
-import es.uam.eps.ir.knnbandit.main.contact.ContactAdvancedOutputResumer;
-import es.uam.eps.ir.knnbandit.main.general.GeneralAdvancedOutputResumer;
-import es.uam.eps.ir.knnbandit.main.withknowledge.WithKnowledgeAdvancedOutputResumer;
+import es.uam.eps.ir.knnbandit.main.WarmupAdvancedOutputResumer;
+import es.uam.eps.ir.knnbandit.main.contact.ContactWarmupAdvancedOutputResumer;
+import es.uam.eps.ir.knnbandit.main.general.GeneralWarmupAdvancedOutputResumer;
+import es.uam.eps.ir.knnbandit.main.withknowledge.WithKnowledgeWarmupAdvancedOutputResumer;
+import es.uam.eps.ir.knnbandit.partition.Partition;
+import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
+import es.uam.eps.ir.knnbandit.partition.UniformPartition;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.ranksys.formats.parsing.Parsers;
-import static es.uam.eps.ir.knnbandit.main.selector.DatasetType.*;
 
 import java.io.IOException;
 import java.util.Arrays;
+
+import static es.uam.eps.ir.knnbandit.main.selector.DatasetType.*;
 
 /**
  * Main class for summarizing the content of recommendation files.
@@ -28,7 +32,7 @@ import java.util.Arrays;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class AdvancedOutputResumerSelector
+public class WarmupAdvancedOutputResumerSelector
 {
     /**
      * Summarizes the recommendation files.
@@ -49,15 +53,15 @@ public class AdvancedOutputResumerSelector
         switch(type)
         {
             case GENERAL:
-                length = 6;
+                length = 8;
                 firstIndex = 1;
-                lastIndex = 5;
+                lastIndex = 7;
                 break;
             case CONTACT:
             case KNOWLEDGE:
-                length = 5;
+                length = 7;
                 firstIndex = 0;
-                lastIndex = 5;
+                lastIndex = 7;
                 break;
             case STREAM:
             default:
@@ -83,16 +87,19 @@ public class AdvancedOutputResumerSelector
             points.add(Parsers.ip.parse(s));
         }
 
-        boolean recursive = false;
+        String training = execArgs[3];
+        int auxNumParts = Parsers.ip.parse(execArgs[4]);
+        int numParts = Math.abs(auxNumParts);
+        Partition partition = (auxNumParts > 0) ? new UniformPartition() : new RelevantPartition();
+
         IOType iotype = IOType.TEXT;
         boolean gzipped = false;
+        IOType warmupIotype = IOType.TEXT;
+        boolean warmupGzipped = false;
+        double percTrain = Double.NaN;
         for (int i = lastIndex; i < execArgs.length; ++i)
         {
-            if ("-r".equals(args[i]))
-            {
-                recursive = true;
-            }
-            else if("-io-type".equals(args[i]))
+            if("-io-type".equals(args[i]))
             {
                 ++i;
                 iotype = IOType.fromString(args[i]);
@@ -101,44 +108,58 @@ public class AdvancedOutputResumerSelector
             {
                 gzipped = true;
             }
+            else if("-warmup-io-type".equals(args[i]))
+            {
+                ++i;
+                warmupIotype = IOType.fromString(args[i]);
+            }
+            else if("--warmup-gzipped".equals(args[i]))
+            {
+                warmupGzipped = true;
+            }
+            else if("-perctrain".equals(args[i]))
+            {
+                ++i;
+                percTrain = Parsers.dp.parse(args[i]);
+            }
         }
 
         switch(type)
         {
             case GENERAL:
             {
-                double threshold = Parsers.dp.parse(execArgs[3]);
-                boolean useRatings = execArgs[4].equalsIgnoreCase("true");
+                double threshold = Parsers.dp.parse(execArgs[5]);
+                boolean useRatings = execArgs[6].equalsIgnoreCase("true");
 
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    GeneralAdvancedOutputResumer<Long, Long> resumer = new GeneralAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, iotype, gzipped);
-                    resumer.summarize(directory, points, recursive);
+                    GeneralWarmupAdvancedOutputResumer<Long, Long> resumer = new GeneralWarmupAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, iotype, gzipped, warmupIotype, warmupGzipped);
+                    resumer.summarize(directory, points, training, partition, numParts, percTrain);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    GeneralAdvancedOutputResumer<Long, String> resumer = new GeneralAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, iotype, gzipped);
-                    resumer.summarize(directory, points, recursive);
+                    GeneralWarmupAdvancedOutputResumer<Long, String> resumer = new GeneralWarmupAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, iotype, gzipped, warmupIotype, warmupGzipped);
+                    resumer.summarize(directory, points, training, partition, numParts, percTrain);
                 }
                 break;
             }
             case CONTACT:
             {
-                boolean directed = execArgs[3].equalsIgnoreCase("true");
-                boolean notReciprocal = execArgs[4].equalsIgnoreCase("true");
+                boolean directed = execArgs[5].equalsIgnoreCase("true");
+                boolean notReciprocal = execArgs[6].equalsIgnoreCase("true");
 
-                AdvancedOutputResumer<Long, Long> resumer = new ContactAdvancedOutputResumer<>(input, "\t", Parsers.lp, directed, notReciprocal, iotype, gzipped);
-                resumer.summarize(directory, points, recursive);
+                WarmupAdvancedOutputResumer<Long, Long> resumer = new ContactWarmupAdvancedOutputResumer<>(input, "\t", Parsers.lp, directed, notReciprocal, iotype, gzipped, warmupIotype, warmupGzipped);
+                resumer.summarize(directory, points, training, partition, numParts, percTrain);
 
                 break;
             }
             case KNOWLEDGE:
             {
-                double threshold = Parsers.dp.parse(execArgs[3]);
-                boolean useRatings = execArgs[4].equalsIgnoreCase("true");
+                double threshold = Parsers.dp.parse(execArgs[5]);
+                boolean useRatings = execArgs[6].equalsIgnoreCase("true");
 
-                WithKnowledgeAdvancedOutputResumer<Long, Long> resumer = new WithKnowledgeAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, iotype, gzipped);
-                resumer.summarize(directory, points, recursive);
+                WithKnowledgeWarmupAdvancedOutputResumer<Long, Long> resumer = new WithKnowledgeWarmupAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, iotype, gzipped, warmupIotype, warmupGzipped);
+                resumer.summarize(directory, points, training, partition, numParts, percTrain);
                 break;
 
             }

@@ -18,6 +18,7 @@ public interface ReaderInterface
 
     List<String> readHeader() throws IOException;
 
-
+    List<Pair<Integer>> readFile(String filename) throws IOException;
+    List<Pair<Integer>> readFile(InputStream stream) throws IOException;
 
 }
