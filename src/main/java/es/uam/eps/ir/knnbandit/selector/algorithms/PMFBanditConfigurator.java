@@ -1,11 +1,6 @@
 package es.uam.eps.ir.knnbandit.selector.algorithms;
 
-import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
-import es.uam.eps.ir.knnbandit.recommendation.mf.InteractiveMF;
-import es.uam.eps.ir.knnbandit.selector.AlgorithmIdentifiers;
 import es.uam.eps.ir.knnbandit.selector.PMFBanditIdentifiers;
 import es.uam.eps.ir.knnbandit.selector.algorithms.factorizer.*;
 import es.uam.eps.ir.knnbandit.selector.algorithms.pmfbandit.EpsilonGreedyPMFBanditConfigurator;
@@ -17,7 +12,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.DoublePredicate;
 
 public class PMFBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
 {

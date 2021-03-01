@@ -12,7 +12,7 @@ import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.RestrictedVectorCosineSimilarity;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.*;
@@ -32,7 +32,7 @@ import java.util.stream.Stream;
  * @author Pablo Castells (pablo.castells@uam.es)
  *
  */
-public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
+public class CollaborativeGreedy<U,I> extends AbstractInteractiveRecommender<U, I>
 {
     /**
      * A list containing a random order of items.
@@ -285,7 +285,7 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
 
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))

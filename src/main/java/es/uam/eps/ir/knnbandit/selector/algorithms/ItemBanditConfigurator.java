@@ -2,7 +2,7 @@ package es.uam.eps.ir.knnbandit.selector.algorithms;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.ItemBanditRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
@@ -107,14 +107,14 @@ public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
             ValueFunction valueFunction = ValueFunctions.identity();
             return new ItemBanditRecommender<>(userIndex, itemIndex, ignoreUnknown, banditSupplier, valueFunction);
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
         {
             return this.apply(userIndex, itemIndex);
         }

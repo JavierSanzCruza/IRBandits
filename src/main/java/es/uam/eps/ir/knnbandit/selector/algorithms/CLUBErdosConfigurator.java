@@ -2,14 +2,11 @@ package es.uam.eps.ir.knnbandit.selector.algorithms;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
-import es.uam.eps.ir.knnbandit.recommendation.clusters.club.CLUBComplete;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.club.CLUBERdos;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmIdentifiers;
 import org.json.JSONObject;
-
-import java.util.function.DoublePredicate;
 
 public class CLUBErdosConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
 {
@@ -46,13 +43,13 @@ public class CLUBErdosConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
             return new CLUBERdos<>(userIndex, itemIndex, ignoreUnknown, alpha, alpha2);
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
         {
             return new CLUBERdos<>(userIndex, itemIndex, ignoreUnknown, rngSeed, alpha, alpha2);
         }

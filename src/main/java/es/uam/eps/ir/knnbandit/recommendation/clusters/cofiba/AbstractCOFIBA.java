@@ -16,7 +16,7 @@ import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.generator.GeneratorBadConfiguredException;
 import es.uam.eps.ir.knnbandit.graph.generator.GeneratorNotConfiguredException;
 import es.uam.eps.ir.knnbandit.graph.generator.GraphGenerator;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.ClusteringAlgorithm;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.Clusters;
 import es.uam.eps.ir.knnbandit.recommendation.clusters.ClustersImpl;
@@ -46,7 +46,7 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public abstract class AbstractCOFIBA<U,I> extends InteractiveRecommender<U,I>
+public abstract class AbstractCOFIBA<U,I> extends AbstractInteractiveRecommender<U,I>
 {
     // Item structures:
     /**
@@ -198,7 +198,7 @@ public abstract class AbstractCOFIBA<U,I> extends InteractiveRecommender<U,I>
     public void init(Stream<FastRating> values)
     {
         this.init();
-        values.forEach(t -> this.update(t.uidx(),t.iidx(),t.value()));
+        values.forEach(t -> this.fastUpdate(t.uidx(),t.iidx(),t.value()));
     }
 
     /**
@@ -346,7 +346,7 @@ public abstract class AbstractCOFIBA<U,I> extends InteractiveRecommender<U,I>
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))

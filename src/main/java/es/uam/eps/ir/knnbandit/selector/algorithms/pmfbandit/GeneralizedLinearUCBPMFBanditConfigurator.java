@@ -2,7 +2,7 @@ package es.uam.eps.ir.knnbandit.selector.algorithms.pmfbandit;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.mf.icf.GeneralizedLinearUCBPMFInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmIdentifiers;
@@ -48,13 +48,13 @@ public class GeneralizedLinearUCBPMFBanditConfigurator<U,I> extends AbstractAlgo
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
             return new GeneralizedLinearUCBPMFInteractiveRecommender<>(userIndex, itemIndex, ignoreUnknown, k, lambdaP, lambdaQ, stdev, numIter, alpha);
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
         {
             return new GeneralizedLinearUCBPMFInteractiveRecommender<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, lambdaP, lambdaQ, stdev, numIter, alpha);
         }

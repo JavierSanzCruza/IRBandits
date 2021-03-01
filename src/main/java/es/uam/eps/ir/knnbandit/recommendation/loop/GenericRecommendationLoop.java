@@ -10,7 +10,8 @@ package es.uam.eps.ir.knnbandit.recommendation.loop;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.FastInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.selection.Selection;
@@ -45,7 +46,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     /**
      * The interactive recommender for the loop.
      */
-    protected final InteractiveRecommender<U,I> recommender;
+    protected final FastInteractiveRecommender<U,I> recommender;
     /**
      * The dataset including the necessary information.
      */
@@ -261,7 +262,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
         List<FastRating> recValues = updateValues.v1();
         for(FastRating value : recValues)
         {
-            recommender.update(value.uidx(), value.iidx(),value.value());
+            recommender.fastUpdate(value.uidx(), value.iidx(),value.value());
             selection.update(value.uidx(), value.iidx(), value.value());
         }
 
@@ -282,7 +283,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
         List<FastRating> recValues = updateValues.v1();
         for(FastRating value : recValues)
         {
-            recommender.update(value.uidx(), value.iidx(), value.value());
+            recommender.fastUpdate(value.uidx(), value.iidx(), value.value());
             selection.update(value.uidx(), value.iidx(), value.value());
         }
 

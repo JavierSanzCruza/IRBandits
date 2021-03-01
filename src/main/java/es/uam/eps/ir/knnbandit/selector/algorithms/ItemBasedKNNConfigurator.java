@@ -2,16 +2,13 @@ package es.uam.eps.ir.knnbandit.selector.algorithms;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.knn.item.InteractiveItemBasedKNN;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.VectorCosineSimilarity;
-import es.uam.eps.ir.knnbandit.recommendation.knn.user.InteractiveUserBasedKNN;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmIdentifiers;
 import org.json.JSONObject;
-
-import java.util.function.DoublePredicate;
 
 public class ItemBasedKNNConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
 {
@@ -52,14 +49,14 @@ public class ItemBasedKNNConfigurator<U,I> extends AbstractAlgorithmConfigurator
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
             UpdateableSimilarity sim = new VectorCosineSimilarity(itemIndex.numItems());
             return new InteractiveItemBasedKNN<>(userIndex, itemIndex, ignoreUnknown, ignoreZeroes, 0, k, sim);
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
         {
             UpdateableSimilarity sim = new VectorCosineSimilarity(itemIndex.numItems());
             return new InteractiveItemBasedKNN<>(userIndex, itemIndex, ignoreUnknown, rngSeed, ignoreZeroes, 0, k, sim);

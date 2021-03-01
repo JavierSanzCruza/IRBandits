@@ -8,13 +8,15 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation;
 
-import es.uam.eps.ir.knnbandit.utils.Rating;
+import es.uam.eps.ir.knnbandit.utils.FastRating;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.List;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public interface InteractiveRecommender<U,I>
+public interface FastInteractiveRecommender<U,I> extends InteractiveRecommender<U,I>
 {
     /**
      * Initializes the specific variables of a method.
@@ -25,14 +27,14 @@ public interface InteractiveRecommender<U,I>
      * Initializes the specific variables of a method, using some information as training data.
      * @param values a stream of (user, item, value) triplets.
      */
-    void initialize(Stream<Rating<U,I>> values);
+    void init(Stream<FastRating> values);
 
     /**
      * Obtains the users.
      *
      * @return the users.
      */
-    Stream<U> getUsers();
+    IntStream getUidx();
 
 
     /**
@@ -40,62 +42,41 @@ public interface InteractiveRecommender<U,I>
      *
      * @return the items.
      */
-    Stream<I> getItems();
-
-    /**
-     * Obtains the number of users.
-     *
-     * @return the number of users.
-     */
-    int numUsers();
-
-    /**
-     * Obtains the number of items.
-     *
-     * @return the number of items.
-     */
-    int numItems();
+    IntStream getIidx();
 
     /**
      * Given a user, and a list of items, returns the next value.
-     * @param u user.
+     * @param uidx user.
      * @param available the list of identifiers of the candidate items.
      * @return the identifier of the recommended item if everything went OK, -1 otherwise i.e. when a user cannot be recommended an item)
      */
-    I next(U u, List<I> available);
+    int next(int uidx, IntList available);
 
     /**
      * Given a user, and the list of available items, returns a top-k recommendation (when possible).
      * If the algorithm can only recommend l < k items, but there are more available, those are
      * recommended randomly.
      *
-     * @param u user identifier.
+     * @param uidx user identifier.
      * @param available the list of identifiers of the candidate items.
      * @param k the number of items to recommend.
      * @return a list of recommended items.
      */
-    List<I> next(U u, List<I> available, int k);
+    IntList next(int uidx, IntList available, int k);
 
     /**
      * Updates the method.
      *
-     * @param u  User.
-     * @param i  Item.
+     * @param uidx  User identifier.
+     * @param iidx  Item identifier.
      * @param value The rating u provides to i.
      */
-    void update(U u, I i, double value);
+    void fastUpdate(int uidx, int iidx, double value);
 
     /**
      * Updates the method.
      *
      * @param train Training data.
      */
-    void update(List<Tuple3<U, I, Double>> train);
-
-    /**
-     * Checks if the recommender uses all the received information, or only known data.
-     *
-     * @return true if the recommender uses all the received information, false otherwise.
-     */
-    boolean usesAll();
+    void fastUpdate(List<Tuple3<Integer, Integer, Double>> train);
 }

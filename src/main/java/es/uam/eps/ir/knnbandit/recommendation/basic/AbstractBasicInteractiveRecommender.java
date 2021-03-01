@@ -10,7 +10,7 @@ package es.uam.eps.ir.knnbandit.recommendation.basic;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.ranksys.core.util.tuples.Tuple2id;
@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public abstract class AbstractBasicInteractiveRecommender<U, I> extends InteractiveRecommender<U, I>
+public abstract class AbstractBasicInteractiveRecommender<U, I> extends AbstractInteractiveRecommender<U, I>
 {
     /**
      * Values of each item.

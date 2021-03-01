@@ -2,11 +2,8 @@ package es.uam.eps.ir.knnbandit.selector.algorithms.pmfbandit;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
-import es.uam.eps.ir.knnbandit.recommendation.knn.item.InteractiveItemBasedKNN;
-import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
-import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.VectorCosineSimilarity;
 import es.uam.eps.ir.knnbandit.recommendation.mf.icf.EpsilonGreedyInteractivePMFRecommender;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmIdentifiers;
 import es.uam.eps.ir.knnbandit.selector.PMFBanditIdentifiers;
@@ -51,13 +48,13 @@ public class EpsilonGreedyPMFBanditConfigurator<U,I> extends AbstractAlgorithmCo
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
             return new EpsilonGreedyInteractivePMFRecommender<>(userIndex, itemIndex, ignoreUnknown, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
         {
             return new EpsilonGreedyInteractivePMFRecommender<>(userIndex, itemIndex, ignoreUnknown, rngSeed, k, lambdaP, lambdaQ, stdev, numIter, epsilon);
         }

@@ -63,7 +63,7 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))

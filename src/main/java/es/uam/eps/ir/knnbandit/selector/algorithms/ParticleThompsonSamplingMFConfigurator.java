@@ -2,18 +2,13 @@ package es.uam.eps.ir.knnbandit.selector.algorithms;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
-import es.uam.eps.ir.knnbandit.recommendation.knn.item.InteractiveItemBasedKNN;
-import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
-import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.VectorCosineSimilarity;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.ParticleThompsonSamplingMF;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.particles.PTSMFParticleFactory;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.particles.PTSMParticleFactories;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmIdentifiers;
 import org.json.JSONObject;
-
-import java.util.function.DoublePredicate;
 
 public class ParticleThompsonSamplingMFConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
 {
@@ -62,14 +57,14 @@ public class ParticleThompsonSamplingMFConfigurator<U,I> extends AbstractAlgorit
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex)
         {
             PTSMFParticleFactory<U, I> factory = PTSMParticleFactories.normalFactory(k, stdev, sigmaP, sigmaQ);
             return new ParticleThompsonSamplingMF<>(userIndex, itemIndex, ignoreUnknown, numP, factory);
         }
 
         @Override
-        public InteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
+        public AbstractInteractiveRecommender<U, I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed)
         {
             PTSMFParticleFactory<U, I> factory = PTSMParticleFactories.normalFactory(k, stdev, sigmaP, sigmaQ);
             return new ParticleThompsonSamplingMF<>(userIndex, itemIndex, ignoreUnknown, rngSeed, numP, factory);

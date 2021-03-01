@@ -186,7 +186,7 @@ public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFReco
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))

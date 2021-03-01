@@ -10,26 +10,19 @@ package es.uam.eps.ir.knnbandit.recommendation.knn.item;
 
 import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFastUpdateablePreferenceData;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.FastUpdateablePreferenceData;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.TransposedUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilarity;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jooq.lambda.tuple.Tuple;
-import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.*;
-import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 
 /**
@@ -38,7 +31,7 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveRecommender<U, I>
+public abstract class AbstractInteractiveItemBasedKNN<U, I> extends AbstractInteractiveRecommender<U, I>
 {
     /**
      * Updateable similarity.
@@ -396,7 +389,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
     protected abstract double score(int vidx, double rating);
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))

@@ -1,19 +1,23 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.ensembles;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.MultiArmedBandit;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
 import es.uam.eps.ir.knnbandit.selector.algorithms.bandit.BanditSupplier;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import es.uam.eps.ir.knnbandit.utils.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -26,16 +30,8 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class MultiArmedBanditEnsemble<U,I> extends InteractiveRecommender<U,I> implements Ensemble<U,I>
+public class MultiArmedBanditEnsemble<U,I> extends AbstractEnsemble<U,I>
 {
-    /**
-     * The list of recommenders in the ensemble.
-     */
-    private final List<InteractiveRecommender<U,I>> recommenders;
-    /**
-     * The names of the recommenders.
-     */
-    private final List<String> recNames;
     /**
      * The multi-armed bandit to select between recommenders.
      */
@@ -48,10 +44,6 @@ public class MultiArmedBanditEnsemble<U,I> extends InteractiveRecommender<U,I> i
      * The value function for the bandit
      */
     private final ValueFunction valFunc;
-    /**
-     * The last used recommendation algorithm.
-     */
-    int lastRec;
 
     /**
      * Constructor.
@@ -62,21 +54,12 @@ public class MultiArmedBanditEnsemble<U,I> extends InteractiveRecommender<U,I> i
      * @param recs a map, indexed by recommender name, and containing recommender suppliers as values.
      * @param valFunc a value function for the bandit.
      */
-    public MultiArmedBanditEnsemble(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, BanditSupplier mabFunc, Map<String, InteractiveRecommenderSupplier<U,I>> recs, ValueFunction valFunc)
+    public MultiArmedBanditEnsemble(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, Map<String, InteractiveRecommenderSupplier<U,I>> recs, BanditSupplier mabFunc, ValueFunction valFunc)
     {
-        super(uIndex, iIndex, ignoreNotRated);
-        this.recommenders = new ArrayList<>();
-        this.recNames = new ArrayList<>();
-        recs.forEach((name, rec) ->
-        {
-            recNames.add(name);
-            recommenders.add(rec.apply(uIndex, iIndex));
-        });
-
-        bandit = mabFunc.apply(recNames.size());
-        int lastRec = -1;
+        super(uIndex, iIndex, ignoreNotRated, recs);
+        bandit = mabFunc.apply(this.getAlgorithmCount());
         this.available = new IntArrayList();
-        for(int i = 0; i< recNames.size(); ++i) available.add(i);
+        for(int i = 0; i < this.getAlgorithmCount(); ++i) available.add(i);
         this.valFunc = valFunc;
     }
 
@@ -90,66 +73,38 @@ public class MultiArmedBanditEnsemble<U,I> extends InteractiveRecommender<U,I> i
      * @param recs a map, indexed by recommender name, and containing recommender suppliers as values.
      * @param valFunc a value function for the bandit.
      */
-    public MultiArmedBanditEnsemble(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, BanditSupplier mabFunc, Map<String, InteractiveRecommenderSupplier<U,I>> recs, ValueFunction valFunc)
+    public MultiArmedBanditEnsemble(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, Map<String, InteractiveRecommenderSupplier<U,I>> recs, BanditSupplier mabFunc, ValueFunction valFunc)
     {
-        super(uIndex, iIndex, ignoreNotRated, rngSeed);
-        this.recommenders = new ArrayList<>();
-        this.recNames = new ArrayList<>();
-        recs.forEach((name, rec) ->
-        {
-            recNames.add(name);
-            recommenders.add(rec.apply(uIndex, iIndex));
-        });
-
-        bandit = mabFunc.apply(recNames.size());
-        int lastRec = -1;
+        super(uIndex, iIndex, ignoreNotRated, rngSeed, recs);
+        bandit = mabFunc.apply(this.getAlgorithmCount());
         this.available = new IntArrayList();
-        for(int i = 0; i< recNames.size(); ++i) available.add(i);
+        for(int i = 0; i < this.getAlgorithmCount(); ++i) available.add(i);
         this.valFunc = valFunc;
+    }
+
+    @Override
+    public void init()
+    {
+        super.init();
+        bandit.reset();
     }
 
     @Override
     public void init(Stream<FastRating> values)
     {
-        this.recommenders.forEach(rec -> rec.init(values));
+        super.init(values);
+        bandit.reset();
     }
 
     @Override
-    public int next(int uidx, IntList available)
+    protected void updateEnsemble(int uidx, int iidx, double value)
     {
-        this.lastRec = bandit.next(available, valFunc);
-        return this.recommenders.get(lastRec).next(uidx, available);
+        bandit.update(currentAlgorithm, value);
     }
 
     @Override
-    public IntList next(int uidx, IntList available, int k)
+    protected int selectAlgorithm(int uidx)
     {
-        this.lastRec = bandit.next(this.available, valFunc);
-        return this.recommenders.get(lastRec).next(uidx, available, k);
-    }
-
-    @Override
-    public void update(int uidx, int iidx, double value)
-    {
-        bandit.update(lastRec, value);
-        recommenders.forEach(rec -> rec.update(uidx, iidx, value));
-    }
-
-    @Override
-    public int getCurrentAlgorithm()
-    {
-        return lastRec;
-    }
-
-    @Override
-    public String getAlgorithmName(int idx)
-    {
-        return recNames.get(idx);
-    }
-
-    @Override
-    public Pair<Integer> getAlgorithmStats(int idx)
-    {
-        return bandit.getStats(idx);
+        return bandit.next(available, valFunc);
     }
 }

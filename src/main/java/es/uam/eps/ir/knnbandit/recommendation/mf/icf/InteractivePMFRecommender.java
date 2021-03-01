@@ -8,15 +8,11 @@ import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AdditiveRatingFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.FastUpdateablePreferenceData;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.SimpleFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.stream.Stream;
 
@@ -29,7 +25,7 @@ import java.util.stream.Stream;
  * @param <U> Type of the users.
  * @param <I> Type of the items.
  */
-public abstract class InteractivePMFRecommender<U, I> extends InteractiveRecommender<U, I>
+public abstract class InteractivePMFRecommender<U, I> extends AbstractInteractiveRecommender<U, I>
 {
     /**
      * An algebra to perform matrix operations.

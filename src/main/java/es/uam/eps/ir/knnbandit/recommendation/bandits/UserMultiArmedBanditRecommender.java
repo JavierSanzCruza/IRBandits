@@ -12,7 +12,7 @@ package es.uam.eps.ir.knnbandit.recommendation.bandits;
 import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.MultiArmedBandit;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
 import es.uam.eps.ir.knnbandit.selector.algorithms.bandit.BanditSupplier;
@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class UserMultiArmedBanditRecommender<U, I> extends InteractiveRecommender<U, I>
+public class UserMultiArmedBanditRecommender<U, I> extends AbstractInteractiveRecommender<U, I>
 {
     /**
      * Implementation of an item bandit.
@@ -76,7 +76,7 @@ public class UserMultiArmedBanditRecommender<U, I> extends InteractiveRecommende
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         if(!Double.isNaN(value)) // If the (uidx, iidx) pair exists.
         {

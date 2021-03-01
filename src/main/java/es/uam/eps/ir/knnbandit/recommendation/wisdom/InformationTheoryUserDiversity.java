@@ -5,7 +5,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AbstractSimpleFas
 import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AdditiveRatingFastUpdateablePreferenceData;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -17,7 +17,7 @@ import java.util.PriorityQueue;
 import java.util.function.DoublePredicate;
 import java.util.stream.Stream;
 
-public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<U, I>
+public class InformationTheoryUserDiversity<U,I> extends AbstractInteractiveRecommender<U, I>
 {
     protected final Int2DoubleOpenHashMap num;
     protected final Int2DoubleOpenHashMap den;
@@ -149,7 +149,7 @@ public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))
