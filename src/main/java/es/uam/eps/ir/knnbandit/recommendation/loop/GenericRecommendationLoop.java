@@ -114,8 +114,8 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
      * @param update the update strategy.
      * @param endcond the condition to end the loop
      * @param metrics the metrics to consider
-     * @param cutoff the cutoff of the recommendation ranking
      * @param rngSeed random number generator seed.
+     * @param cutoff the cutoff of the recommendation ranking
      *
      */
     public GenericRecommendationLoop(Dataset<U,I> dataset, Selection<U,I> selection, InteractiveRecommenderSupplier<U,I> provider, UpdateStrategy<U,I> update, EndCondition endcond, Map<String, CumulativeMetric<U,I>> metrics, int rngSeed, int cutoff)

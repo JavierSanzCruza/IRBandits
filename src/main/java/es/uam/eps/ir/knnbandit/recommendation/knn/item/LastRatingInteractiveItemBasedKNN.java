@@ -16,8 +16,8 @@ import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilar
 import java.util.stream.Stream;
 
 /**
- * Interactive version of user-based kNN algorithm.
- *
+ * Interactive version of item-based kNN algorithm. If a user-item pair is received
+ * several times, it takes the most recent value.
  * @param <U> User type.
  * @param <I> Item type.
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
@@ -39,6 +39,23 @@ public class LastRatingInteractiveItemBasedKNN<U, I> extends AbstractInteractive
     public LastRatingInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
     {
         super(uIndex, iIndex, hasRating, ignoreZeros, userK, itemK, sim, LastRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param uIndex      User index.
+     * @param iIndex      Item index.
+     * @param hasRating   True if we must ignore unknown items when updating.
+     * @param rngSeed     Random number generator seed.
+     * @param ignoreZeros True if we ignore zero ratings when updating.
+     * @param userK       Number of users to select.
+     * @param itemK       Number of items to take as neighbors
+     * @param sim         Updateable similarity
+     */
+    public LastRatingInteractiveItemBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, boolean ignoreZeros, int userK, int itemK, UpdateableSimilarity sim)
+    {
+        super(uIndex, iIndex, hasRating, rngSeed, ignoreZeros, userK, itemK, sim, LastRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex));
     }
 
     @Override

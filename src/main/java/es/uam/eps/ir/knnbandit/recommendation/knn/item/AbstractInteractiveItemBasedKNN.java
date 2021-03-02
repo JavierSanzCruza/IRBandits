@@ -35,6 +35,9 @@ import java.util.stream.Stream;
 /**
  * Abstract version of an interactive item-based kNN algorithm
  *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
+ *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -71,7 +74,9 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
      * Preference data.
      */
     protected final AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData;
-
+    /**
+     * True if ignores ratings equal to zero.
+     */
     private final boolean ignoreZeros;
 
     /**
@@ -112,6 +117,7 @@ public abstract class AbstractInteractiveItemBasedKNN<U, I> extends InteractiveR
      * @param uIndex      User index.
      * @param iIndex      Item index.
      * @param hasRating   True if we must ignore unknown items when updating.
+     * @param rngSeed     Random number generator seed.
      * @param ignoreZeros True if we ignore zero ratings when updating.
      * @param userK       Number of items rated by the user to pick.
      * @param itemK       Number of users rated by the item to pick.

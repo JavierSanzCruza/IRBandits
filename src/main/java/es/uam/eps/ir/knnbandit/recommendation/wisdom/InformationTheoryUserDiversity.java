@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ * de Madrid, http://ir.ii.uam.es.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at http://mozilla.org/MPL/2.0.
+ *
+ */
 package es.uam.eps.ir.knnbandit.recommendation.wisdom;
 
 import es.uam.eps.ir.knnbandit.Constants;
@@ -17,18 +26,42 @@ import java.util.PriorityQueue;
 import java.util.function.DoublePredicate;
 import java.util.stream.Stream;
 
+/**
+ * Class that uses the information theory of the ratings of the users that have
+ * rated an item to compute the score.
+ *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
 public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<U, I>
 {
+    /**
+     * For the probabilities, the numerator for each user.
+     */
     protected final Int2DoubleOpenHashMap num;
+    /**
+     * For the probabilities, the denominator for each user.
+     */
     protected final Int2DoubleOpenHashMap den;
     /**
      * Preference data.
      */
     protected final AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData;
-
+    /**
+     * Predicate for determining whether a rating is relevant or not.
+     */
     protected final DoublePredicate predicate;
 
-
+    /**
+     * Constructor.
+     * @param uIndex            user index.
+     * @param iIndex            item index.
+     * @param ignoreNotRated    true if we want to ignore user-item pairs not present in the dataset, false otherwise.
+     * @param predicate         predicate for determining whether a rating is relevant or not.
+     */
     public InformationTheoryUserDiversity(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, DoublePredicate predicate)
     {
         super(uIndex, iIndex, ignoreNotRated);
@@ -38,6 +71,14 @@ public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<
         this.predicate = predicate;
     }
 
+    /**
+     * Constructor.
+     * @param uIndex            user index.
+     * @param iIndex            item index.
+     * @param ignoreNotRated    true if we want to ignore user-item pairs not present in the dataset, false otherwise.
+     * @param rngSeed           random seed.
+     * @param predicate         predicate for determining whether a rating is relevant or not.
+     */
     public InformationTheoryUserDiversity(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, DoublePredicate predicate)
     {
         super(uIndex, iIndex, ignoreNotRated, rngSeed);

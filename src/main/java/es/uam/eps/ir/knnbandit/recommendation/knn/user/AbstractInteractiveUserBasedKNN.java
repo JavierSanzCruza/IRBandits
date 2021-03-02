@@ -71,12 +71,13 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
     /**
      * Constructor.
      *
-     * @param uIndex      User index.
-     * @param iIndex      Item index.
-     * @param hasRating   True if we must ignore unknown items when updating.
-     * @param ignoreZeros True if we ignore zero ratings when updating.
-     * @param k           Number of neighbors to use.
-     * @param sim         Updateable similarity
+     * @param uIndex        User index.
+     * @param iIndex        Item index.
+     * @param hasRating     True if we must ignore unknown items when updating.
+     * @param ignoreZeros   True if we ignore zero ratings when updating.
+     * @param k             Number of neighbors to use.
+     * @param sim           Updateable similarity
+     * @param retrievedData A preference data object for storing the warm-up retrieved data.
      */
     public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, boolean ignoreZeros, int k, UpdateableSimilarity sim, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
     {
@@ -109,12 +110,14 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
     /**
      * Constructor.
      *
-     * @param uIndex      User index.
-     * @param iIndex      Item index.
-     * @param hasRating   True if we must ignore unknown items when updating.
-     * @param ignoreZeros True if we ignore zero ratings when updating.
-     * @param k           Number of neighbors to use.
-     * @param sim         Updateable similarity
+     * @param uIndex        User index.
+     * @param iIndex        Item index.
+     * @param hasRating     True if we must ignore unknown items when updating.
+     * @param rngSeed       Random number generator seed.
+     * @param ignoreZeros   True if we ignore zero ratings when updating.
+     * @param k             Number of neighbors to use.
+     * @param sim           Updateable similarity
+     * @param retrievedData A preference data object for storing the warm-up retrieved data.
      */
     public AbstractInteractiveUserBasedKNN(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, boolean ignoreZeros, int k, UpdateableSimilarity sim, AbstractSimpleFastUpdateablePreferenceData<U,I> retrievedData)
     {
@@ -151,14 +154,6 @@ public abstract class AbstractInteractiveUserBasedKNN<U, I> extends InteractiveR
         this.retrievedData.clear();
         this.sim.initialize();
     }
-
-    /*@Override
-    public void init(FastPreferenceData<U,I> prefData)
-    {
-        this.retrievedData.clear();
-        prefData.getUidxWithPreferences().forEach(uidx -> prefData.getUidxPreferences(uidx).forEach(i -> retrievedData.updateRating(uidx, i.v1, i.v2)));
-        this.sim.initialize(retrievedData);
-    }*/
 
     @Override
     public void init(Stream<FastRating> values)

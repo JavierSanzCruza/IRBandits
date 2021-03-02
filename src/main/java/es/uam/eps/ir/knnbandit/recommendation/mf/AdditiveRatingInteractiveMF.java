@@ -17,10 +17,12 @@ import es.uam.eps.ir.ranksys.mf.Factorizer;
 import java.util.stream.Stream;
 
 /**
- * Interactive version of matrix factorization algorithms. Legacy version.
+ * Interactive version of matrix factorization algorithms. If a user-item pair is received
+ * several times, it takes the sum of all values.
  *
  * @param <U> User type.
  * @param <I> Item type.
+ *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */

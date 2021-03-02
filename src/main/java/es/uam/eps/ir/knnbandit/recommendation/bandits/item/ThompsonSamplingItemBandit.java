@@ -38,10 +38,21 @@ public class ThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
      * The number of items.
      */
     private final int numItems;
-
+    /**
+     * The initial alpha values for each item.
+     */
     private final double[] initialAlphas;
+    /**
+     * The initial beta values for each item.
+     */
     private final double[] initialBetas;
+    /**
+     * The initial alpha values for all items.
+     */
     private final double initialAlpha;
+    /**
+     * The initial beta values for all items.
+     */
     private final double initialBeta;
 
     /**

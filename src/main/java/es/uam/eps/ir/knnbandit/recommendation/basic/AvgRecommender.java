@@ -53,6 +53,7 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
      * @param uIndex     User index.
      * @param iIndex     Item index.
      * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     * @param rngSeed   Random number generator seed.
      */
     public AvgRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed)
     {

@@ -18,6 +18,7 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.io.*;
@@ -36,6 +37,19 @@ import java.util.function.Supplier;
  */
 public abstract class Validation<U,I>
 {
+    /**
+     * The input-output type.
+     */
+    private final IOSelector ioSelector;
+
+    /**
+     * Constructor.
+     * @param ioSelector a selector for reading / writing files..
+     */
+    public Validation(IOSelector ioSelector)
+    {
+        this.ioSelector = ioSelector;
+    }
     /**
      * Applies validation over a set of algorithms:
      * @param algorithms a file containing the algorithm configuration.
@@ -109,8 +123,8 @@ public abstract class Validation<U,I>
                 // Create the recommendation loop: in this case, a general offline dataset loop
                 FastRecommendationLoop<U,I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
                 // Execute the loop:
-                Executor<U, I> executor = new Executor<>();
-                String fileName = outputFolder + name + "_" + i + ".txt";
+                Executor<U, I> executor = new Executor<>(ioSelector);
+                String fileName = outputFolder + name + "_" + i + ".txt" + ((ioSelector.isCompressed()) ? ".gz" : "");
                 executor.executeWithoutWarmup(loop, fileName, resume, interval);
                 int currentIter = loop.getCurrentIter();
                 if(currentIter > 0) // if at least one iteration has been recorded:

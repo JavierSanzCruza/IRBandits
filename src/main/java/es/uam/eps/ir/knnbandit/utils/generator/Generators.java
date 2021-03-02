@@ -10,7 +10,9 @@ package es.uam.eps.ir.knnbandit.utils.generator;
 
 /**
  * Generator examples.
- * @author Javier Sanz-Cruzado Puig.
+ *
+ * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class Generators 
 {

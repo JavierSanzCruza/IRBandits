@@ -12,6 +12,7 @@ package es.uam.eps.ir.knnbandit.main;
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.partition.Partition;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
@@ -19,7 +20,7 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
-import es.uam.eps.ir.knnbandit.io.Reader;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import org.jooq.lambda.tuple.Tuple2;
@@ -42,6 +43,26 @@ public abstract class WarmupValidation<U,I>
 {
     private static final String FIXED = "fixed";
     private static final String VARIABLE = "variable";
+
+    /**
+     * The format selector for the input files.
+     */
+    private final IOSelector ioSelector;
+    /**
+     * The format selector for the warm-up files.
+     */
+    private final IOSelector warmupIOSelector;
+
+    /**
+     * Constructor.
+     * @param ioSelector        a selector for reading/writing files.
+     * @param warmupIOSelector  a selector for reading warm-up files.
+     */
+    public WarmupValidation(IOSelector ioSelector, IOSelector warmupIOSelector)
+    {
+        this.ioSelector = ioSelector;
+        this.warmupIOSelector = warmupIOSelector;
+    }
 
     /**
      * Applies validation over a set of algorithms when some warmup is available.
@@ -91,8 +112,8 @@ public abstract class WarmupValidation<U,I>
         }
 
         // Read the warmup data
-        Reader reader = new Reader();
-        List<Pair<Integer>> train = reader.read(warmupData, "\t", true);
+        Reader reader = warmupIOSelector.getReader();
+        List<Pair<Integer>> train = reader.readFile(warmupIOSelector.getInputStream(warmupData));
         System.out.println("The warmup data has been read");
 
         List<Integer> splitPoints = new ArrayList<>();
@@ -185,8 +206,8 @@ public abstract class WarmupValidation<U,I>
                     FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(validDataset, rec, endCond.get(), rngSeed);
 
                     // Execute the loop:
-                    Executor<U, I> executor = new Executor<>();
-                    String fileName = currentOutputFolder + name + "_" + i + ".txt";
+                    Executor<U, I> executor = new Executor<>(ioSelector);
+                    String fileName = currentOutputFolder + name + "_" + i + ".txt" + ((ioSelector.isCompressed()) ? ".gz" : "");
                     executor.executeWithWarmup(loop, fileName, resume, interval, warmup);
                     int currentIter = loop.getCurrentIter();
                     if (currentIter > 0) // if at least one iteration has been recorded:

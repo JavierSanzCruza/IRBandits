@@ -29,6 +29,7 @@ import java.util.function.DoublePredicate;
  *
  * @param <U> User type.
  * @param <I> Item type.
+ *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -83,6 +84,11 @@ public class AlgorithmSelector<U, I>
         this.relevanceChecker = relevance;
     }
 
+    /**
+     * Obtains a configurator for a single algorithm.
+     * @param name the name of the algorithm.
+     * @return the configurator.
+     */
     private AlgorithmConfigurator<U,I> getConfigurator(String name)
     {
         AlgorithmConfigurator<U,I> conf;
@@ -174,8 +180,8 @@ public class AlgorithmSelector<U, I>
      * Adds a set of algorithms.
      *
      * @param file File containing the configuration of the algorithms.
-     * @throws IOException                                            if something fails while reading
-     * @throws es.uam.eps.ir.knnbandit.selector.UnconfiguredException if the selector has not been configured
+     * @throws IOException           if something fails while reading.
+     * @throws UnconfiguredException if the selector has not been configured.
      */
     public void addFile(String file, boolean single) throws IOException, UnconfiguredException
     {
@@ -219,7 +225,7 @@ public class AlgorithmSelector<U, I>
      * Adds a set of algorithms.
      *
      * @param array File containing the configuration of the algorithms.
-     * @throws es.uam.eps.ir.knnbandit.selector.UnconfiguredException if the selector has not been configured
+     * @throws UnconfiguredException if the selector has not been configured
      */
     public void addList(JSONArray array, boolean single) throws UnconfiguredException
     {

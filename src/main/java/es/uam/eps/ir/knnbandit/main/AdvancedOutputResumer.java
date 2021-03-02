@@ -10,12 +10,16 @@
 package es.uam.eps.ir.knnbandit.main;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
+import es.uam.eps.ir.knnbandit.io.Reader;
+import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.ranksys.formats.parsing.Parsers;
+import org.jooq.lambda.tuple.Tuple3;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Class for summarizing the outcomes of recommenders.
@@ -28,6 +32,25 @@ import java.util.*;
  */
 public abstract class AdvancedOutputResumer<U,I>
 {
+    /**
+     * Identifier name for the time needed to execute the recommendations.
+     */
+    private final String TIMENAME = "time";
+    /**
+     * The input-output selector.
+     */
+    private final IOSelector ioSelector;
+
+
+    /**
+     * Constructor.
+     * @param ioSelector input-output type selector for the reader / writer.
+     */
+    public AdvancedOutputResumer(IOSelector ioSelector)
+    {
+        this.ioSelector = ioSelector;
+    }
+
     /**
      * Summarizes the contents of a directory.
      * @param input     the directory containing the recommendation executions.
@@ -101,8 +124,7 @@ public abstract class AdvancedOutputResumer<U,I>
             for (File f : indivFiles)
             {
                 Map<String, Map<Integer, Double>> map = readFile(f, list);
-                if (map != null)
-                    results.put(f.getName(), map);
+                results.put(f.getName(), map);
             }
 
             this.printSummary(results, list, directory);
@@ -198,10 +220,6 @@ public abstract class AdvancedOutputResumer<U,I>
         }
     }
 
-
-
-
-
     /**
      * Reads a file, and obtains, for some given iteration numbers, the values of the different metrics.
      * @param f the file to read.
@@ -212,64 +230,47 @@ public abstract class AdvancedOutputResumer<U,I>
     private Map<String, Map<Integer, Double>> readFile(File f, IntList list) throws IOException
     {
         Map<String, Map<Integer, Double>> res = new HashMap<>();
-        Map<Integer, String> mapping = new HashMap<>();
 
-        try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f))))
+        Map<String, Supplier<CumulativeMetric<U,I>>> metricsSupps = this.getMetrics();
+        Map<String, CumulativeMetric<U,I>> metrics = new HashMap<>();
+        metricsSupps.forEach((name, metric) ->
         {
-            // First, we do process the corresponding header of the file.
-            String header = br.readLine();
-            String[] split = header.split("\t");
-            if(split.length < 5)
+            CumulativeMetric<U,I> m = metric.get();
+            m.initialize(this.getDataset());
+            metrics.put(name, m);
+            res.put(name, new HashMap<>());
+        });
+        res.put(TIMENAME, new HashMap<>());
+
+        Reader reader = ioSelector.getReader();
+        reader.initialize(ioSelector.getInputStream(f.getAbsolutePath()));
+
+        int i = 0;
+        Tuple3<Integer, FastRecommendation, Long> triplet;
+        long cumTime = 0;
+        while((triplet = reader.readIteration()) != null)
+        {
+            int numIter = triplet.v1;
+            FastRecommendation fastRec = triplet.v2;
+            long time = triplet.v3;
+
+            metrics.values().forEach(metric -> metric.update(fastRec));
+
+            int finalI = i;
+            if (numIter == list.get(i))
             {
-                System.err.println("Failure while reading file " + f.getAbsolutePath());
-                return null;
+                metrics.forEach((name, metric) -> res.get(name).put(list.get(finalI), metric.compute()));
+                res.get(TIMENAME).put(list.get(finalI), cumTime+0.0);
+                cumTime = 0;
+                ++i;
             }
 
-            int len = split.length;
-            for(int i = 3; i < len; ++i)
-            {
-                String metricName = split[i];
-                res.put(metricName, new Int2DoubleOpenHashMap());
-                mapping.put(i, metricName);
-            }
-
-            // Then, we read the file:
-            int currentIter = -1;
-            String line;
-            int listSize = list.size();
-            int i = 0;
-            double time = 0.0;
-            while((line = br.readLine()) != null && i < listSize)
-            {
-                // We first split the line
-                String[] lineSplit = line.split("\t");
-                // We obtain the iteration number:
-                int numIter = Parsers.ip.parse(lineSplit[0]);
-                if(currentIter != numIter)
-                {
-                    currentIter = numIter;
-                    time += Parsers.lp.parse(lineSplit[len-1]);
-                }
-
-                if (numIter == list.get(i))
-                {
-                    for (int j = 3; j < len - 1; ++j)
-                    {
-                        String metricName = mapping.get(j);
-                        res.get(metricName).put(list.get(i), Double.parseDouble(lineSplit[j]));
-                    }
-
-                    // And we store the accumulated time needed to compute the recommendation.
-                    String timeName = mapping.get(len-1);
-                    res.get(timeName).put(list.get(i), time);
-                    time = 0;
-                    ++i;
-                }
-            }
-            System.out.println("Finished reading file " + f.getAbsolutePath());
-
-            return res;
+            cumTime += time;
         }
+
+        reader.close();
+        System.out.println("Finished reading file " + f.getAbsolutePath());
+        return res;
     }
 
     /**
@@ -277,4 +278,10 @@ public abstract class AdvancedOutputResumer<U,I>
      * @return the dataset used during the validation.
      */
     protected abstract Dataset<U,I> getDataset();
+
+    /**
+     * Obtains the metrics.
+     * @return a map with supplier for the metrics.
+     */
+    protected abstract Map<String, Supplier<CumulativeMetric<U,I>>> getMetrics();
 }

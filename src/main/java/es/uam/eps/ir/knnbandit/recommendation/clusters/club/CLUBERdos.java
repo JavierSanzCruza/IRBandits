@@ -53,6 +53,7 @@ public class CLUBERdos<U ,I> extends AbstractCLUB<U,I>
      * @param uIndex     User index.
      * @param iIndex     Item index.
      * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     * @param rngSeed Random number generator seed.
      * @param alpha1 Parameter that manages the importance of the confidence bound for the item selection.
      * @param alpha2 Parameter that manages how difficult is for an edge in the graph to disappear.
      */

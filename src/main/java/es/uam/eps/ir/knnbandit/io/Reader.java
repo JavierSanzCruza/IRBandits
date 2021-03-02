@@ -9,74 +9,70 @@
 package es.uam.eps.ir.knnbandit.io;
 
 import es.uam.eps.ir.knnbandit.utils.Pair;
-import org.jooq.lambda.tuple.Tuple2;
-import org.ranksys.formats.parsing.Parsers;
+import es.uam.eps.ir.ranksys.fast.FastRecommendation;
+import org.jooq.lambda.tuple.Tuple3;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.io.InputStream;
 import java.util.List;
 
 /**
- * Class for reading a recommendation loop
+ * Interface for reading recommendation files.
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class Reader
+public interface Reader
 {
     /**
-     * Given a file, reads the lists of user-item pairs.
-     *
-     * @param file      name of the file
-     * @param delimiter field separator
-     * @return the list of user-item pairs in the file.
+     * Initializes the reader.
+     * @param filename name of the file.
+     * @throws IOException if something fails while initializing.
      */
-    public List<Pair<Integer>> read(String file, String delimiter, boolean header)
-    {
-        List<Pair<Integer>> list = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file))))
-        {
-            String line;
-            if (header)
-            {
-                String headerLine = br.readLine();
-            }
-
-            while ((line = br.readLine()) != null)
-            {
-                Pair<Integer> pair = this.parseLine(line, delimiter);
-                if (pair != null)
-                {
-                    list.add(pair);
-                }
-            }
-            return list;
-        }
-        catch (IOException ioe)
-        {
-            System.err.println("Something failed while reading the file");
-            return null;
-        }
-    }
+    void initialize(String filename) throws IOException;
 
     /**
-     * Parses one line.
-     *
-     * @param line the line.
-     * @return the user-item pair if everything is OK, null otherwise
+     * Initializes the reader.
+     * @param inputStream an input stream.
+     * @throws IOException if something fails while initializing.
      */
-    private Pair<Integer> parseLine(String line, String delimiter)
-    {
-        String[] split = line.split(delimiter);
-        if (split.length < 3)
-        {
-            return null;
-        }
-        int user = Parsers.ip.parse(split[1]);
-        int item = Parsers.ip.parse(split[2]);
-        return new Pair<>(user, item);
-    }
+    void initialize(InputStream inputStream) throws IOException;
+
+    /**
+     * Reads a single iteration.
+     * @return a triplet containing a) the iteration number, b) the recommendation, c) the time needed for the recommendation.
+     * @throws IOException if something fails while reading the file.
+     */
+    Tuple3<Integer, FastRecommendation, Long> readIteration() throws IOException;
+
+    /**
+     * Closes the reader.
+     * @throws IOException if something fails while closing the reader.
+     */
+    void close() throws IOException;
+
+    /**
+     * Reads the header of the file.
+     * @return a list containing the elements in the header of the file.
+     * @throws IOException if something fails while reading the header.
+     */
+    List<String> readHeader() throws IOException;
+
+    /**
+     * Reads a whole file, and obtains the different user-item pairs.
+     * @param filename the name of the file.
+     * @return a list of user-item pairs.
+     * @throws IOException if something fails while reading the file.
+     */
+    List<Pair<Integer>> readFile(String filename) throws IOException;
+
+
+    /**
+     * Reads a whole file, and obtains the different user-item pairs.
+     * @param stream an input stream.
+     * @return a list of user-item pairs.
+     * @throws IOException if something fails while reading the stream.
+     */
+    List<Pair<Integer>> readFile(InputStream stream) throws IOException;
+
 }

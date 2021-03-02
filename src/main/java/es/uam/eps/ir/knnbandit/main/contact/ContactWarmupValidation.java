@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.main.contact;
 
 import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.main.WarmupValidation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeRecall;
@@ -30,20 +31,48 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Class for executing contact recommender systems in simulated interactive loops (with training)
+ * Class for choosing optimal contact recommendation algorithms in simulated interactive loops (when warm-up data
+ * is available).
+ *
+ * @param <U> type of the users.
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class ContactWarmupValidation<U> extends WarmupValidation<U,U>
 {
+    /**
+     * The contact recommendation dataset.
+     */
     private final ContactDataset<U> dataset;
+    /**
+     * The metrics to compute.
+     */
     private final Map<String, Supplier<CumulativeMetric<U,U>>> metrics;
+    /**
+     * Selects which warmup we use: all the links in the set or just the ones in the network.
+     */
     private final WarmupType warmupType;
+    /**
+     * The number of items to recommend each iteration.
+     */
     private final int cutoff;
 
-    public ContactWarmupValidation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, WarmupType warmupType, int cutoff)
+    /**
+     * Constructor.
+     * @param input             the file containing the dataset.
+     * @param separator         separator for the different dataset registers.
+     * @param parser            parser for reading the users.
+     * @param directed          true if the network is directed.
+     * @param notReciprocal     true if we want to avoid recommending reciprocal edges to existing ones, false otherwise.
+     * @param warmupType        selects which warmup we use: all the links in the set or just the ones in the network.
+     * @param cutoff            the cutoff of the recommendation.
+     * @param ioSelector        a selector for reading / writing files.
+     * @param warmupIOSelector a selector for reading warm-up files.
+     */
+    public ContactWarmupValidation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, WarmupType warmupType, int cutoff, IOSelector ioSelector, IOSelector warmupIOSelector)
     {
+        super(ioSelector, warmupIOSelector);
         dataset = ContactDataset.load(input, directed, notReciprocal, parser, separator);
         this.metrics = new HashMap<>();
         metrics.put("recall", CumulativeRecall::new);

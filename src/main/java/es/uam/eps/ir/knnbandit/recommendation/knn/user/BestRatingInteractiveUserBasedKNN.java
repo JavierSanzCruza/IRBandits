@@ -16,8 +16,8 @@ import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.UpdateableSimilar
 import java.util.stream.Stream;
 
 /**
- * Interactive version of user-based kNN algorithm.
- *
+ * Interactive version of user-based kNN algorithm.If a user-item pair is received
+ * several times, it takes the highest value.
  * @param <U> User type.
  * @param <I> Item type.
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
@@ -46,6 +46,7 @@ public class BestRatingInteractiveUserBasedKNN<U, I> extends AbstractInteractive
      * @param uIndex      User index.
      * @param iIndex      Item index.
      * @param hasRating   True if we must ignore unknown items when updating.
+     * @param rngSeed     Random number generator seed.
      * @param ignoreZeros True if we ignore zero ratings when updating.
      * @param k           Number of neighbors to use.
      * @param sim         Updateable similarity

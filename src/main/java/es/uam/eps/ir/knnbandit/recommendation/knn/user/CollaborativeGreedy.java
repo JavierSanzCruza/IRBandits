@@ -47,7 +47,9 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
      * Relation between users and jointly explored objects (including ratings)
      */
     SimpleFastUpdateablePreferenceData<U, I> jointData;
-
+    /**
+     * The already retrieved data (warm-up data)
+     */
     SimpleFastUpdateablePreferenceData<U,I> retrievedData;
     /**
      * Number of times each user has been recommended an item.
@@ -145,26 +147,6 @@ public class CollaborativeGreedy<U,I> extends InteractiveRecommender<U, I>
         values.forEach(t -> jointData.updateRating(t.uidx(), t.iidx(), t.value() == 0 ? -1.0 : 1.0));
         this.sim.initialize(jointData);
     }
-
-    /*@Override
-    public void init(FastPreferenceData<U, I> prefData)
-    {
-        jointList.clear();
-        this.getIidx().forEach(jointList::add);
-        Collections.shuffle(jointList);
-
-        jointExpl.clear();
-        this.times.clear();
-        jointIndex.clear();
-
-        this.jointData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
-
-        prefData.getAllUidx().forEach(uidx ->
-            prefData.getUidxPreferences(uidx).forEach(iidx ->
-                this.jointData.update(prefData.uidx2user(uidx), prefData.iidx2item(iidx.v1),iidx.v2 == 0 ? -1 : iidx.v2)));
-
-        this.sim.initialize(jointData);
-    }*/
 
     @Override
     public int next(int uidx, IntList availability)

@@ -18,6 +18,7 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
@@ -37,6 +38,20 @@ import java.util.stream.IntStream;
  */
 public abstract class Recommendation<U,I>
 {
+    /**
+     * The input-output type.
+     */
+    private final IOSelector ioSelector;
+
+    /**
+     * Constructor.
+     * @param ioSelector selector for the input/output files.
+     */
+    public Recommendation(IOSelector ioSelector)
+    {
+        this.ioSelector = ioSelector;
+    }
+
     /**
      * Applies an interactive recommendation loop for different algorithms.
      * @param algorithms a file containing the algorithm configuration.
@@ -107,8 +122,8 @@ public abstract class Recommendation<U,I>
                 // Create the recommendation loop: in this case, a general offline dataset loop
                 FastRecommendationLoop<U,I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
                 // Execute the loop:
-                Executor<U, I> executor = new Executor<>();
-                String fileName = outputFolder + name + "_" + i + ".txt";
+                Executor<U, I> executor = new Executor<>(ioSelector);
+                String fileName = outputFolder + name + "_" + i + ".txt" + ((ioSelector.isCompressed()) ? ".gz" : "");
                 Map<String, List<Double>> metricValues = executor.executeWithoutWarmup(loop, fileName, resume, interval);
                 int currentIter = loop.getCurrentIter();
                 if(currentIter > 0) // if at least one iteration has been recorded:

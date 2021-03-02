@@ -107,7 +107,7 @@ Next, we detail the arguments and utilities of the different programs:
 ### Validation
 Given no warmup, this program executes validation to search for the optimal parameters for a recommendation algorithm. It is executed as:
 ```
-java -jar IRBandits.jar valid type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times -cutoff cutoff)
+java -jar IRBandits.jar valid type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times -cutoff cutoff -io-type iotype --gzipped)
 ```
 where the command line arguments are:
    - `type-of-dataset`: see the earlier type of dataset configuration.
@@ -120,11 +120,15 @@ where the command line arguments are:
        - `end-condition > 1.0`: executes it for a number of iterations equal to `end-condition`
    - `resume`: if we have to recover recommendations from a previous execution.
    - `dataset-related-arguments`: see earlier.
-   - (Optional) `-k times`: the number of times each recommendation might be executed 
-   - (Optional) `-cutoff cutoff`: the number of items to recommend each time.
+   - (Optional) `-k times`: the number of times each recommendation might be executed (by default, 1).
+   - (Optional) `-cutoff cutoff`: the number of items to recommend each time (by default, 1).
+   - (Optional) `-io-type iotype`: indicates the format of the recommendation files. Different possibilities:
+       - `text` : if we want the files to be readable (default option).
+       - `binary`: if we want the files to be written in a binary format.
+   - (Optional) `--gzipped`: if we want the recommendation files to be compressed (using GZIP).
 
 With these parameters, the different algorithms execute, and the following output is produced:
-   - A recommendation file for each recommendation loop execution. The name format for this file is: ` algorithmname-iter.txt`, where algorithm name shows the used algorithm and its parameters. In case the optional parameter `k` is not used, the `iter` value shall be equal to `0`. If `k`is used (and each algorithm is executed several times), it represents the execution number for that algorithm.
+   - A recommendation file for each recommendation loop execution. The name format for this file is: ` algorithmname-iter.txt` (`.txt.gz` if the files are compressed), where algorithm name shows the used algorithm and its parameters. In case the optional parameter `k` is not used, the `iter` value shall be equal to `0`. If `k`is used (and each algorithm is executed several times), it represents the execution number for that algorithm.
    - The algorithm ranking in the comparison, in a file named `algorithms-metric-ranking.txt`, where `algorithms` is the name of the JSON configuration file, and `metric` is each one of the considered metrics: the clickthrough rate in the `stream` case, and the number of iterations / cumulative recall in the rest of cases. The file contains, on each line, an algorithm-value pair, sorted by descending metric value. An example can be observed below:
 ```
 Algorithm	recall
@@ -140,7 +144,7 @@ club-erdos-0.1-2.0-ignore	0.0039402985074626865
 ### Recommendation
 Given no warmup, this program executes a set of recommendation algorithms. It is executed as:
 ```
-java -jar IRBandits.jar rec type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times -interval interval -cutoff cutoff)
+java -jar IRBandits.jar rec type-of-dataset algorithms input output end-condition resume dataset-related-arguments (-k times -interval interval -cutoff cutoff -io-type iotype --gzipped)
 ```
 where the command line arguments are:
    - `type-of-dataset`: see the earlier type of dataset configuration.
@@ -156,7 +160,10 @@ where the command line arguments are:
    - (Optional) `-k times`: the number of times each recommendation might be executed.
    - (Optional) `-interval interval`: this program produces a summary file for each recommendation. This value establishes the amount of iterations between each recorded point in the summary. By default, it records a register in the summary file each 10,000 iterations.
    - (Optional) `-cutoff cutoff`: the number of items to recommend each time.
-
+   - (Optional) `-io-type iotype`: indicates the format of the recommendation files. Different possibilities:
+       - `text` : if we want the files to be readable (default option).
+       - `binary`: if we want the files to be written in a binary format.
+   - (Optional) `--gzipped`: if we want the recommendation files to be compressed (using GZIP).
 
 With these parameters, the different algorithms execute, and the following output is produced:
    - A recommendation file for each recommendation loop execution. The name format for this file is: ` algorithmname-iter.txt`, where algorithm name shows the used algorithm and its parameters. In case the optional parameter `k` is not used, the `iter` value shall be equal to `0`. If `k`is used (and each algorithm is executed several times), it represents the execution number for that algorithm.
@@ -173,7 +180,7 @@ Iteration	recall	gini
 ### Validation with warm-up
 This program is similar to the Validation one, but it takes some warm-up data. It is executed as:
 ```
-java -jar IRBandits.jar warmup-valid type-of-dataset algorithms input output end-condition resume training partition-params dataset-related-arguments (-k times - type type -cutoff cutoff)
+java -jar IRBandits.jar warmup-valid type-of-dataset algorithms input output end-condition resume training partition-params dataset-related-arguments (-k times - type type -cutoff cutoff -io-type iotype --gzipped -warmup-io-type iotype --warmup-gzipped)
 ```
 where the command line arguments are:
    - `type-of-dataset`: see the earlier type of dataset configuration.
@@ -199,13 +206,20 @@ where the command line arguments are:
        -  `onlyratings`: removes all user-item pairs in the warm-up which do not appear in the original dataset.
        -  `full`: uses the warm-up data as it is.   
    - (Optional) `-cutoff cutoff`: the number of items to recommend each time.
-
+   - (Optional) `-io-type iotype`: indicates the format of the recommendation files. Different possibilities:
+       - `text` : if we want the files to be readable (default option).
+       - `binary`: if we want the files to be written in a binary format.
+   - (Optional) `--gzipped`: if we want the recommendation files to be compressed (using GZIP).
+   - (Optional) `-warmup-io-type iotype`: indicates the format of the warm-up file. Different possibilities:
+       - `text` : if the warm-up file is in text mode (default option).
+       - `binary`: if the warm-up file is in binary mode.
+   - (Optional) `--warmup-gzipped`: if the warm-up file is compressed (using GZIP).   
 The output of this program is identical to that of the Validation one, with the exception that a new directory is created for each partition (identified by number).
 
 ### Recommendation with warm-up
 This program is similar to the Recommendation one, but it takes some warm-up data. It is executed as:
 ```
-java -jar IRBandits.jar warmup-rec type-of-dataset algorithms input output end-condition resume training numParts dataset-related-arguments (-k times -percTrain percTrain -type type -interval interval -cutoff cutoff)
+java -jar IRBandits.jar warmup-rec type-of-dataset algorithms input output end-condition resume training numParts dataset-related-arguments (-k times -percTrain percTrain -type type -interval interval -cutoff cutoff -io-type iotype --gzipped -warmup-io-type iotype --warmup-gzipped)
 ```
 where the command line arguments are:
    - `type-of-dataset`: see the earlier type of dataset configuration.
@@ -227,13 +241,20 @@ where the command line arguments are:
        -  `full`: uses the warm-up data as it is.    
    - (Optional) `-percTrain percTrain`: By default, the data from the warm-up file is equally divided in `numParts`, and, for each partition `j`, parts `0` to `j` are taken as training. However, if this parameter is present and takes values between 0 and 1, partition `0` shall contain the first `percTrain` user-item pairs, partition `j` shall contain the first `(j+1)*percTrain` fraction of user-item pairs in the warm-up data (with `j` going from `0` to `numParts-1`). If `numParts` is negative, `percTrain` refers to the fraction of positively rated user-item pairs.
    - (Optional) `-cutoff cutoff`: the number of items to recommend each time.
-
+   - (Optional) `-io-type iotype`: indicates the format of the recommendation files. Different possibilities:
+       - `text` : if we want the files to be readable (default option).
+       - `binary`: if we want the files to be written in a binary format.
+   - (Optional) `--gzipped`: if we want the recommendation files to be compressed (using GZIP).
+   - (Optional) `-warmup-io-type iotype`: indicates the format of the warm-up file. Different possibilities:
+       - `text` : if the warm-up file is in text mode (default option).
+       - `binary`: if the warm-up file is in binary mode.
+   - (Optional) `--warmup-gzipped`: if the warm-up file is compressed (using GZIP).   
 The output of this program is identical to that of the Recommendation one, with the exception that a new directory is created for each partition (identified by number).
 
 ### Summary
 This program takes earlier executions, and summarizes them. It is executed as:
 ```
-java -jar IRBandits.jar summarize type-of-dataset input file/directory time-points dataset-related-arguments (-r)
+java -jar IRBandits.jar summarize type-of-dataset input file/directory time-points dataset-related-arguments (-r -io-type iotype --gzipped)
 ```
 where
    - `input`: file containing the dataset.
@@ -241,7 +262,11 @@ where
    - `time-points`: a comma-separated list of the iteration numbers we want to include in the summary.
    - `dataset-related-arguments`: see earlier.
    - (Optional) `-r`: if we summarize all the files in a directory, and we include this flag, this program is executed recursively in the subdirectories.
-
+   - (Optional) `-io-type iotype`: indicates the format of the recommendation files. Different possibilities:
+       - `text` : if we want the files to be readable (default option).
+       - `binary`: if we want the files to be written in a binary format.
+   - (Optional) `--gzipped`: if we want the recommendation files to be compressed (using GZIP).
+   
 On each analyzed directory, this program creates a new directory, named `metrics`, where it stores a file for each metric.
 The format for this file is (tab-separated and containing one register per line):
 ```
@@ -250,6 +275,39 @@ algorithm-file point-0 point-1 ... point-N
 where
  - `algorithm-file` is the name of the summarized file.
  - `point-X` is the value of the metric at the `X`-th point in `time-points`.
+ 
+ ### Summary with warm-up
+ This program takes earlier executions, and summarizes them. It is executed as:
+ ```
+ java -jar IRBandits.jar warmupsummarize type-of-dataset input file/directory time-points training numParts dataset-related-arguments (-r -io-type iotype --gzipped -warmup-io-type iotype --warmup-gzipped)
+ ```
+ where
+    - `input`: file containing the dataset.
+    - `file/directory`: a directory to summarize. It must have as many subdirectories as `numParts`, named using the numbers.
+    - `time-points`: a comma-separated list of the iteration numbers we want to include in the summary.
+    - `training`: the route to a recommendation file containing the warm-up data. The format of the file must be the same as the one for recommendation output files.
+    - `numParts`: the number of partitions to consider. In case this value is negative, we consider the set of positively-rated user-item pairs to apply the partition.    
+    - `dataset-related-arguments`: see earlier.
+    - (Optional) `-r`: if we summarize all the files in a directory, and we include this flag, this program is executed recursively in the subdirectories.
+    - (Optional) `-percTrain percTrain`: By default, the data from the warm-up file is equally divided in `numParts`, and, for each partition `j`, parts `0` to `j` are taken as training. However, if this parameter is present and takes values between 0 and 1, partition `0` shall contain the first `percTrain` user-item pairs, partition `j` shall contain the first `(j+1)*percTrain` fraction of user-item pairs in the warm-up data (with `j` going from `0` to `numParts-1`). If `numParts` is negative, `percTrain` refers to the fraction of positively rated user-item pairs.
+   - (Optional) `-io-type iotype`: indicates the format of the recommendation files. Different possibilities:
+       - `text` : if we want the files to be readable (default option).
+       - `binary`: if we want the files to be written in a binary format.
+   - (Optional) `--gzipped`: if we want the recommendation files to be compressed (using GZIP).
+   - (Optional) `-warmup-io-type iotype`: indicates the format of the warm-up file. Different possibilities:
+       - `text` : if the warm-up file is in text mode (default option).
+       - `binary`: if the warm-up file is in binary mode.
+   - (Optional) `--warmup-gzipped`: if the warm-up file is compressed (using GZIP).   
+    
+ On each analyzed directory, this program creates a new directory, named `metrics`, where it stores a file for each metric.
+ The format for this file is (tab-separated and containing one register per line):
+ ```
+ algorithm-file point-0 point-1 ... point-N
+ ```
+ where
+  - `algorithm-file` is the name of the summarized file.
+  - `point-X` is the value of the metric at the `X`-th point in `time-points`.
+  
  
 ### Training statistics
 This program obtains the statistics for the training data (and the partitions).
@@ -273,26 +331,36 @@ In order to execute different configurations, we include in the `config` folder 
 It is possible to set a random seed for the experiments, so that the selection of users and other random choices are the same when the experiment is repeated. For that purpose, in the output directory, just add a file named `rngseedlist` (without any file extension) containing the a list of seeds (must be equal to the optional `k` value in the different programs), and set the parameter `resume` to true.
 
 ### Output format
-The output of both programs is the same: for each algorithm in the comparison, a file will be created. The name of the file will be the same as the chosen algorithm configuration. Each of the output files has the following format: separated by tabs, the first line contains the header of the file. Then, each row contains the information of a single iteration: the number of the iteration, the selected user, the selected item, the value of the metrics and the time taken to execute the iteration (in ms.)
+The output of both programs is the same: for each algorithm in the comparison, a file will be created. The name of the file will be the same as the chosen algorithm configuration. 
+Depending on the format, we distinguish two possibilities.
 
+In case we write the files in text mode, the output files have the following format: separated by tabs, the first line contains the header of the file. Then, each row contains the information of a single iteration: the number of the iteration, the selected user, the selected item and the time taken to execute the iteration (in ms.)
 This is an example of the content format of this file:
 ```
-iter	user	item	recall	gini	time
-0	1713	4901	0.0	1.0	27
-1	1880	1477	0.0	0.9999838334195551	13
-2	1626	56725	0.0	0.9999676668391102	3
-3	2002	34539	0.0	0.9999515002586653	3
-4	477	5085	0.0	0.9999353336782204	6
-5	2012	44312	0.0	0.9999191670977755	5
-6	1526	60448	0.0	0.9999030005173306	45
-7	528	9392	0.0	0.9998868339368857	46
-8	887	2878	0.0	0.9998706673564408	31
-9	1313	22947	0.0	0.9998545007759959	56
-10	2274	45478	0.0	0.9998383341955509	1
-11	1615	7493	0.0	0.999822167615106	2
-12	1481	58528	0.0	0.9998060010346611	0
+iter	user	item	time
+0	1713	4901	27
+1	1880	1477	13
+2	1626	56725	3
+3	2002	34539	3
+4	477	5085	6
+5	2012	44312	5
+6	1526	60448	45
+7	528	9392	46
+8	887	2878	31
+9	1313	22947	56
+10	2274	45478	1
+11	1615	7493	2
+12	1481	58528	0
 ```
 In case we choose a cutoff for the recommendation greater than one, the format is similar: now, the iteration number can be repeated, and the value for the different metrics will be the same for all the recommendations in an iteration.
+
+Now, in case we choose a binary file, the format (for each recommendation) is the following:
+```
+iter user numItems item1 item2 item3 ... itemN time
+```
+where `iter` references the iteration number, `user` is the identifier of the user, `numItems` is the number of 
+recommended items this iteration, `itemN` represent the identifiers of the different users, and `time`is the time needed
+to execute the whole iteration. Except for `time`, which is stored as a long int, all fields are integers.
 
 ## References
 1. Sanz-Cruzado, J., Castells, P., López, E. (2019).  A Simple Multi-Armed Nearest-Neighbor Bandit for Interactive Recommendation. In 13th ACM Conference on Recommender Systems (RecSys 2019). Copenhagen, Denmark, September 2019, pp. 358–362.

@@ -9,8 +9,6 @@
  */
 package es.uam.eps.ir.knnbandit;
 
-import org.ranksys.formats.parsing.Parsers;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +22,13 @@ import java.util.Random;
  */
 public class UntieRandomNumber
 {
+    /**
+     * List of rangom seeds
+     */
     public static List<Integer> rngSeeds;
+    /**
+     * The unique random seed.
+     */
     public static int RNG = 0;
 
     /**

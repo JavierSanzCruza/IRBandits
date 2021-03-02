@@ -58,6 +58,7 @@ public class OfflineDatasetWithKnowledgeRecommendationLoop<U,I> extends GenericR
      * @param endCondition the condition that establishes whether the loop has finished or not.
      * @param dataUse      a selection of the subset of the ratings we shall use for updates.
      * @param rngSeed      a seed for a random number generator
+     * @param cutoff       the number of items to recommend each iteration.
      */
     public OfflineDatasetWithKnowledgeRecommendationLoop(DatasetWithKnowledge<U, I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, KnowledgeDataUse dataUse, int rngSeed, int cutoff)
     {

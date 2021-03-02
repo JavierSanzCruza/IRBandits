@@ -12,8 +12,11 @@ package es.uam.eps.ir.knnbandit.main;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.partition.Partition;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -28,17 +31,31 @@ import java.util.*;
 public abstract class TrainingStatistics<U,I>
 {
     /**
+     * Selects the format for reading the training data.
+     */
+    private final IOSelector warmupIOSelector;
+
+    /**
+     * Constructor.
+     * @param warmupIOSelector selects the format for reading the training data.
+     */
+    public TrainingStatistics(IOSelector warmupIOSelector)
+    {
+        this.warmupIOSelector = warmupIOSelector;
+    }
+    /**
      * Finds the statistics of the training set.
      * @param training the file containing the training data.
      * @param partition the partition strategy.
      * @param numSplits the number of splits.
      * @param percTrain the percentage of the warm-up data to use as training.
      */
-    public void statistics(String training, Partition partition, int numSplits, double percTrain)
+    public void statistics(String training, Partition partition, int numSplits, double percTrain) throws IOException
     {
         // Read the training data.
-        Reader reader = new Reader();
-        List<Pair<Integer>> train = reader.read(training, "\t", true);
+        Reader reader = warmupIOSelector.getReader();
+        InputStream input = warmupIOSelector.getInputStream(training);
+        List<Pair<Integer>> train = reader.readFile(input);
 
         Dataset<U,I> dataset = this.getDataset();
 

@@ -43,6 +43,7 @@ public class ReplayerRecommendationLoop<U,I> extends GenericRecommendationLoop<U
      * @param recommender   the interactive recommendation algorithm.
      * @param metrics       the set of metrics we want to study.
      * @param endCondition  the condition that establishes whether the loop has finished or not.
+     * @param rngSeed       the random seed generator.
      */
     public ReplayerRecommendationLoop(StreamDataset<U,I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, int rngSeed)
     {

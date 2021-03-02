@@ -29,8 +29,13 @@ public class MLECategoricalItemBandit<U,I> extends ItemBandit<U,I>
      * The number of items.
      */
     private final int numItems;
-
+    /**
+     * The initial number of hits for each item.
+     */
     private final double[] initialAlphas;
+    /**
+     * The initial number of hits for all items.
+     */
     private final double initialAlpha;
 
     /**

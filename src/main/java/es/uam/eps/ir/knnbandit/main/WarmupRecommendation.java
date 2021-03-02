@@ -20,6 +20,7 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -42,6 +43,27 @@ import java.util.stream.IntStream;
  */
 public abstract class WarmupRecommendation<U,I>
 {
+    /**
+     * The format selector for the input files.
+     */
+    private final IOSelector ioSelector;
+    /**
+     * The format selector for the warm-up files.
+     */
+    private final IOSelector warmupIOSelector;
+
+
+    /**
+     * Constructor.
+     * @param ioSelector        a selector for reading/writing files.
+     * @param warmupIOSelector  a selector for reading warm-up files.
+     */
+    public WarmupRecommendation(IOSelector ioSelector, IOSelector warmupIOSelector)
+    {
+        this.ioSelector = ioSelector;
+        this.warmupIOSelector = warmupIOSelector;
+    }
+
     /**
      * Applies recommendation with warmup over a set of algorithms:
      * @param algorithms a file containing the algorithm configuration. It should contain as many lines
@@ -91,8 +113,9 @@ public abstract class WarmupRecommendation<U,I>
         }
 
         // Read the warmup data
-        Reader reader = new Reader();
-        List<Pair<Integer>> train = reader.read(warmupData, "\t", true);
+        Reader warmupReader = warmupIOSelector.getReader();
+        InputStream stream = warmupIOSelector.getInputStream(warmupData);
+        List<Pair<Integer>> train = warmupReader.readFile(stream);
         System.out.println("The warmup data has been read");
 
         List<Integer> splitPoints;
@@ -174,8 +197,8 @@ public abstract class WarmupRecommendation<U,I>
                         // Create the recommendation loop: in this case, a general offline dataset loop
                         FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
                         // Execute the loop:
-                        Executor<U, I> executor = new Executor<>();
-                        String fileName = currentOutputFolder + name + "_" + i + ".txt";
+                        Executor<U, I> executor = new Executor<>(ioSelector);
+                        String fileName = currentOutputFolder + name + "_" + i + ".txt" + ((ioSelector.isCompressed()) ? ".gz" : "");
                         Map<String, List<Double>> metricValues = executor.executeWithWarmup(loop, fileName, resume, interval, warmup);
                         int currentIter = loop.getCurrentIter();
                         if (currentIter > 0) // if at least one iteration has been recorded:

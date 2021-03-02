@@ -8,24 +8,44 @@ import java.util.Arrays;
 
 /**
  * Bandit that selects an item proportionally to its popularity.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ *
  * @param <U> type of the users.
  * @param <I> type of the items.
  */
 public class MLECategoricalAverageItemBandit<U,I> extends ItemBandit<U,I>
 {
     /**
-     * A Beta distribution for each possible item.
+     * The number of hits of the item.
      */
     private final double[] hits;
+    /**
+     * The number of misses of the item.
+     */
     private final double[] misses;
     /**
      * The number of items.
      */
     private final int numItems;
 
+    /**
+     * The initial number of hits for each item.
+     */
     private final double[] initialAlphas;
+    /**
+     * The initial number of misses for each item.
+     */
     private final double[] initialBetas;
+
+    /**
+     * The initial number of hits for all items.
+     */
     private final double initialAlpha;
+    /**
+     * The initial number of misses for all items.
+     */
     private final double initialBeta;
 
     /**

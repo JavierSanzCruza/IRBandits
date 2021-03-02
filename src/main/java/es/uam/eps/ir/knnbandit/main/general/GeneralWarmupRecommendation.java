@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.main.general;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.GeneralDataset;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.main.WarmupRecommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -34,8 +35,7 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.function.Supplier;
 
 /**
- * Class for applying recommendation in general recommendation contexts (i.e. movie, music recommendation)
- * where users and items are separate sets, and warmup data is available.
+ * Class for executing general domain recommender systems in simulated interactive loops (with training)
  *
  * @param <U> type of the users.
  * @param <I> type of the items.
@@ -54,24 +54,31 @@ public class GeneralWarmupRecommendation<U,I> extends WarmupRecommendation<U,I>
      */
     private final Map<String, Supplier<CumulativeMetric<U,I>>> metrics;
     /**
-     * The type of warmup.
+     * Selects which warmup we use: all the links in the set or just the ones in the network.
      */
     private final WarmupType warmupType;
-
+    /**
+     * The number of items to recommend each iteration.
+     */
     private final int cutoff;
 
     /**
      * Constructor.
-     * @param input file containing the information about the ratings.
-     * @param separator a separator for reading the file.
-     * @param uParser parser for reading the set of users.
-     * @param iParser parser for reading the set of items.
-     * @param threshold the relevance threshold.
-     * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
+     * @param input             file containing the information about the ratings.
+     * @param separator         a separator for reading the file.
+     * @param uParser           parser for reading the set of users.
+     * @param iParser           parser for reading the set of items.
+     * @param threshold         the relevance threshold.
+     * @param useRatings        true if we have to consider the real ratings, false to binarize them according to the threshold value.
+     * @param warmup            selects which warmup we use: all the links in the set or just the ones in the network.
+     * @param cutoff            the cutoff of the recommendation.
+     * @param ioSelector        a selector for reading / writing files.
+     * @param warmupIOSelector  a selector for reading warm-up files.
      * @throws IOException if something fails while reading the dataset.
      */
-    public GeneralWarmupRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, WarmupType warmup, int cutoff) throws IOException
+    public GeneralWarmupRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, WarmupType warmup, int cutoff, IOSelector ioSelector, IOSelector warmupIOSelector) throws IOException
     {
+        super(ioSelector, warmupIOSelector);
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);
 

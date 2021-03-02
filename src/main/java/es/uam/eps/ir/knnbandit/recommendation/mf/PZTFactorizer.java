@@ -35,14 +35,28 @@ import static java.lang.Math.sqrt;
  *
  * @param <U> type of the users
  * @param <I> type of the items
+ *
  * @author Saúl Vargas (saul.vargas@uam.es)
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
  */
 public class PZTFactorizer<U, I> extends ALSFactorizer<U, I>
 {
+    /**
+     * Regularization factor for the user matrix.
+     */
     private final double lambdaP;
+    /**
+     * Regularization factor for the item matrix.
+     */
     private final double lambdaQ;
+    /**
+     * The confidence.
+     */
     private final DoubleUnaryOperator confidence;
+    /**
+     * True if we want the factorizer to be able to use zero values.
+     */
     private final boolean usesZeroes;
 
 

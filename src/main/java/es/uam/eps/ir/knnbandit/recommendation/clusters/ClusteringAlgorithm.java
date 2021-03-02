@@ -17,7 +17,10 @@ import java.util.Set;
 
 /**
  * Algorithm for detecting the communities of a graph.
- * @author Javier Sanz-Cruzado Puig
+ *
+ * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ *
  * @param <U> Type of the users.
  */
 public interface ClusteringAlgorithm<U>
