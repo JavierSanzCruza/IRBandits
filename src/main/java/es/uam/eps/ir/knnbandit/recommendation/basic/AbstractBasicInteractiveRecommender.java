@@ -54,6 +54,7 @@ public abstract class AbstractBasicInteractiveRecommender<U, I> extends Interact
      * @param uIndex    User index.
      * @param iIndex    Item index.
      * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     * @param rngSeed   Random number generator seed.
      */
     public AbstractBasicInteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed)
     {

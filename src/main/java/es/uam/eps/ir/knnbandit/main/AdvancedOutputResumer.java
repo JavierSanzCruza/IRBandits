@@ -10,21 +10,16 @@
 package es.uam.eps.ir.knnbandit.main;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.io.BinaryReader;
-import es.uam.eps.ir.knnbandit.io.IOType;
-import es.uam.eps.ir.knnbandit.io.ReaderInterface;
-import es.uam.eps.ir.knnbandit.io.TextReader;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
+import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.ranksys.fast.FastRecommendation;
-import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
-import org.ranksys.formats.parsing.Parsers;
 
 import java.io.*;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Class for summarizing the outcomes of recommenders.
@@ -37,28 +32,24 @@ import java.util.zip.GZIPInputStream;
  */
 public abstract class AdvancedOutputResumer<U,I>
 {
-
+    /**
+     * Identifier name for the time needed to execute the recommendations.
+     */
     private final String TIMENAME = "time";
     /**
-     * The input-output type.
+     * The input-output selector.
      */
-    private final IOType ioType;
-    /**
-     * If the files have to be read/written in a compressed manner.
-     */
-    private final boolean gzipped;
+    private final IOSelector ioSelector;
+
 
     /**
      * Constructor.
-     * @param ioType input-output type for the reader / writer.
+     * @param ioSelector input-output type selector for the reader / writer.
      */
-    public AdvancedOutputResumer(IOType ioType, boolean gzipped)
+    public AdvancedOutputResumer(IOSelector ioSelector)
     {
-        this.ioType = ioType;
-        this.gzipped = gzipped;
+        this.ioSelector = ioSelector;
     }
-
-
 
     /**
      * Summarizes the contents of a directory.
@@ -133,8 +124,7 @@ public abstract class AdvancedOutputResumer<U,I>
             for (File f : indivFiles)
             {
                 Map<String, Map<Integer, Double>> map = readFile(f, list);
-                if (map != null)
-                    results.put(f.getName(), map);
+                results.put(f.getName(), map);
             }
 
             this.printSummary(results, list, directory);
@@ -252,9 +242,8 @@ public abstract class AdvancedOutputResumer<U,I>
         });
         res.put(TIMENAME, new HashMap<>());
 
-        ReaderInterface reader = this.getReader();
-        InputStream inputStream = (gzipped) ? new GZIPInputStream(new FileInputStream(f)) : new FileInputStream(f);
-        reader.initialize(inputStream);
+        Reader reader = ioSelector.getReader();
+        reader.initialize(ioSelector.getInputStream(f.getAbsolutePath()));
 
         int i = 0;
         Tuple3<Integer, FastRecommendation, Long> triplet;
@@ -295,22 +284,4 @@ public abstract class AdvancedOutputResumer<U,I>
      * @return a map with supplier for the metrics.
      */
     protected abstract Map<String, Supplier<CumulativeMetric<U,I>>> getMetrics();
-
-    /**
-     * Obtains a reader.
-     * @return the reader if everything is ok, null otherwise.
-     */
-    protected ReaderInterface getReader()
-    {
-        switch (ioType)
-        {
-            case BINARY:
-                return new BinaryReader();
-            case TEXT:
-                return new TextReader();
-            case ERROR:
-            default:
-                return null;
-        }
-    }
 }

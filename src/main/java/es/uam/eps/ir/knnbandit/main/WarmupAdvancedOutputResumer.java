@@ -10,10 +10,8 @@
 package es.uam.eps.ir.knnbandit.main;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.io.BinaryReader;
-import es.uam.eps.ir.knnbandit.io.IOType;
-import es.uam.eps.ir.knnbandit.io.ReaderInterface;
-import es.uam.eps.ir.knnbandit.io.TextReader;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
+import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.partition.Partition;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
@@ -26,10 +24,10 @@ import org.jooq.lambda.tuple.Tuple3;
 import java.io.*;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.zip.GZIPInputStream;
 
 /**
- * Class for summarizing the outcomes of recommenders.
+ * Class for summarizing the outcomes of recommenders. Such recommenders
+ * use some warm-up data as training.
  *
  * @param <U> type of the users.
  * @param <I> type of the items.
@@ -42,36 +40,24 @@ public abstract class WarmupAdvancedOutputResumer<U,I>
 
     private final static String TIMENAME = "time";
     /**
-     * The input-output type.
+     * The format selector for the input files.
      */
-    private final IOType ioType;
+    private final IOSelector ioSelector;
     /**
-     * If the files have to be read/written in a compressed manner.
+     * The format selector for the warm-up files.
      */
-    private final boolean gzipped;
-
-    /**
-     * The input-output type.
-     */
-    private final IOType warmupIOType;
-    /**
-     * If the files have to be read/written in a compressed manner.
-     */
-    private final boolean gzippedWarmup;
+    private final IOSelector warmupIOSelector;
 
     /**
      * Constructor.
-     * @param ioType input-output type for the reader / writer.
+     * @param ioSelector        a selector for reading files.
+     * @param warmupIOSelector  a selector for reading warm-up files.
      */
-    public WarmupAdvancedOutputResumer(IOType ioType, boolean gzipped, IOType warmupIOType, boolean gzippedWarmup)
+    public WarmupAdvancedOutputResumer(IOSelector ioSelector, IOSelector warmupIOSelector)
     {
-        this.ioType = ioType;
-        this.gzipped = gzipped;
-        this.warmupIOType = warmupIOType;
-        this.gzippedWarmup = gzippedWarmup;
+        this.ioSelector = ioSelector;
+        this.warmupIOSelector = warmupIOSelector;
     }
-
-
 
     /**
      * Summarizes the contents of a directory.
@@ -86,8 +72,8 @@ public abstract class WarmupAdvancedOutputResumer<U,I>
         points.sort(Comparator.naturalOrder());
 
         // Read the warmup data
-        ReaderInterface warmupReader = this.getWarmupReader();
-        InputStream stream = gzippedWarmup ? new GZIPInputStream(new FileInputStream(warmupData)) : new FileInputStream(warmupData);
+        Reader warmupReader = warmupIOSelector.getReader();
+        InputStream stream = warmupIOSelector.getInputStream(warmupData);
         List<Pair<Integer>> train = warmupReader.readFile(stream);
 
         List<Integer> splitPoints;
@@ -304,8 +290,8 @@ public abstract class WarmupAdvancedOutputResumer<U,I>
         });
         res.put(TIMENAME, new HashMap<>());
 
-        ReaderInterface reader = this.getReader();
-        InputStream inputStream = (gzipped) ? new GZIPInputStream(new FileInputStream(f)) : new FileInputStream(f);
+        Reader reader = ioSelector.getReader();
+        InputStream inputStream = ioSelector.getInputStream(f.getAbsolutePath());
         reader.initialize(inputStream);
 
         int i = 0;
@@ -349,40 +335,9 @@ public abstract class WarmupAdvancedOutputResumer<U,I>
     protected abstract Map<String, Supplier<CumulativeMetric<U,I>>> getMetrics();
 
     /**
-     * Obtains a reader.
-     * @return the reader if everything is ok, null otherwise.
+     * Obtains the warm-up for the recommendation.
+     * @param trainData the list of pairs in the warm-up data.
+     * @return the warm-up for the recommendation.
      */
-    protected ReaderInterface getReader()
-    {
-        switch (ioType)
-        {
-            case BINARY:
-                return new BinaryReader();
-            case TEXT:
-                return new TextReader();
-            case ERROR:
-            default:
-                return null;
-        }
-    }
-
-    /**
-     * Obtains a reader.
-     * @return the reader if everything is ok, null otherwise.
-     */
-    protected ReaderInterface getWarmupReader()
-    {
-        switch (warmupIOType)
-        {
-            case BINARY:
-                return new BinaryReader();
-            case TEXT:
-                return new TextReader();
-            case ERROR:
-            default:
-                return null;
-        }
-    }
-
     protected abstract Warmup getWarmup(List<Pair<Integer>> trainData);
 }

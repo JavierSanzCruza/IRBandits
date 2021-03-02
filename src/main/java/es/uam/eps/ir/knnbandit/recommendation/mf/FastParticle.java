@@ -29,8 +29,13 @@ public abstract class FastParticle<U, I> implements Particle<U, I>
      */
     private final FastItemIndex<I> iIndex;
 
-
+    /**
+     * The number of users.
+     */
     protected int numUsers;
+    /**
+     * The number of items.
+     */
     protected int numItems;
 
     /**
@@ -66,12 +71,19 @@ public abstract class FastParticle<U, I> implements Particle<U, I>
         return this.getWeight(this.uIndex.user2uidx(u), this.iIndex.item2iidx(i), value);
     }
 
-
+    /**
+     * Obtains the user index for the particle.
+     * @return the user index.
+     */
     protected FastUserIndex<U> getUserIndex()
     {
         return this.uIndex;
     }
 
+    /**
+     * Obtains the item index for the particle.
+     * @return the item index.
+     */
     protected FastItemIndex<I> getItemIndex()
     {
         return this.iIndex;

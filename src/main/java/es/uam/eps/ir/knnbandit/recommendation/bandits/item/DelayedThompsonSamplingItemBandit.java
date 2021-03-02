@@ -33,25 +33,44 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
      */
     private final BetaDistribution[] betas;
 
-
+    /**
+     * The time that has passed since the items were last updated.
+     */
     private final Int2IntMap delays;
+    /**
+     * Current estimated value for each item.
+     */
     private final Int2DoubleMap currentScores;
+    /**
+     * Number of plays before recomputing the value of an item.
+     */
     private final int delay;
     /**
      * The number of items.
      */
     private final int numItems;
-
+    /**
+     * The initial alpha values for each item.
+     */
     private final double[] initialAlphas;
+    /**
+     * The initial beta values for each item.
+     */
     private final double[] initialBetas;
+    /**
+     * The initial alpha values for all items.
+     */
     private final double initialAlpha;
+    /**
+     * The initial beta values for all items.
+     */
     private final double initialBeta;
 
     /**
      * Constructor.
      *
      * @param numItems The number of items.
-     * @param delay    The time.
+     * @param delay    The time before updating the value of an item.
      */
     public DelayedThompsonSamplingItemBandit(int numItems, int delay)
     {
@@ -79,6 +98,7 @@ public class DelayedThompsonSamplingItemBandit<U, I> extends ItemBandit<U, I>
      * @param numItems     Number of items.
      * @param initialAlpha The initial value for the alpha parameter of Beta distributions.
      * @param initialBeta  The initial value for the beta parameter of the Beta distributions.
+     * @param delay        The time before updating the value of an item.
      */
     public DelayedThompsonSamplingItemBandit(int numItems, double initialAlpha, double initialBeta, int delay)
     {

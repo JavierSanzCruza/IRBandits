@@ -8,6 +8,12 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation;
 
+/**
+ * Enumeration for defining the type of uses we can make of the data with knowledge.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
 public enum KnowledgeDataUse
 {
     ONLYKNOWN, ONLYUNKNOWN, ALL;

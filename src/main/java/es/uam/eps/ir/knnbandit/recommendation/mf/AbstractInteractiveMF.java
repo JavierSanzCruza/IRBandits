@@ -32,7 +32,7 @@ import java.util.logging.LogManager;
 import java.util.stream.Stream;
 
 /**
- * Interactive version of matrix factorization algorithms. Legacy version.
+ * Interactive version of matrix factorization algorithms. Abstract implementation.
  *
  * @param <U> User type.
  * @param <I> Item type.

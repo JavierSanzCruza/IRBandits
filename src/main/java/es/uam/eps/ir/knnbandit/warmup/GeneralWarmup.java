@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ * de Madrid, http://ir.ii.uam.es.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at http://mozilla.org/MPL/2.0.
+ *
+ */
 package es.uam.eps.ir.knnbandit.warmup;
 
 import es.uam.eps.ir.knnbandit.data.datasets.OfflineDataset;
@@ -12,14 +21,38 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+/**
+ * Class for the storing the warm-up data for general recommendations.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
 public class GeneralWarmup implements OfflineWarmup
 {
-
+    /**
+     * A list containing only the ratings in the dataset.
+     */
     private final List<FastRating> cleanTraining;
+    /**
+     * A list containing all the ratings in the warm-up data.
+     */
     private final List<FastRating> fullTraining;
+    /**
+     * Lists for indicating the remaining items to be computed.
+     */
     private final List<IntList> availability;
+    /**
+     * Number of relevant items.
+     */
     private final int numRel;
 
+    /**
+     * Constructor.
+     * @param cleanTraining a list containing the ratings that appear in the dataset.
+     * @param fullTraining  a list containing all the ratings in the warm-up data.
+     * @param availability  lists for indicating the remaining items to be computed.
+     * @param numRel        the number of relevant items.
+     */
     protected GeneralWarmup(List<FastRating> cleanTraining, List<FastRating> fullTraining, List<IntList> availability, int numRel)
     {
         this.cleanTraining = cleanTraining;
@@ -52,6 +85,13 @@ public class GeneralWarmup implements OfflineWarmup
         return cleanTraining;
     }
 
+    /**
+     * Loads the warm-up data.
+     * @param dataset   the dataset.
+     * @param training  the full list of user-item pairs in the warm-up.
+     * @param type      filters the list of pairs. If ALL, it does not apply a filter. If ONLYRATED, ignores those user-item pairs not in the dataset.
+     * @return the warm-up data.
+     */
     public static GeneralWarmup load(OfflineDataset<?,?> dataset, Stream<Pair<Integer>> training, WarmupType type)
     {
         List<FastRating> fullTraining = new ArrayList<>();

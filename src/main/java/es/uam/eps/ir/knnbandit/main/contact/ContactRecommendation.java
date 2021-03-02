@@ -11,7 +11,7 @@ package es.uam.eps.ir.knnbandit.main.contact;
 
 import es.uam.eps.ir.knnbandit.data.datasets.ContactDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.io.IOType;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.main.Recommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -27,27 +27,47 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Class for executing contact recommender systems in simulated interactive loops (with training)
+ * Class for executing contact recommender systems in simulated interactive loops (without training)
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
+ *
+ * @param <U> type of the users.
  */
 public class ContactRecommendation<U> extends Recommendation<U,U>
 {
+    /**
+     * The contact recommendation dataset.
+     */
     private final ContactDataset<U> dataset;
+    /**
+     * The map of metric suppliers.
+     */
     private final Map<String, Supplier<CumulativeMetric<U,U>>> metrics;
+    /**
+     * The cut-off of the recommendation.
+     */
     private final int cutoff;
 
-    public ContactRecommendation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, int cutoff, IOType type, boolean gzipped)
+    /**
+     * Constructor.
+     * @param input         the file containing the dataset.
+     * @param separator     separator for the different dataset registers.
+     * @param parser        parser for reading the users.
+     * @param directed      true if the network is directed.
+     * @param notReciprocal true if we want to avoid recommending reciprocal edges to existing ones, false otherwise.
+     * @param cutoff        the cutoff of the recommendation.
+     * @param ioSelector    a selector for reading / writing files.
+     */
+    public ContactRecommendation(String input, String separator, Parser<U> parser, boolean directed, boolean notReciprocal, int cutoff, IOSelector ioSelector)
     {
-        super(type, gzipped);
+        super(ioSelector);
         dataset = ContactDataset.load(input, directed, notReciprocal, parser, separator);
         this.metrics = new HashMap<>();
         metrics.put("recall", CumulativeRecall::new);
         metrics.put("gini", CumulativeGini::new);
         this.cutoff = cutoff;
     }
-
 
     @Override
     protected Dataset<U, U> getDataset()

@@ -17,8 +17,22 @@ package es.uam.eps.ir.knnbandit.selector;
  */
 public class EpsilonGreedyUpdateFunctionIdentifiers
 {
+    /**
+     * Identifier for the stationary update.
+     */
     public static final String STATIONARY = "stationary";
+    /**
+     * Identifier for the non-stationary version, which favors the last values.
+     */
     public static final String NONSTATIONARY = "nonStationary";
+
+    /**
+     * Identifier for the version that computes the value of the arm considering the rewards for the rest of the arms.
+     */
     public static final String USEALL = "useAll";
+
+    /**
+     * Instead of using average value, it uses a simple count.
+     */
     public static final String COUNT = "count";
 }

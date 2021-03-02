@@ -53,6 +53,7 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
      *
      * @param uIndex    user index.
      * @param iIndex    item index.
+     * @param rngSeed   random number generator seed.
      */
     public RandomRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed)
     {

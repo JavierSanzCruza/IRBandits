@@ -9,7 +9,8 @@
  */
 package es.uam.eps.ir.knnbandit.main.selector;
 
-import es.uam.eps.ir.knnbandit.io.IOType;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
+import es.uam.eps.ir.knnbandit.selector.io.IOType;
 import es.uam.eps.ir.knnbandit.main.WarmupAdvancedOutputResumer;
 import es.uam.eps.ir.knnbandit.main.contact.ContactWarmupAdvancedOutputResumer;
 import es.uam.eps.ir.knnbandit.main.general.GeneralWarmupAdvancedOutputResumer;
@@ -124,6 +125,9 @@ public class WarmupAdvancedOutputResumerSelector
             }
         }
 
+        IOSelector ioSelector = new IOSelector(iotype, gzipped);
+        IOSelector warmupIOSelector = new IOSelector(warmupIotype, warmupGzipped);
+
         switch(type)
         {
             case GENERAL:
@@ -133,12 +137,12 @@ public class WarmupAdvancedOutputResumerSelector
 
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    GeneralWarmupAdvancedOutputResumer<Long, Long> resumer = new GeneralWarmupAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, iotype, gzipped, warmupIotype, warmupGzipped);
+                    GeneralWarmupAdvancedOutputResumer<Long, Long> resumer = new GeneralWarmupAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, ioSelector, warmupIOSelector);
                     resumer.summarize(directory, points, training, partition, numParts, percTrain);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    GeneralWarmupAdvancedOutputResumer<Long, String> resumer = new GeneralWarmupAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, iotype, gzipped, warmupIotype, warmupGzipped);
+                    GeneralWarmupAdvancedOutputResumer<Long, String> resumer = new GeneralWarmupAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, ioSelector, warmupIOSelector);
                     resumer.summarize(directory, points, training, partition, numParts, percTrain);
                 }
                 break;
@@ -148,7 +152,7 @@ public class WarmupAdvancedOutputResumerSelector
                 boolean directed = execArgs[5].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[6].equalsIgnoreCase("true");
 
-                WarmupAdvancedOutputResumer<Long, Long> resumer = new ContactWarmupAdvancedOutputResumer<>(input, "\t", Parsers.lp, directed, notReciprocal, iotype, gzipped, warmupIotype, warmupGzipped);
+                WarmupAdvancedOutputResumer<Long, Long> resumer = new ContactWarmupAdvancedOutputResumer<>(input, "\t", Parsers.lp, directed, notReciprocal, ioSelector, warmupIOSelector);
                 resumer.summarize(directory, points, training, partition, numParts, percTrain);
 
                 break;
@@ -158,7 +162,7 @@ public class WarmupAdvancedOutputResumerSelector
                 double threshold = Parsers.dp.parse(execArgs[5]);
                 boolean useRatings = execArgs[6].equalsIgnoreCase("true");
 
-                WithKnowledgeWarmupAdvancedOutputResumer<Long, Long> resumer = new WithKnowledgeWarmupAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, iotype, gzipped, warmupIotype, warmupGzipped);
+                WithKnowledgeWarmupAdvancedOutputResumer<Long, Long> resumer = new WithKnowledgeWarmupAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, ioSelector, warmupIOSelector);
                 resumer.summarize(directory, points, training, partition, numParts, percTrain);
                 break;
 
@@ -205,8 +209,15 @@ public class WarmupAdvancedOutputResumerSelector
         }
 
         builder.append("Optional arguments:\n");
-        builder.append("\t-r : if we want to make the program recursive over internal directories");
-
+        builder.append("\t-perctrain perc : The percentage of the warm-up data to use as training (by default, it is splitted in equal parts");
+        builder.append("\t-io-type : establishes the format of the input-output files. Possible values:\n");
+        builder.append("\t\tbinary : for binary files\n");
+        builder.append("\t\ttext : for text files (default value)\n");
+        builder.append("\t--gzipped : if we want to compress the recommendation files (by default, they are not compressed)");
+        builder.append("\t-warmup-io-type : establishes the format of the warm-up files. Possible values:\n");
+        builder.append("\t\tbinary : for binary files\n");
+        builder.append("\t\ttext : for text files (default value)\n");
+        builder.append("\t--warmup-gzipped : if the warm-up files are compressed (by default, they are not compressed)");
         return builder.toString();
     }
 

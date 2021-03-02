@@ -24,14 +24,39 @@ import java.util.Arrays;
  */
 public class Main
 {
+    /**
+     * Identifier for the recommendation program (without training).
+     */
     private final static String RECOMMENDATION = "rec";
-    private final static String VALIDATION = "valid";
+    /**
+     * Identifier for the recommendation program (with training).
+     */
     private final static String WARMUPRECOMMENDATION = "warmup-rec";
+    /**
+     * Identifier for the validation program (without training).
+     */
+    private final static String VALIDATION = "valid";
+    /**
+     * Identifier for the validation program (with training).
+     */
     private final static String WARMUPVALIDATION = "warmup-valid";
+    /**
+     * Identifier for analyzing the training statistics.
+     */
     private final static String TRAININGSTATS = "train-stats";
+    /**
+     * Identifier for the program that summarizes the recommendation files (without training).
+     */
+    private final static String SUMMARIZE = "summarize";
+    /**
+     * Identifier for the program that summarizes the recommendation files (with training).
+     */
+    private final static String WARMUPSUMMARIZE = "warmup-summarize";
+
+
+
     private final static String DATASET = "dataset";
     private final static String ANALYSIS = "dataset-analysis";
-    private final static String SUMMARIZE = "summarize";
     private final static String OUTPUTRANKER = "outputranker";
 
     /**
@@ -85,6 +110,12 @@ public class Main
                     resumer.summarize(args[1], Arrays.copyOfRange(args,2, args.length));
                     break;
                 }
+                case WARMUPSUMMARIZE:
+                {
+                    WarmupAdvancedOutputResumerSelector resumer = new WarmupAdvancedOutputResumerSelector();
+                    resumer.summarize(args[1], Arrays.copyOfRange(args, 2, args.length));
+                    break;
+                }
                 case DATASET:
                 {
                     DatasetGraphSelector grapher = new DatasetGraphSelector();
@@ -110,8 +141,6 @@ public class Main
                     System.err.println("ERROR: Invalid configuration.");
                     return;
             }
-
-
         }
         catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException | UnconfiguredException ex)
         {

@@ -9,121 +9,59 @@
 package es.uam.eps.ir.knnbandit.io;
 
 import es.uam.eps.ir.ranksys.fast.FastRecommendation;
-import org.ranksys.core.util.tuples.Tuple2id;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.List;
-import java.util.Map;
+import java.io.OutputStream;
 
 /**
- * Class for writing a recommendation loop.
+ * Interface for writing recommendation registers.
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class Writer
+public interface Writer
 {
     /**
-     * A writer, for printing the results into a file.
+     * Initializes the writer.
+     * @param filename the name of the file in which to store the recommendations.
      */
-    private BufferedWriter bw;
-    /**
-     * The set of metrics to use.
-     */
-    private final List<String> metricNames;
+    void initialize(String filename) throws IOException;
 
     /**
-     * Constructor.
-     *
-     * @param filename    the name of the file in which to store the output.
-     * @param metricNames the names of the metrics.
-     * @throws IOException if something fails while creating the writer.
+     * Initializes the writer.
+     * @param stream an output stream.
      */
-    public Writer(String filename, List<String> metricNames) throws IOException
-    {
-        this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename)));
-        this.metricNames = metricNames;
-    }
+    void initialize(OutputStream stream) throws IOException;
 
     /**
-     * Writes the header of the output file.
-     */
-    public void writeHeader() throws IOException
-    {
-        StringBuilder builder = new StringBuilder();
-        builder.append("numIter");
-        builder.append("\tuidx");
-        builder.append("\tiidx");
-        for (String metric : metricNames)
-        {
-            builder.append("\t");
-            builder.append(metric);
-        }
-        builder.append("\ttime");
-        bw.write(builder.toString());
-    }
-
-    /**
-     * Writes a line of the output file
-     *
-     * @param numIter current iteration number.
-     * @param uidx    user identifier.
-     * @param iidx    item identifier.
-     * @param metrics metric values.
-     * @param time    time needed to execute this iteration
+     * Writes the header of the file (if any)
      * @throws IOException if something fails while writing.
      */
-    public void writeLine(int numIter, int uidx, int iidx, Map<String, Double> metrics, long time) throws IOException
-    {
-        StringBuilder builder = new StringBuilder();
-        builder.append("\n");
-        builder.append(numIter);
-        builder.append("\t");
-        builder.append(uidx);
-        builder.append("\t");
-        builder.append(iidx);
-        for (String metric : metricNames)
-        {
-            builder.append("\t");
-            builder.append(metrics.get(metric));
-        }
-        builder.append("\t");
-        builder.append(time);
-        bw.write(builder.toString());
-    }
+    void writeHeader() throws IOException;
 
     /**
-     * Writes a recommendation ranking.
-     *
-     * @param numIter   iteration number
-     * @param rec       the recommendation
-     * @param metrics   the metrics
-     * @param time      the time needed to execute this iteration.
+     * Writes a line into the file.
+     * @param numIter the iteration number.
+     * @param uidx the user identifier.
+     * @param iidx the item identifier.
+     * @param time the execution time.
      * @throws IOException if something fails while writing.
      */
-    public void writeRanking(int numIter, FastRecommendation rec, Map<String, Double> metrics, long time) throws IOException
-    {
-        int uidx = rec.getUidx();
-        for(Tuple2id iidx : rec.getIidxs())
-        {
-            this.writeLine(numIter, uidx, iidx.v1, metrics, time);
-        }
-    }
+    void writeLine(int numIter, int uidx, int iidx, long time) throws IOException;
+
+    /**
+     * Writes a ranking into the file.
+     * @param numIter the iteration number.
+     * @param rec the recommendation ranking.
+     * @param time the execution time.
+     * @throws IOException if something fails while writing.
+     */
+    void writeRanking(int numIter, FastRecommendation rec, long time) throws IOException;
 
     /**
      * Closes the writer.
      *
      * @throws IOException if something fails while closing.
      */
-    public void close() throws IOException
-    {
-        if (this.bw != null)
-        {
-            this.bw.close();
-        }
-        this.bw = null;
-    }
+    void close() throws IOException;
 }

@@ -12,7 +12,7 @@ package es.uam.eps.ir.knnbandit.main.stream;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.ReplayerStreamDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.StreamDataset;
-import es.uam.eps.ir.knnbandit.io.IOType;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.metrics.ClickthroughRate;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
@@ -26,10 +26,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 /**
- * Class for applying validation on a dataset using the replayer strategy.
+ * Class for selecting the optimal recommendation algorithms using the replayer procedure.
  *
  * @param <U> type of the users.
  * @param <I> type of the items.
@@ -44,26 +43,49 @@ public class ReplayerValidation<U,I> extends Validation<U,I>
      */
     private final Map<String, Supplier<CumulativeMetric<U,I>>> metrics;
 
+    /**
+     * File containing the log information to use in the replayer strategy.
+     */
     private final String input;
+    /**
+     * Separator for the elements on each register.
+     */
     private final String separator;
+    /**
+     * The user index.
+     */
     private final String userIndex;
+    /**
+     * The item index.
+     */
     private final String itemIndex;
+    /**
+     * The relevance threshold.
+     */
     private final double threshold;
+    /**
+     * A parser for reading the users.
+     */
     private final Parser<U> uParser;
+    /**
+     * A parser for reading the items.
+     */
     private final Parser<I> iParser;
+
     /**
      * Constructor.
-     * @param input the file containing the log information to use in the replayer strategy.
-     * @param separator a file separator.
-     * @param userIndex the user index.
-     * @param itemIndex the item index.
-     * @param threshold the relevance threshold.
-     * @param uParser a parser for reading the users.
-     * @param iParser a parser for reading the items.
+     * @param input         the file containing the log information to use in the replayer strategy.
+     * @param separator     a file separator.
+     * @param userIndex     the user index.
+     * @param itemIndex     the item index.
+     * @param threshold     the relevance threshold.
+     * @param uParser       a parser for reading the users.
+     * @param iParser       a parser for reading the items.
+     * @param ioSelector    a selector for reading / writing files.
      */
-    public ReplayerValidation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser, IOType ioType, boolean gzipped)
+    public ReplayerValidation(String input, String separator, String userIndex, String itemIndex, double threshold, Parser<U> uParser, Parser<I> iParser, IOSelector ioSelector)
     {
-        super(ioType, gzipped);
+        super(ioSelector);
         this.input = input;
         this.separator = separator;
         this.userIndex = userIndex;

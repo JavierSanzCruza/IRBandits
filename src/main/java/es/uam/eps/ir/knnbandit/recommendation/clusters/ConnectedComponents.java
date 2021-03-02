@@ -17,8 +17,8 @@ import java.util.Set;
 
 /**
  * Computes communities via the Weakly Connected Components
- * @author Pablo Castells Azpilicueta
- * @author Javier Sanz-Cruzado Puig
+ * @author Pablo Castells Azpilicueta (pablo.castells@uam.es)
+ * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
  * @param <U> Type of the users.
  */
 public class ConnectedComponents<U> implements ClusteringAlgorithm<U>
@@ -134,8 +134,4 @@ public class ConnectedComponents<U> implements ClusteringAlgorithm<U>
             if (!discovered.contains(v)) visit(v, g, discovered, component);
         });            
     }
-
-
-
-    
 }

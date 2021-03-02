@@ -17,7 +17,8 @@ import es.uam.eps.ir.ranksys.mf.Factorizer;
 import java.util.stream.Stream;
 
 /**
- * Interactive version of matrix factorization algorithms. Legacy version.
+ * Interactive version of matrix factorization algorithms. If a user-item pair is received
+ * several times, it takes the last value.
  *
  * @param <U> User type.
  * @param <I> Item type.

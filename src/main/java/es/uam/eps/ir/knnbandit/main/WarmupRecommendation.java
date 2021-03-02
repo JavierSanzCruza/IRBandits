@@ -12,7 +12,6 @@ package es.uam.eps.ir.knnbandit.main;
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
-import es.uam.eps.ir.knnbandit.io.*;
 import es.uam.eps.ir.knnbandit.io.Reader;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.partition.Partition;
@@ -21,6 +20,7 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import es.uam.eps.ir.knnbandit.selector.UnconfiguredException;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -43,24 +43,25 @@ import java.util.stream.IntStream;
  */
 public abstract class WarmupRecommendation<U,I>
 {
+    /**
+     * The format selector for the input files.
+     */
+    private final IOSelector ioSelector;
+    /**
+     * The format selector for the warm-up files.
+     */
+    private final IOSelector warmupIOSelector;
 
-    /**
-     * The input-output type.
-     */
-    private final IOType ioType;
-    /**
-     * If the files have to be read/written in a compressed manner.
-     */
-    private final boolean gzipped;
 
     /**
      * Constructor.
-     * @param ioType input-output type for the reader / writer.
+     * @param ioSelector        a selector for reading/writing files.
+     * @param warmupIOSelector  a selector for reading warm-up files.
      */
-    public WarmupRecommendation(IOType ioType, boolean gzipped)
+    public WarmupRecommendation(IOSelector ioSelector, IOSelector warmupIOSelector)
     {
-        this.ioType = ioType;
-        this.gzipped = gzipped;
+        this.ioSelector = ioSelector;
+        this.warmupIOSelector = warmupIOSelector;
     }
 
     /**
@@ -112,8 +113,9 @@ public abstract class WarmupRecommendation<U,I>
         }
 
         // Read the warmup data
-        Reader reader = new Reader();
-        List<Pair<Integer>> train = reader.read(warmupData, "\t", true);
+        Reader warmupReader = warmupIOSelector.getReader();
+        InputStream stream = warmupIOSelector.getInputStream(warmupData);
+        List<Pair<Integer>> train = warmupReader.readFile(stream);
         System.out.println("The warmup data has been read");
 
         List<Integer> splitPoints;
@@ -195,8 +197,8 @@ public abstract class WarmupRecommendation<U,I>
                         // Create the recommendation loop: in this case, a general offline dataset loop
                         FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
                         // Execute the loop:
-                        Executor<U, I> executor = new Executor<>(this.getWriter(), this.getReader(), gzipped);
-                        String fileName = currentOutputFolder + name + "_" + i + ".txt" + ((gzipped) ? ".gz" : "");
+                        Executor<U, I> executor = new Executor<>(ioSelector);
+                        String fileName = currentOutputFolder + name + "_" + i + ".txt" + ((ioSelector.isCompressed()) ? ".gz" : "");
                         Map<String, List<Double>> metricValues = executor.executeWithWarmup(loop, fileName, resume, interval, warmup);
                         int currentIter = loop.getCurrentIter();
                         if (currentIter > 0) // if at least one iteration has been recorded:
@@ -305,40 +307,4 @@ public abstract class WarmupRecommendation<U,I>
      * @return the warmup.
      */
     protected abstract Warmup getWarmup(List<Pair<Integer>> trainData);
-
-    /**
-     * Obtains a writer.
-     * @return the writer if everything is ok, null otherwise.
-     */
-    protected WriterInterface getWriter()
-    {
-        switch (ioType)
-        {
-            case BINARY:
-                return new BinaryWriter();
-            case TEXT:
-                return new TextWriter();
-            case ERROR:
-            default:
-                return null;
-        }
-    }
-
-    /**
-     * Obtains a reader.
-     * @return the reader if everything is ok, null otherwise.
-     */
-    protected ReaderInterface getReader()
-    {
-        switch (ioType)
-        {
-            case BINARY:
-                return new BinaryReader();
-            case TEXT:
-                return new TextReader();
-            case ERROR:
-            default:
-                return null;
-        }
-    }
 }

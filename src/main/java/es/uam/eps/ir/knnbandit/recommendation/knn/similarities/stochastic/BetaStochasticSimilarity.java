@@ -70,6 +70,16 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
         }
     }
 
+    /**
+     * Constructor. Sets alpha and beta to 1.
+     *
+     * @param numUsers Number of users.
+     */
+    public BetaStochasticSimilarity(int numUsers)
+    {
+        this(numUsers, 1.0, 1.0);
+    }
+
     @Override
     public void initialize()
     {
@@ -100,15 +110,7 @@ public class BetaStochasticSimilarity implements StochasticUpdateableSimilarity
         });
     }
 
-    /**
-     * Constructor. Sets alpha and beta to 1.
-     *
-     * @param numUsers Number of users.
-     */
-    public BetaStochasticSimilarity(int numUsers)
-    {
-        this(numUsers, 1.0, 1.0);
-    }
+
 
     @Override
     public IntToDoubleFunction exactSimilarity(int idx)

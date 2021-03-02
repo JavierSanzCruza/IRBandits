@@ -21,7 +21,9 @@ import org.jooq.lambda.tuple.Tuple3;
 import java.util.stream.Stream;
 
 /**
- * Interactive version of user-based kNN algorithm.
+ * Interactive version of item-based kNN algorithm. This is the legacy version,
+ * used for offline recommendation with a classical dataset. If a user-item pair is received
+ * several times, it takes the first value.
  *
  * @param <U> User type.
  * @param <I> Item type.
@@ -52,6 +54,7 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
      * @param uIndex      User index.
      * @param iIndex      Item index.
      * @param hasRating   True if we must ignore unknown items when updating.
+     * @param rngSeed     Random number generator seed.
      * @param ignoreZeros True if we ignore zero ratings when updating.
      * @param userK       Number of users to select.
      * @param itemK       Number of items to take as neighbors

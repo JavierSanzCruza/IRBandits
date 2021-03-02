@@ -50,6 +50,7 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
      *
      * @param uIndex    User index.
      * @param iIndex    Item index.
+     * @param rngSeed   Random number generator seed.
      * @param relevanceChecker Relevance checker
      */
     public PopularityRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed, DoublePredicate relevanceChecker)

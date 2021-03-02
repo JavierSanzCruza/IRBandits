@@ -9,7 +9,8 @@
  */
 package es.uam.eps.ir.knnbandit.main.selector;
 
-import es.uam.eps.ir.knnbandit.io.IOType;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
+import es.uam.eps.ir.knnbandit.selector.io.IOType;
 import es.uam.eps.ir.knnbandit.main.WarmupRecommendation;
 import es.uam.eps.ir.knnbandit.main.contact.ContactWarmupRecommendation;
 import es.uam.eps.ir.knnbandit.main.general.GeneralWarmupRecommendation;
@@ -94,6 +95,8 @@ public class WarmupRecommendationSelector
         int cutoff = 1;
         IOType iotype = IOType.TEXT;
         boolean gzipped = false;
+        IOType warmupIotype = IOType.TEXT;
+        boolean warmupGzipped = false;
         for (int i = lastIndex; i < execArgs.length; ++i)
         {
             if ("-k".equals(args[i]))
@@ -130,8 +133,19 @@ public class WarmupRecommendationSelector
             {
                 gzipped = true;
             }
-
+            else if("-warmup-io-type".equals(args[i]))
+            {
+                ++i;
+                warmupIotype = IOType.fromString(args[i]);
+            }
+            else if("--warmup-gzipped".equals(args[i]))
+            {
+                warmupGzipped = true;
+            }
         }
+
+        IOSelector ioSelector = new IOSelector(iotype, gzipped);
+        IOSelector warmupIOSelector = new IOSelector(warmupIotype, warmupGzipped);
 
         String training = execArgs[5];
         int auxNumParts = Parsers.ip.parse(execArgs[6]);
@@ -147,12 +161,12 @@ public class WarmupRecommendationSelector
 
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    WarmupRecommendation<Long, Long> rec = new GeneralWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup, cutoff, iotype, gzipped);
+                    WarmupRecommendation<Long, Long> rec = new GeneralWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, warmup, cutoff, ioSelector, warmupIOSelector);
                     rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    WarmupRecommendation<Long, String> rec = new GeneralWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup, cutoff, iotype, gzipped);
+                    WarmupRecommendation<Long, String> rec = new GeneralWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, warmup, cutoff, ioSelector, warmupIOSelector);
                     rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);
                 }
                 break;
@@ -162,7 +176,7 @@ public class WarmupRecommendationSelector
                 boolean directed = execArgs[7].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[8].equalsIgnoreCase("true");
 
-                WarmupRecommendation<Long, Long> rec = new ContactWarmupRecommendation<>(input, "\t", Parsers.lp, directed, notReciprocal, warmup, cutoff, iotype, gzipped);
+                WarmupRecommendation<Long, Long> rec = new ContactWarmupRecommendation<>(input, "\t", Parsers.lp, directed, notReciprocal, warmup, cutoff, ioSelector, warmupIOSelector);
                 rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);
 
                 break;
@@ -173,7 +187,7 @@ public class WarmupRecommendationSelector
                 boolean useRatings = execArgs[8].equalsIgnoreCase("true");
                 KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[9]);
 
-                WarmupRecommendation<Long, Long> rec = new WithKnowledgeWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, warmup, cutoff, iotype, gzipped);
+                WarmupRecommendation<Long, Long> rec = new WithKnowledgeWarmupRecommendation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, warmup, cutoff, ioSelector, warmupIOSelector);
                 rec.recommend(algorithms, output, endCond, resume, training, partition, numParts, percTrain, k, interval);
                 break;
             }
@@ -229,7 +243,15 @@ public class WarmupRecommendationSelector
         builder.append("\t-k value : The number of times each individual approach has to be executed (by default: 1)");
         builder.append("\t-interval value : Distance between time points in the summary (by default: 10000)");
         builder.append("\t-cutoff value : The number of items to recommend on each iteration (by default: 1)");
-
+        builder.append("\t-perctrain perc : The percentage of the warm-up data to use as training (by default, it is splitted in equal parts");
+        builder.append("\t-io-type : establishes the format of the input-output files. Possible values:\n");
+        builder.append("\t\tbinary : for binary files\n");
+        builder.append("\t\ttext : for text files (default value)\n");
+        builder.append("\t--gzipped : if we want to compress the recommendation files (by default, they are not compressed)");
+        builder.append("\t-warmup-io-type : establishes the format of the warm-up files. Possible values:\n");
+        builder.append("\t\tbinary : for binary files\n");
+        builder.append("\t\ttext : for text files (default value)\n");
+        builder.append("\t--warmup-gzipped : if the warm-up files are compressed (by default, they are not compressed)");
         return builder.toString();
     }
 

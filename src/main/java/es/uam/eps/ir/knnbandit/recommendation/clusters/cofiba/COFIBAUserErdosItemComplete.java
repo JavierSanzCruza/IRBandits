@@ -52,6 +52,21 @@ public class COFIBAUserErdosItemComplete<U,I> extends AbstractCOFIBA<U,I>
         super(uIndex, iIndex, ignoreNotRated, alpha1, alpha2);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param uIndex         User index.
+     * @param iIndex         Item index.
+     * @param ignoreNotRated True if (user, item) pairs without training must be ignored.
+     * @param rngSeed        Random number generator seed.
+     * @param alpha1         Parameter that manages the importance of the confidence bound for the item selection.
+     * @param alpha2         Parameter that manages how difficult is for an edge in the user and item graphs to disappear.
+     */
+    public COFIBAUserErdosItemComplete(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, double alpha1, double alpha2)
+    {
+        super(uIndex, iIndex, ignoreNotRated, rngSeed, alpha1, alpha2);
+    }
+
     @Override
     protected GraphGenerator<Integer> configureItemGenerator()
     {

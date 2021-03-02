@@ -9,7 +9,8 @@
  */
 package es.uam.eps.ir.knnbandit.main.selector;
 
-import es.uam.eps.ir.knnbandit.io.IOType;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
+import es.uam.eps.ir.knnbandit.selector.io.IOType;
 import es.uam.eps.ir.knnbandit.main.AdvancedOutputResumer;
 import es.uam.eps.ir.knnbandit.main.contact.ContactAdvancedOutputResumer;
 import es.uam.eps.ir.knnbandit.main.general.GeneralAdvancedOutputResumer;
@@ -103,6 +104,8 @@ public class AdvancedOutputResumerSelector
             }
         }
 
+        IOSelector ioSelector = new IOSelector(iotype, gzipped);
+
         switch(type)
         {
             case GENERAL:
@@ -112,12 +115,12 @@ public class AdvancedOutputResumerSelector
 
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    GeneralAdvancedOutputResumer<Long, Long> resumer = new GeneralAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, iotype, gzipped);
+                    GeneralAdvancedOutputResumer<Long, Long> resumer = new GeneralAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, ioSelector);
                     resumer.summarize(directory, points, recursive);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    GeneralAdvancedOutputResumer<Long, String> resumer = new GeneralAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, iotype, gzipped);
+                    GeneralAdvancedOutputResumer<Long, String> resumer = new GeneralAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, ioSelector);
                     resumer.summarize(directory, points, recursive);
                 }
                 break;
@@ -127,7 +130,7 @@ public class AdvancedOutputResumerSelector
                 boolean directed = execArgs[3].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[4].equalsIgnoreCase("true");
 
-                AdvancedOutputResumer<Long, Long> resumer = new ContactAdvancedOutputResumer<>(input, "\t", Parsers.lp, directed, notReciprocal, iotype, gzipped);
+                AdvancedOutputResumer<Long, Long> resumer = new ContactAdvancedOutputResumer<>(input, "\t", Parsers.lp, directed, notReciprocal, ioSelector);
                 resumer.summarize(directory, points, recursive);
 
                 break;
@@ -137,7 +140,7 @@ public class AdvancedOutputResumerSelector
                 double threshold = Parsers.dp.parse(execArgs[3]);
                 boolean useRatings = execArgs[4].equalsIgnoreCase("true");
 
-                WithKnowledgeAdvancedOutputResumer<Long, Long> resumer = new WithKnowledgeAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, iotype, gzipped);
+                WithKnowledgeAdvancedOutputResumer<Long, Long> resumer = new WithKnowledgeAdvancedOutputResumer<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, ioSelector);
                 resumer.summarize(directory, points, recursive);
                 break;
 
@@ -185,6 +188,10 @@ public class AdvancedOutputResumerSelector
 
         builder.append("Optional arguments:\n");
         builder.append("\t-r : if we want to make the program recursive over internal directories");
+        builder.append("\t-io-type : establishes the format of the input-output files. Possible values:\n");
+        builder.append("\t\tbinary : for binary files\n");
+        builder.append("\t\ttext : for text files (default value)\n");
+        builder.append("\t--gzipped : if we want to compress the recommendation files (by default, they are not compressed)");
 
         return builder.toString();
     }

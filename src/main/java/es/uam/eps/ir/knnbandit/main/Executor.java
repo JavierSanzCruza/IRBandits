@@ -9,9 +9,10 @@
  */
 package es.uam.eps.ir.knnbandit.main;
 
-import es.uam.eps.ir.knnbandit.io.ReaderInterface;
-import es.uam.eps.ir.knnbandit.io.WriterInterface;
+import es.uam.eps.ir.knnbandit.io.Reader;
+import es.uam.eps.ir.knnbandit.io.Writer;
 import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.ranksys.fast.FastRecommendation;
@@ -24,8 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Executes a recommendation loop, and writes its values into a file:
@@ -38,15 +37,11 @@ import java.util.zip.GZIPOutputStream;
  */
 public class Executor<U,I>
 {
-    private final WriterInterface writer;
-    private final ReaderInterface reader;
-    private final boolean gzipped;
+    private final IOSelector selector;
 
-    public Executor(WriterInterface writer, ReaderInterface reader, boolean gzipped)
+    public Executor(IOSelector selector)
     {
-        this.writer = writer;
-        this.reader = reader;
-        this.gzipped = gzipped;
+        this.selector = selector;
     }
 
     /**
@@ -91,7 +86,7 @@ public class Executor<U,I>
     {
         Map<String, List<Double>> metricValues = new HashMap<>();
         loop.getMetrics().forEach(metricName -> metricValues.put(metricName, new ArrayList<>()));
-
+        Writer writer = selector.getWriter();
         try
         {
             if(loop.getCutoff() == 1)
@@ -103,14 +98,13 @@ public class Executor<U,I>
                     list = this.retrievePreviousIterations(file);
                 }
 
-                OutputStream stream = gzipped ? new GZIPOutputStream(new FileOutputStream(file)) : new FileOutputStream(file);
-                writer.initialize(stream);
+                writer.initialize(selector.getOutputStream(file));
                 writer.writeHeader();
 
                 // Step 2: if there are any, we update the loop with such values.
                 if (resume && !list.isEmpty())
                 {
-                    metricValues.putAll(this.updateWithPrevious(loop, list, interval));
+                    metricValues.putAll(this.updateWithPrevious(loop, list, interval, writer));
                 }
             }
             else
@@ -121,17 +115,17 @@ public class Executor<U,I>
                     list = this.retrievePreviousIterationsRankings(file);
                 }
 
-                writer.initialize(file);
+                writer.initialize(selector.getOutputStream(file));
                 writer.writeHeader();
 
                 if(resume && !list.isEmpty())
                 {
-                    metricValues.putAll(this.updateWithPreviousRankings(loop, list, interval));
+                    metricValues.putAll(this.updateWithPreviousRankings(loop, list, interval, writer));
                 }
             }
 
             // Step 3: until the loop ends, we
-            int currentIter = this.executeRemaining(loop, interval, metricValues);
+            int currentIter = this.executeRemaining(loop, interval, metricValues, writer);
             writer.close();
             return metricValues;
         }
@@ -156,9 +150,8 @@ public class Executor<U,I>
         File f = new File(filename);
         if(f.exists() && !f.isDirectory())
         {
-            InputStream stream = gzipped ? new GZIPInputStream(new FileInputStream(filename)) : new FileInputStream(filename);
-
-            reader.initialize(stream);
+            Reader reader = selector.getReader();
+            reader.initialize(selector.getInputStream(filename));
             reader.readHeader();
 
             Tuple3<Integer, FastRecommendation, Long> line;
@@ -190,9 +183,8 @@ public class Executor<U,I>
         File f = new File(filename);
         if(f.exists() && !f.isDirectory())
         {
-            InputStream stream = gzipped ? new GZIPInputStream(new FileInputStream(filename)) : new FileInputStream(filename);
-
-            reader.initialize(stream);
+            Reader reader = selector.getReader();
+            reader.initialize(selector.getInputStream(filename));
             reader.readHeader();
 
             Tuple3<Integer, FastRecommendation, Long> line;
@@ -221,7 +213,7 @@ public class Executor<U,I>
      * @return a map containing the values of the metrics in certain time points.
      * @throws IOException if something fails while writing.
      */
-    public Map<String, List<Double>> updateWithPreviousRankings(FastRecommendationLoop<U,I> loop, List<Tuple2<FastRecommendation, Long>> recovered, int interval) throws IOException
+    public Map<String, List<Double>> updateWithPreviousRankings(FastRecommendationLoop<U,I> loop, List<Tuple2<FastRecommendation, Long>> recovered, int interval, Writer writer) throws IOException
     {
         List<String> metricNames = loop.getMetrics();
         Map<String, List<Double>> metricValues = new HashMap<>();
@@ -267,7 +259,7 @@ public class Executor<U,I>
      * @return a map containing the values of the metrics in certain time points.
      * @throws IOException if something fails while writing.
      */
-    public Map<String, List<Double>> updateWithPrevious(FastRecommendationLoop<U, I> loop, List<Tuple3<Integer,Integer,Long>> recovered, int interval) throws IOException
+    public Map<String, List<Double>> updateWithPrevious(FastRecommendationLoop<U, I> loop, List<Tuple3<Integer,Integer,Long>> recovered, int interval, Writer writer) throws IOException
     {
         List<String> metricNames = loop.getMetrics();
         Map<String, List<Double>> metricValues = new HashMap<>();
@@ -310,7 +302,7 @@ public class Executor<U,I>
      * @param metricValues the list of metric values.
      * @return the number of iterations for finishing the loop.
      */
-    public int executeRemaining(FastRecommendationLoop<U, I> loop, int interval, Map<String, List<Double>> metricValues) throws IOException
+    public int executeRemaining(FastRecommendationLoop<U, I> loop, int interval, Map<String, List<Double>> metricValues, Writer writer) throws IOException
     {
         List<String> metricNames = loop.getMetrics();
         boolean ranking = loop.getCutoff() > 1;

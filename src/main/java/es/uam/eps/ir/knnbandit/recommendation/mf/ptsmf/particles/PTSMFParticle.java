@@ -8,7 +8,6 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.mf.ptsmf.particles;
 
-import cern.colt.matrix.DoubleFactory1D;
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;

@@ -8,7 +8,6 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation;
 
-import es.uam.eps.ir.knnbandit.UntieRandomNumberReader;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
@@ -26,6 +25,7 @@ import java.util.stream.Stream;
  *
  * @param <U> User type.
  * @param <I> Item type.
+ *
  * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -48,9 +48,10 @@ public abstract class InteractiveRecommender<U, I>
      */
     protected Random rng;
     /**
-     *
+     * True if the algorithm ignores the not rated ratings.
      */
     protected boolean ignoreNotRated;
+
     /**
      * Constructor.
      *

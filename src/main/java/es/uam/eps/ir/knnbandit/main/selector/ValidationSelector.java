@@ -9,7 +9,8 @@
  */
 package es.uam.eps.ir.knnbandit.main.selector;
 
-import es.uam.eps.ir.knnbandit.io.IOType;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
+import es.uam.eps.ir.knnbandit.selector.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Validation;
 import es.uam.eps.ir.knnbandit.main.contact.ContactValidation;
 import es.uam.eps.ir.knnbandit.main.general.GeneralValidation;
@@ -119,6 +120,8 @@ public class ValidationSelector
             }
         }
 
+        IOSelector ioSelector = new IOSelector(iotype, gzipped);
+
         // Then, we identify the specific algorithms, and select the types.
         switch(type)
         {
@@ -129,12 +132,12 @@ public class ValidationSelector
 
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    Validation<Long, Long> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, cutoff, iotype, gzipped);
+                    Validation<Long, Long> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, cutoff, ioSelector);
                     valid.validate(algorithms, output, endCond, resume, k);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    Validation<Long, String> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, cutoff, iotype, gzipped);
+                    Validation<Long, String> valid = new GeneralValidation<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, cutoff, ioSelector);
                     valid.validate(algorithms, output, endCond, resume, k);
                 }
                 break;
@@ -144,7 +147,7 @@ public class ValidationSelector
                 boolean directed = execArgs[5].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[6].equalsIgnoreCase("true");
 
-                Validation<Long, Long> valid = new ContactValidation<>(input, "\t", Parsers.lp, directed, notReciprocal, cutoff, iotype, gzipped);
+                Validation<Long, Long> valid = new ContactValidation<>(input, "\t", Parsers.lp, directed, notReciprocal, cutoff, ioSelector);
                 valid.validate(algorithms, output, endCond, resume, k);
 
                 break;
@@ -155,7 +158,7 @@ public class ValidationSelector
                 boolean useRatings = execArgs[6].equalsIgnoreCase("true");
                 KnowledgeDataUse dataUse = KnowledgeDataUse.fromString(execArgs[7]);
 
-                Validation<Long, Long> valid = new WithKnowledgeValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, cutoff, iotype, gzipped);
+                Validation<Long, Long> valid = new WithKnowledgeValidation<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, dataUse, cutoff, ioSelector);
                 valid.validate(algorithms, output, endCond, resume, k);
                 break;
 
@@ -166,7 +169,7 @@ public class ValidationSelector
                 String userIndex = execArgs[6];
                 String itemIndex = execArgs[7];
 
-                Validation<Integer, Integer> valid = new ReplayerValidation<>(input, "\t", userIndex, itemIndex, threshold, Parsers.ip, Parsers.ip, iotype, gzipped);
+                Validation<Integer, Integer> valid = new ReplayerValidation<>(input, "\t", userIndex, itemIndex, threshold, Parsers.ip, Parsers.ip, ioSelector);
                 valid.validate(algorithms, output,endCond, resume, k);
                 break;
             }
@@ -219,6 +222,10 @@ public class ValidationSelector
         builder.append("Optional arguments:\n");
         builder.append("\t-k value : The number of times each individual approach has to be executed (by default: 1)");
         builder.append("\t-cutoff value : The number of items to recommend on each iteration (by default: 1)");
+        builder.append("\t-io-type : establishes the format of the input-output files. Possible values:\n");
+        builder.append("\t\tbinary : for binary files\n");
+        builder.append("\t\ttext : for text files (default value)\n");
+        builder.append("\t--gzipped : if we want to compress the recommendation files (by default, they are not compressed)");
 
         return builder.toString();
     }

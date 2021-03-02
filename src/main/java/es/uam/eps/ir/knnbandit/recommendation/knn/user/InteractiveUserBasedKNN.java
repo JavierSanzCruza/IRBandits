@@ -18,7 +18,8 @@ import java.util.stream.Stream;
 
 /**
  * Interactive version of user-based kNN algorithm. This is the legacy version,
- * used for offline recommendation with a classical dataset.
+ * used for offline recommendation with a classical dataset. If a user-item pair is received
+ * several times, it takes the first value.
  *
  * @param <U> User type.
  * @param <I> Item type.
@@ -48,6 +49,7 @@ public class InteractiveUserBasedKNN<U, I> extends AbstractInteractiveUserBasedK
      * @param uIndex      User index.
      * @param iIndex      Item index.
      * @param hasRating   True if we must ignore unknown items when updating.
+     * @param rngSeed     Random number generator seed.
      * @param ignoreZeros True if we ignore zero ratings when updating.
      * @param k           Number of neighbors to use.
      * @param sim         Updateable similarity

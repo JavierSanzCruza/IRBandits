@@ -11,7 +11,8 @@ package es.uam.eps.ir.knnbandit.main.withknowledge;
 
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.DatasetWithKnowledge;
-import es.uam.eps.ir.knnbandit.io.IOType;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
+import es.uam.eps.ir.knnbandit.selector.io.IOType;
 import es.uam.eps.ir.knnbandit.main.Recommendation;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeKnowledgeRecall;
@@ -32,8 +33,9 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.function.Supplier;
 
 /**
- * Class for applying validation in general recommendation contexts (i.e. movie, music recommendation)
- * where users and items are separate sets.
+ * Class for applying recommendation algorithms in general recommendation contexts (i.e. movie, music recommendation)
+ * where users and items are separate sets. The data contains information about whether the user knew about the
+ * recommended items or not.
  *
  * @param <U> type of the users.
  * @param <I> type of the items.
@@ -51,7 +53,9 @@ public class WithKnowledgeRecommendation<U,I> extends Recommendation<U,I>
      * The set of metrics to compute.
      */
     private final Map<String, Supplier<CumulativeMetric<U,I>>> metrics;
-
+    /**
+     * The number of items to recommend each iteration.
+     */
     private final int cutoff;
     /**
      * Data use.
@@ -60,18 +64,20 @@ public class WithKnowledgeRecommendation<U,I> extends Recommendation<U,I>
 
     /**
      * Constructor.
-     * @param input file containing the information about the ratings.
-     * @param separator a separator for reading the file.
-     * @param uParser parser for reading the set of users.
-     * @param iParser parser for reading the set of items.
-     * @param threshold the relevance threshold.
-     * @param useRatings true if we have to consider the real ratings, false to binarize them according to the threshold value.
-     * @param use the type of data we are using (according to the whether the user knows or not about the items).
+     * @param input         file containing the information about the ratings.
+     * @param separator     a separator for reading the file.
+     * @param uParser       parser for reading the set of users.
+     * @param iParser       parser for reading the set of items.
+     * @param threshold     the relevance threshold.
+     * @param useRatings    true if we have to consider the real ratings, false to binarize them according to the threshold value.
+     * @param use           the type of data we are using (according to the whether the user knows or not about the items).
+     * @param cutoff        the number of items to recommend each iteration.
+     * @param ioSelector    a selector for reading / writing files.
      * @throws IOException if something fails while reading the dataset.
      */
-    public WithKnowledgeRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, int cutoff, IOType type, boolean gzipped) throws IOException
+    public WithKnowledgeRecommendation(String input, String separator, Parser<U> uParser, Parser<I> iParser, double threshold, boolean useRatings, KnowledgeDataUse use, int cutoff, IOSelector ioSelector) throws IOException
     {
-        super(type, gzipped);
+        super(ioSelector);
 
         DoubleUnaryOperator weightFunction = useRatings ? (double x) -> x : (double x) -> (x >= threshold ? 1.0 : 0.0);
         DoublePredicate relevance = useRatings ? (double x) -> (x >= threshold) : (double x) -> (x > 0.0);

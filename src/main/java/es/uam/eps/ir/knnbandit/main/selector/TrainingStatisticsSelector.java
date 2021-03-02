@@ -16,6 +16,8 @@ import es.uam.eps.ir.knnbandit.main.withknowledge.WithKnowledgeTrainingStatistic
 import es.uam.eps.ir.knnbandit.partition.Partition;
 import es.uam.eps.ir.knnbandit.partition.RelevantPartition;
 import es.uam.eps.ir.knnbandit.partition.UniformPartition;
+import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
+import es.uam.eps.ir.knnbandit.selector.io.IOType;
 import es.uam.eps.ir.knnbandit.warmup.WarmupType;
 import org.ranksys.formats.parsing.Parsers;
 
@@ -82,6 +84,8 @@ public class TrainingStatisticsSelector
         int numParts = Math.abs(auxNumParts);
         Partition partition = (auxNumParts > 0) ? new UniformPartition() : new RelevantPartition();
         double percTrain = Double.NaN;
+        IOType warmupIotype = IOType.TEXT;
+        boolean warmupGzipped = false;
         for (int i = lastIndex; i < execArgs.length; ++i)
         {
             if("-perctrain".equals(args[i]))
@@ -89,8 +93,18 @@ public class TrainingStatisticsSelector
                 ++i;
                 percTrain = Parsers.dp.parse(args[i]);
             }
-
+            else if("-warmup-io-type".equals(args[i]))
+            {
+                ++i;
+                warmupIotype = IOType.fromString(args[i]);
+            }
+            else if("--warmup-gzipped".equals(args[i]))
+            {
+                warmupGzipped = true;
+            }
         }
+
+        IOSelector ioSelector = new IOSelector(warmupIotype, warmupGzipped);
         switch(type)
         {
             case GENERAL:
@@ -100,12 +114,12 @@ public class TrainingStatisticsSelector
 
                 if(args[0].equalsIgnoreCase("movielens"))
                 {
-                    GeneralTrainingStatistics<Long, Long> stats = new GeneralTrainingStatistics<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings);
+                    GeneralTrainingStatistics<Long, Long> stats = new GeneralTrainingStatistics<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, ioSelector);
                     stats.statistics(training, partition, numParts, percTrain);
                 }
                 else if(args[0].equalsIgnoreCase("foursquare"))
                 {
-                    GeneralTrainingStatistics<Long, String> stats = new GeneralTrainingStatistics<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings);
+                    GeneralTrainingStatistics<Long, String> stats = new GeneralTrainingStatistics<>(input, "::", Parsers.lp, Parsers.sp, threshold, useRatings, ioSelector);
                     stats.statistics(training, partition, numParts, percTrain);
                 }
                 break;
@@ -115,7 +129,7 @@ public class TrainingStatisticsSelector
                 boolean directed = execArgs[3].equalsIgnoreCase("true");
                 boolean notReciprocal = execArgs[4].equalsIgnoreCase("true");
 
-                ContactTrainingStatistics<Long> stats = new ContactTrainingStatistics<>(input, "\t", Parsers.lp, directed, notReciprocal);
+                ContactTrainingStatistics<Long> stats = new ContactTrainingStatistics<>(input, "\t", Parsers.lp, directed, notReciprocal, ioSelector);
                 stats.statistics(training, partition, numParts, percTrain);
 
                 break;
@@ -125,7 +139,7 @@ public class TrainingStatisticsSelector
                 double threshold = Parsers.dp.parse(execArgs[3]);
                 boolean useRatings = execArgs[4].equalsIgnoreCase("true");
 
-                WithKnowledgeTrainingStatistics<Long, Long> stats = new WithKnowledgeTrainingStatistics<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings);
+                WithKnowledgeTrainingStatistics<Long, Long> stats = new WithKnowledgeTrainingStatistics<>(input, "::", Parsers.lp, Parsers.lp, threshold, useRatings, ioSelector);
                 stats.statistics(training, partition, numParts, percTrain);
                 break;
 
@@ -166,6 +180,13 @@ public class TrainingStatisticsSelector
             case STREAM:
             default:
         }
+
+        builder.append("Optional arguments:\n");
+        builder.append("\t-perctrain perc : The percentage of the warm-up data to use as training (by default, it is splitted in equal parts");
+        builder.append("\t-warmup-io-type : establishes the format of the warm-up files. Possible values:\n");
+        builder.append("\t\tbinary : for binary files\n");
+        builder.append("\t\ttext : for text files (default value)\n");
+        builder.append("\t--warmup-gzipped : if the warm-up files are compressed (by default, they are not compressed)");
         return builder.toString();
     }
 

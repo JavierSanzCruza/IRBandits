@@ -13,7 +13,6 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.recommendation.mf.Particle;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ictr.particles.ICTRParticle;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ictr.particles.ICTRParticleFactory;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 
 /**
  * UCB variant of the ICTR recommender.

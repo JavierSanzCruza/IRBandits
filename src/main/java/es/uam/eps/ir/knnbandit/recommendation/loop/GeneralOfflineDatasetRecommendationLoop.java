@@ -54,6 +54,7 @@ public class GeneralOfflineDatasetRecommendationLoop<U,I> extends GenericRecomme
      * @param metrics      the set of metrics we want to study.
      * @param endCondition the condition that establishes whether the loop has finished or not.
      * @param rngSeed      a random number generator seed.
+     * @param cutoff       the number of items to recommend each iteration.
      */
     public GeneralOfflineDatasetRecommendationLoop(GeneralDataset<U, I> dataset, InteractiveRecommenderSupplier<U, I> recommender, Map<String, CumulativeMetric<U, I>> metrics, EndCondition endCondition, int rngSeed, int cutoff)
     {

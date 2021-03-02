@@ -11,6 +11,9 @@ package es.uam.eps.ir.knnbandit.recommendation.mf;
 /**
  * Individual particle for reinforcement learning algorithms.
  *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
+ *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
@@ -48,7 +51,13 @@ public interface Particle<U, I>
      */
     double getEstimatedReward(U u, I i);
 
-
+    /**
+     * Obtains the estimated value of the interaction between user and item.
+     *
+     * @param uidx the user identifier.
+     * @param iidx the item identifier.
+     * @return the estimated reward
+     */
     double getEstimatedReward(int uidx, int iidx);
 
     /**
@@ -61,7 +70,19 @@ public interface Particle<U, I>
      */
     double getWeight(U u, I i, double value);
 
+    /**
+     * Obtains the weight of the particle.
+     *
+     * @param uidx  the index of the user.
+     * @param iidx  the index of the item.
+     * @param value the value of the interaction between user and item.
+     * @return the weight of the particle.
+     */
     double getWeight(int uidx, int iidx, double value);
 
+    /**
+     * Clones the particle.
+     * @return a cloned particle.
+     */
     Particle<U, I> clone();
 }
