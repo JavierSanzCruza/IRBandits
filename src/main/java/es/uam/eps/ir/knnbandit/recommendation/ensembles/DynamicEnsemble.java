@@ -21,6 +21,7 @@ import es.uam.eps.ir.knnbandit.recommendation.loop.selection.user.RoundRobinSele
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.GeneralWarmup;
+import es.uam.eps.ir.knnbandit.warmup.OfflineWarmup;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.knnbandit.warmup.WarmupType;
 import es.uam.eps.ir.ranksys.core.Recommendation;
@@ -144,9 +145,7 @@ public class DynamicEnsemble<U,I> extends AbstractEnsemble<U,I>
         OfflineDataset<U,I> validation = (GeneralDataset<U,I>) builder.buildFromStream(uIndex, iIndex, warmup);
 
         // We load the warmup data.
-        NonSequentialSelection<U,I> nonSeqSel = new NonSequentialSelection<>(0, new RoundRobinSelector(), false);
-        Warmup warmup = GeneralWarmup.load(validation, training.stream(), this.ignoreNotRated ? WarmupType.ONLYRATINGS : WarmupType.FULL);
-        nonSeqSel.init(validation, warmup);
+        OfflineWarmup warmup = GeneralWarmup.load(validation, training.stream(), this.ignoreNotRated ? WarmupType.ONLYRATINGS : WarmupType.FULL);
 
         // We optimize a given ranking metric at cutoff k (k is introduced in the constructor).
         this.optimizer.init(validation, validCutoff);
@@ -162,7 +161,7 @@ public class DynamicEnsemble<U,I> extends AbstractEnsemble<U,I>
             // and we compute the value of a given ranking metric (precision, recall, nDCG, ...)
             double prec = validation.getUidxWithPreferences().mapToDouble(uidx ->
             {
-                IntList available = nonSeqSel.selectCandidates(uidx);
+                IntList available = warmup.getAvailability().get(uidx);
                 IntList res = rec.next(uidx, available, validCutoff);
                 Recommendation<U,I> recomm = new Recommendation<>(this.uIndex.uidx2user(uidx), res.stream().map(iidx -> new Tuple2od<>(this.iIndex.iidx2item(iidx), 1.0)).collect(Collectors.toList()));
                 return this.optimizer.evaluate(recomm);
