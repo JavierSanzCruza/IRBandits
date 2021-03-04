@@ -26,7 +26,7 @@ import java.util.function.DoublePredicate;
 import java.util.stream.Stream;
 
 /**
- * Recommender that uses the average distance between pairs of users who have rated
+ * Recommender that uses the maximum distance between pairs of users who have rated
  * the item to compute the recommendation.
  * @param <U> type of the users.
  * @param <I> type of the items.
@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class AverageCosineUserDistance<U,I> extends AbstractInteractiveRecommender<U,I>
+public class MaximumCosineUserDistance<U,I> extends AbstractInteractiveRecommender<U,I>
 {
     /**
      * The cosine similarity between users.
@@ -61,7 +61,7 @@ public class AverageCosineUserDistance<U,I> extends AbstractInteractiveRecommend
      * @param iIndex item index.
      * @param relevanceChecker checks the relevance of a rating.
      */
-    public AverageCosineUserDistance(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, DoublePredicate relevanceChecker)
+    public MaximumCosineUserDistance(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, DoublePredicate relevanceChecker)
     {
         super(uIndex, iIndex, true);
         this.sim = new VectorCosineSimilarity(uIndex.numUsers());
@@ -78,7 +78,7 @@ public class AverageCosineUserDistance<U,I> extends AbstractInteractiveRecommend
      * @param rngSeed random number generator seed.
      * @param relevanceChecker checks the relevance of a rating.
      */
-    public AverageCosineUserDistance(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed, DoublePredicate relevanceChecker)
+    public MaximumCosineUserDistance(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed, DoublePredicate relevanceChecker)
     {
         super(uIndex, iIndex, true, rngSeed);
         this.sim = new VectorCosineSimilarity(uIndex.numUsers());
