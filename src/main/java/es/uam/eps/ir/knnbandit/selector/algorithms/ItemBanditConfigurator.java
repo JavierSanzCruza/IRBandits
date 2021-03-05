@@ -39,7 +39,7 @@ public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
 
             JSONObject bandit = object.getJSONObject(BANDIT);
             String name = bandit.getString(NAME);
-            BanditConfigurator<U,I> banditConfigurator = this.selectBanditConfigurator(name);
+            BanditConfigurator banditConfigurator = this.selectBanditConfigurator(name);
             if(banditConfigurator == null) return null;
 
             List<BanditSupplier> banditSuppliers = banditConfigurator.getBandits(bandit.getJSONArray(PARAMS));
@@ -62,14 +62,14 @@ public class ItemBanditConfigurator<U,I> extends AbstractAlgorithmConfigurator<U
 
         JSONObject bandit = object.getJSONObject(BANDIT);
         String name = bandit.getString(NAME);
-        BanditConfigurator<U,I> banditConfigurator = this.selectBanditConfigurator(name);
+        BanditConfigurator banditConfigurator = this.selectBanditConfigurator(name);
         if(banditConfigurator == null) return null;
 
         BanditSupplier banditSupplier = banditConfigurator.getBandit(bandit.getJSONObject(PARAMS));
         return new ItemBanditInteractiveRecommenderSupplier<>(banditSupplier, ignoreUnknown);
     }
 
-    protected BanditConfigurator<U,I> selectBanditConfigurator(String name)
+    protected BanditConfigurator selectBanditConfigurator(String name)
     {
         switch(name)
         {

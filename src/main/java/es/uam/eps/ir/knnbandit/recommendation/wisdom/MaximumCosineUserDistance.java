@@ -14,10 +14,8 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.knn.similarities.VectorCosineSimilarity;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
-import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
+import it.unimi.dsi.fastutil.ints.*;
 import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.util.Comparator;
@@ -37,13 +35,18 @@ import java.util.stream.Stream;
 public class MaximumCosineUserDistance<U,I> extends AbstractInteractiveRecommender<U,I>
 {
     /**
-     * The cosine similarity between users.
-     */
-    private final VectorCosineSimilarity sim;
-    /**
      * The scores for each item.
      */
     private final Int2DoubleMap itemScores;
+    /**
+     * The actual similarities.
+     */
+    private final Int2ObjectMap<Int2DoubleOpenHashMap> sims;
+    /**
+     * The norms of the users.
+     */
+    private final Int2DoubleMap userNorms;
+
 
     /**
      * Predicate for checking the relevance of a rating.
@@ -64,8 +67,11 @@ public class MaximumCosineUserDistance<U,I> extends AbstractInteractiveRecommend
     public MaximumCosineUserDistance(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, DoublePredicate relevanceChecker)
     {
         super(uIndex, iIndex, true);
-        this.sim = new VectorCosineSimilarity(uIndex.numUsers());
+        this.sims = new Int2ObjectOpenHashMap<>();
+        sims.defaultReturnValue(new Int2DoubleOpenHashMap());
         this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
+        this.userNorms = new Int2DoubleOpenHashMap();
+        userNorms.defaultReturnValue(0.0);
         this.relevanceChecker = relevanceChecker;
         this.itemScores = new Int2DoubleOpenHashMap();
         this.itemScores.defaultReturnValue(0.0);
@@ -81,7 +87,10 @@ public class MaximumCosineUserDistance<U,I> extends AbstractInteractiveRecommend
     public MaximumCosineUserDistance(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed, DoublePredicate relevanceChecker)
     {
         super(uIndex, iIndex, true, rngSeed);
-        this.sim = new VectorCosineSimilarity(uIndex.numUsers());
+        this.sims = new Int2ObjectOpenHashMap<>();
+        sims.defaultReturnValue(new Int2DoubleOpenHashMap());
+        this.userNorms = new Int2DoubleOpenHashMap();
+        userNorms.defaultReturnValue(0.0);
         this.retrievedData = SimpleFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
         this.relevanceChecker = relevanceChecker;
         this.itemScores = new Int2DoubleOpenHashMap();
@@ -92,7 +101,7 @@ public class MaximumCosineUserDistance<U,I> extends AbstractInteractiveRecommend
     public void init()
     {
         this.retrievedData.clear();
-        this.sim.initialize();
+        this.sims.clear();
         this.itemScores.clear();
     }
 
@@ -104,18 +113,44 @@ public class MaximumCosineUserDistance<U,I> extends AbstractInteractiveRecommend
 
         values.filter(triplet -> relevanceChecker.test(triplet.value())).forEach(triplet ->
             this.retrievedData.updateRating(triplet.uidx(), triplet.iidx(), triplet.value()));
-        this.sim.initialize(retrievedData);
 
-        // Now, we initialize the values for the items.
+        // Initialize the cosine similarity between users:
+        this.retrievedData.getAllUidx().forEach(uidx ->
+        {
+            Int2DoubleOpenHashMap map = new Int2DoubleOpenHashMap();
+            map.defaultReturnValue(0.0);
+            this.sims.put(uidx, map);
+
+            double uNorm = retrievedData.getUidxPreferences(uidx).mapToDouble(iidx ->
+            {
+                retrievedData.getIidxPreferences(iidx.v1).forEach(vidx -> this.sims.get(uidx).addTo(vidx.v1,iidx.v2*vidx.v2));
+                return iidx.v2*iidx.v2;
+            }).sum();
+
+            this.userNorms.put(uidx, uNorm);
+         });
+
+        // Now, we initialize the scores for the different items.
         this.retrievedData.getIidxWithPreferences().forEach(iidx ->
         {
-            double iidxVal = 2.0*this.retrievedData.getIidxPreferences(iidx).map(u -> u.v1).mapToDouble(uidx1 ->
-                this.retrievedData.getIidxPreferences(iidx).filter(u -> uidx1 < u.v1).map(u -> u.v1).mapToDouble(uidx2 ->
-                    1.0-this.sim.similarity(uidx1, uidx2)
-                ).sum()
-            ).sum();
+            IntIterator iterator1 = this.retrievedData.getIidxUidxs(iidx);
 
-            this.itemScores.put(iidx, iidxVal);
+            double value = 0.0;
+            while(iterator1.hasNext())
+            {
+                IntIterator iterator2 = this.retrievedData.getIidxUidxs(iidx);
+                int uidx = iterator1.nextInt();
+                while(iterator2.hasNext())
+                {
+                    int vidx = iterator2.nextInt();
+                    if(vidx <= uidx) continue;
+
+                    double val = 1.0 - this.sims.get(uidx).getOrDefault(vidx, 0.0) / Math.sqrt(this.userNorms.get(uidx)*this.userNorms.get(vidx));
+                    if(val >= value)
+                        value = val;
+                }
+                this.itemScores.put(iidx, value);
+            }
         });
     }
 
@@ -216,27 +251,48 @@ public class MaximumCosineUserDistance<U,I> extends AbstractInteractiveRecommend
     {
         if(!relevanceChecker.test(value)) return;
 
-        // Step 1: For all the items which have been positively rated by uidx,
-        // we update the value by substracting the distances between uidx and the rest.
-        this.retrievedData.getUidxPreferences(uidx).forEach(i ->
+        double userNorm = this.userNorms.getOrDefault(uidx, 0.0);
+        double oldVal = this.retrievedData.getPreference(uidx, iidx).orElse(new IdxPref(iidx, 0.0)).v2;
+        double newNorm = userNorm + 2*oldVal*value + value*value;
+
+        // Now, we update the corresponding similarities:
+        // We do only have to update the similarities between uidx and the items who have rated iidx, so:
+
+        this.retrievedData.getIidxPreferences(iidx).filter(v -> v.v1 != uidx).forEach(v ->
         {
-            int jidx = i.v1;
-            double sub = this.retrievedData.getIidxPreferences(jidx).map(v -> v.v1).mapToDouble(vidx -> 1.0 - sim.similarity(uidx, vidx)).sum();
-            this.itemScores.put(jidx, this.itemScores.get(jidx) - sub);
+            int vidx = v.v1;
+            double sim = this.sims.get(vidx).getOrDefault(uidx, 0.0);
+            sim += v.v2*value;
+
+            this.sims.get(vidx).put(uidx, sim);
+            this.sims.get(uidx).put(vidx, sim);
         });
 
-        // Step 2: Update the similarity and the preference data:
+        this.userNorms.put(uidx, newNorm);
         this.retrievedData.updateRating(uidx, iidx, value);
-        this.sim.updateNorm(uidx, value);
-        this.retrievedData.getIidxPreferences(iidx).forEach(vidx -> this.sim.update(uidx, vidx.v1, iidx, value, vidx.v2));
 
-        // Step 3: For all the items which have been positively rated by uidx (including iidx),
-        // we update their value by adding the distances between uidx and the rest.
-        this.retrievedData.getUidxPreferences(uidx).forEach(i ->
+        // Now, we find the maximum values for the items who uidx has rated (plus iidx):
+        this.retrievedData.getUidxPreferences(uidx).forEach(j ->
         {
-            int jidx = i.v1;
-            double add = this.retrievedData.getIidxPreferences(jidx).map(v -> v.v1).mapToDouble(vidx -> 1.0 - sim.similarity(uidx, vidx)).sum();
-            this.itemScores.put(jidx, this.itemScores.get(jidx) + add);
+            int jidx = j.v1;
+            IntIterator iterator1 = this.retrievedData.getIidxUidxs(jidx);
+
+            double v = 0.0;
+            while(iterator1.hasNext())
+            {
+                IntIterator iterator2 = this.retrievedData.getIidxUidxs(jidx);
+                int widx = iterator1.nextInt();
+                while(iterator2.hasNext())
+                {
+                    int vidx = iterator2.nextInt();
+                    if(vidx <= widx) continue;
+
+                    double val = 1.0 - this.sims.get(widx).getOrDefault(vidx, 0.0) / Math.sqrt(this.userNorms.get(widx)*this.userNorms.get(vidx));
+                    if(val >= v)
+                        v = val;
+                }
+                this.itemScores.put(jidx, v);
+            }
         });
     }
 }

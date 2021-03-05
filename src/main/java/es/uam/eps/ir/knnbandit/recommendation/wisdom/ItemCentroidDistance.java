@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class ItemCentroid<U,I> extends AbstractInteractiveRecommender<U,I>
+public class ItemCentroidDistance<U,I> extends AbstractInteractiveRecommender<U,I>
 {
     /**
      * The norm of the users.
@@ -70,7 +70,7 @@ public class ItemCentroid<U,I> extends AbstractInteractiveRecommender<U,I>
      * @param iIndex item index.
      * @param relevanceChecker checks the relevance of a rating.
      */
-    public ItemCentroid(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, DoublePredicate relevanceChecker)
+    public ItemCentroidDistance(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, DoublePredicate relevanceChecker)
     {
         super(uIndex, iIndex, true);
         this.retrievedData = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
@@ -97,7 +97,7 @@ public class ItemCentroid<U,I> extends AbstractInteractiveRecommender<U,I>
      * @param rngSeed random number generator seed.
      * @param relevanceChecker checks the relevance of a rating.
      */
-    public ItemCentroid(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed, DoublePredicate relevanceChecker)
+    public ItemCentroidDistance(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, int rngSeed, DoublePredicate relevanceChecker)
     {
         super(uIndex, iIndex, true, rngSeed);
         this.retrievedData = AdditiveRatingFastUpdateablePreferenceData.load(Stream.empty(), uIndex, iIndex);
@@ -188,7 +188,7 @@ public class ItemCentroid<U,I> extends AbstractInteractiveRecommender<U,I>
                 double value = itemScores.getOrDefault(item, itemScores.defaultReturnValue());
                 int size = retrievedData.numUsers(item);
                 if(size >= 1)
-                    value = 1.0 - this.itemNorm.get(item)*(size + 1.0);
+                    value = 1.0 - value/(this.itemNorm.get(item)*(size + 1.0));
 
                 if (value > val)
                 {
@@ -237,7 +237,7 @@ public class ItemCentroid<U,I> extends AbstractInteractiveRecommender<U,I>
                 double value = itemScores.getOrDefault(iidx, itemScores.defaultReturnValue());
                 int size = retrievedData.numUsers(iidx);
                 if(size >= 1)
-                    value = 1.0 - this.itemNorm.get(iidx)*(size + 1.0);
+                    value = 1.0 - value/(this.itemNorm.get(iidx)*(size + 1.0));
 
                 if(queue.size() < num)
                 {

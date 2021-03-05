@@ -6,12 +6,12 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractBanditConfigurator<U,I> implements BanditConfigurator<U,I>
+public abstract class AbstractBanditConfigurator<U,I> implements BanditConfigurator
 {
     @Override
-    public List<BanditSupplier<U, I>> getBandits(JSONArray array)
+    public List<BanditSupplier> getBandits(JSONArray array)
     {
-        List<BanditSupplier<U,I>> list = new ArrayList<>();
+        List<BanditSupplier> list = new ArrayList<>();
         int numConfigs = array.length();
         for(int i = 0; i < numConfigs; ++i)
         {

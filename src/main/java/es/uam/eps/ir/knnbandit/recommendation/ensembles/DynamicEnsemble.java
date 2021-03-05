@@ -80,9 +80,30 @@ public class DynamicEnsemble<U,I> extends AbstractEnsemble<U,I>
      * @param validCutoff the cut-off for the validation rankings.
      * @param percValid the percentage of the current data we use as training for validation.
      */
-    public DynamicEnsemble(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, Map<String, InteractiveRecommenderSupplier<U,I>> recs, boolean ignoreNotRated, int numEpochs, int validCutoff, double percValid, DynamicOptimizer<U,I> optimizer)
+    public DynamicEnsemble(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, Map<String, InteractiveRecommenderSupplier<U,I>> recs, int numEpochs, int validCutoff, double percValid, DynamicOptimizer<U,I> optimizer)
     {
         super(uIndex, iIndex, ignoreNotRated, recs);
+
+        this.numEpochs = numEpochs;
+        this.warmup = new ArrayList<>();
+        this.validCutoff = validCutoff;
+        this.percValid = percValid;
+        this.optimizer = optimizer;
+    }
+
+    /**
+     * Constructor.
+     * @param uIndex the user index.
+     * @param iIndex the item index.
+     * @param recs a map containing the recommenders.
+     * @param ignoreNotRated true if we only update the ratings when they exist in the dataset, false otherwise.
+     * @param numEpochs the number of epochs before changing the selected algorithm.
+     * @param validCutoff the cut-off for the validation rankings.
+     * @param percValid the percentage of the current data we use as training for validation.
+     */
+    public DynamicEnsemble(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, Map<String, InteractiveRecommenderSupplier<U,I>> recs, int numEpochs, int validCutoff, double percValid, DynamicOptimizer<U,I> optimizer)
+    {
+        super(uIndex, iIndex, ignoreNotRated, rngSeed, recs);
 
         this.numEpochs = numEpochs;
         this.warmup = new ArrayList<>();

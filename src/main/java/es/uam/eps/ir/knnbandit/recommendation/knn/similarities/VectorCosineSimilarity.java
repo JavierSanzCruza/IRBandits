@@ -127,16 +127,14 @@ public class VectorCosineSimilarity implements UpdateableSimilarity
         {
             if (this.norm[idx] > 0.0)
             {
-                return this.num.get(idx).int2DoubleEntrySet().stream().filter(v -> v.getIntKey() != idx).map(v -> new Tuple2id(v.getIntKey(), v.getDoubleValue() / this.norm[v.getIntKey()]));
+                return this.num.get(idx).int2DoubleEntrySet().stream().filter(v -> v.getIntKey() != idx)
+                        .map(v -> new Tuple2id(v.getIntKey(), v.getDoubleValue()/(Math.sqrt(this.norm[idx]*this.norm[v.getIntKey()]))));
             }
             return Stream.empty();
             //return IntStream.range(0, this.numUsers).filter(i -> i != idx).mapToObj(i -> new Tuple2id(i, similarity(idx, i))).filter(x -> x.v2 > 0.0);
         }
         catch(NullPointerException poi)
         {
-            double value = this.norm[idx];
-            Int2DoubleOpenHashMap map = (Int2DoubleOpenHashMap) this.num.get(idx);
-            System.err.println("Something failed");
             return Stream.empty();
         }
     }

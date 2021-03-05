@@ -10,6 +10,9 @@
 package es.uam.eps.ir.knnbandit.selector;
 
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
+import es.uam.eps.ir.knnbandit.recommendation.wisdom.AverageCosineUserDistance;
+import es.uam.eps.ir.knnbandit.recommendation.wisdom.ItemCentroidDistance;
+import es.uam.eps.ir.knnbandit.recommendation.wisdom.MaximumCosineUserDistance;
 import es.uam.eps.ir.knnbandit.selector.algorithms.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -138,6 +141,15 @@ public class AlgorithmSelector<U, I>
                 break;
             case AlgorithmIdentifiers.COFIBA:
                 conf = new COFIBAConfigurator<>();
+                break;
+            case AlgorithmIdentifiers.AVGUSERCOS:
+                conf = new AverageCosineUserDistanceConfigurator<>(this.relevanceChecker);
+                break;
+            case AlgorithmIdentifiers.MAXUSERCOS:
+                conf = new MaximumCosineUserDistanceConfigurator<>(this.relevanceChecker);
+                break;
+            case AlgorithmIdentifiers.ITEMCENTR:
+                conf = new ItemCentroidDistanceConfigurator<>(this.relevanceChecker);
                 break;
             default:
                 conf = null;

@@ -3,6 +3,8 @@ package es.uam.eps.ir.knnbandit.recommendation.reranker;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.FastInteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
@@ -31,11 +33,11 @@ public class RankingCombiner<U,I> extends AbstractInteractiveRecommender<U, I>
     /**
      * The base recommender.
      */
-    private final AbstractInteractiveRecommender<U,I> baseRec;
+    private final FastInteractiveRecommender<U,I> baseRec;
     /**
      * The reranking recommender.
      */
-    private final AbstractInteractiveRecommender<U,I> rerRec;
+    private final FastInteractiveRecommender<U,I> rerRec;
     /**
      * The top-k of the recommendation.
      */
@@ -57,7 +59,7 @@ public class RankingCombiner<U,I> extends AbstractInteractiveRecommender<U, I>
      * @param topK              the number of elements to retrieve from the base recommender.
      * @param lambda            trade-off betweeen the original recommendation and the reranking one.
      */
-    public RankingCombiner(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, AbstractInteractiveRecommender<U,I> baseRec, AbstractInteractiveRecommender<U,I> rerRec, int topK, double lambda)
+    public RankingCombiner(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, FastInteractiveRecommender<U,I> baseRec, FastInteractiveRecommender<U,I> rerRec, int topK, double lambda)
     {
         super(uIndex, iIndex, ignoreNotRated);
         this.baseRec = baseRec;
@@ -77,7 +79,7 @@ public class RankingCombiner<U,I> extends AbstractInteractiveRecommender<U, I>
      * @param topK              the number of elements to retrieve from the base recommender.
      * @param lambda            trade-off betweeen the original recommendation and the reranking one.
      */
-    public RankingCombiner(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, AbstractInteractiveRecommender<U,I> baseRec, AbstractInteractiveRecommender<U,I> rerRec, int topK, double lambda)
+    public RankingCombiner(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, FastInteractiveRecommender<U,I> baseRec, FastInteractiveRecommender<U,I> rerRec, int topK, double lambda)
     {
         super(uIndex, iIndex, ignoreNotRated, rngSeed);
         this.baseRec = baseRec;

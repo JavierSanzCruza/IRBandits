@@ -5,8 +5,8 @@ import org.json.JSONObject;
 
 import java.util.List;
 
-public interface BanditConfigurator<U,I>
+public interface BanditConfigurator
 {
-    List<BanditSupplier<U,I>> getBandits(JSONArray array);
-    BanditSupplier<U,I> getBandit(JSONObject object);
+    List<BanditSupplier> getBandits(JSONArray array);
+    BanditSupplier getBandit(JSONObject object);
 }

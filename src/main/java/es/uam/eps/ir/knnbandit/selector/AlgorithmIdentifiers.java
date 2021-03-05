@@ -45,4 +45,11 @@ public class AlgorithmIdentifiers
 
     // Wisdom of the diverse crowds:
     public static final String INFTHEOR = "inf-theory";
+    public static final String AVGUSERCOS = "avg-user-cosine";
+    public static final String MAXUSERCOS = "max-user-cosine";
+    public static final String ITEMCENTR = "item-centroid-cosine";
+
+    public static final String RANKINGCOMB = "ranking-combiner";
+    public static final String BANDITENSEMBLE = "bandit-ensemble";
+    public static final String DYNAMICENSEMBLE = "dynamic-ensemble";
 }
