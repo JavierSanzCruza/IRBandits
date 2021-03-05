@@ -223,18 +223,20 @@ public class Executor<U,I>
             metricValues.put(name, new ArrayList<>());
         }
 
+        List<FastRecommendation> recs = new ArrayList<>();
         for(Tuple2<FastRecommendation, Long> tuple : recovered)
         {
             FastRecommendation rec = tuple.v1;
             long time = tuple.v2;
 
-            loop.fastUpdate(rec);
+            loop.fastUpdateNotRec(rec);
             loop.increaseIteration();
 
             int iter = loop.getCurrentIter();
 
             Map<String, Double> metricVals = loop.getMetricValues();
             writer.writeRanking(iter, rec, time);
+            recs.add(rec);
 
             if(iter % interval == 0)
             {
@@ -244,6 +246,11 @@ public class Executor<U,I>
                     metricValues.get(name).add(value);
                 }
             }
+        }
+
+        if(!loop.hasEnded())
+        {
+            loop.fastUpdateRecList(recs.stream());
         }
 
         return metricValues;
@@ -269,15 +276,20 @@ public class Executor<U,I>
             metricValues.put(name, new ArrayList<>());
         }
 
+        // First, we update the metrics, and iteration numbers:
+        List<Pair<Integer>> recs = new ArrayList<>();
+
         for(Tuple3<Integer,Integer,Long> triplet : recovered)
         {
             int uidx = triplet.v1();
             int iidx = triplet.v2();
             long time = triplet.v3();
 
-            loop.fastUpdate(uidx, iidx);
+            loop.fastUpdateNotRec(uidx, iidx);
+            loop.increaseIteration();
             int iter = loop.getCurrentIter();
 
+            recs.add(new Pair<>(uidx, iidx));
             Map<String, Double> metricVals = loop.getMetricValues();
             writer.writeLine(iter, uidx, iidx, time);
 
@@ -291,6 +303,10 @@ public class Executor<U,I>
             }
         }
 
+        if(!loop.hasEnded())
+        {
+            loop.fastUpdateRec(recs.stream());
+        }
         return metricValues;
     }
 

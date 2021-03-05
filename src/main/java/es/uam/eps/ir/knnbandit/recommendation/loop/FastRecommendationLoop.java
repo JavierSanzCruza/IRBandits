@@ -12,6 +12,8 @@ package es.uam.eps.ir.knnbandit.recommendation.loop;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 
+import java.util.stream.Stream;
+
 /**
  * Interface for fast recommendation loops, relying on indexes instead of identifiers to
  * perform the different operations.
@@ -58,5 +60,11 @@ public interface FastRecommendationLoop<U,I> extends RecommendationLoop<U,I>
      * @param rec the recommendation ranking.
      */
     void fastUpdate(FastRecommendation rec);
+
+
+    void fastUpdateNotRec (int uidx, int iidx);
+    void fastUpdateNotRec(FastRecommendation rec);
+    void fastUpdateRec(Stream<Pair<Integer>> pair);
+    void fastUpdateRecList(Stream<FastRecommendation> recs);
 
 }

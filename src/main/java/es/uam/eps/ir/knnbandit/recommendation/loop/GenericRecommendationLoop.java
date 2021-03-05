@@ -27,6 +27,7 @@ import org.ranksys.core.util.tuples.Tuple2od;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Implementation of a generic recommendation loop.
@@ -289,6 +290,61 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
         FastRecommendation fastRec = updateValues.v2();
         metrics.forEach((name, metric) -> metric.update(fastRec));
         endCond.update(fastRec);
+    }
+
+    @Override
+    public void fastUpdateNotRec(int uidx, int iidx)
+    {
+        Pair<List<FastRating>> updateValues = this.update.selectUpdate(uidx, iidx, this.selection);
+
+        List<FastRating> metricValues = updateValues.v2();
+        for(FastRating value : metricValues)
+        {
+            metrics.forEach((name, metric) -> metric.update(value.uidx(), value.iidx(),value.value()));
+            endCond.update(value.uidx(), value.iidx(),value.value());
+        }
+    }
+
+    @Override
+    public void fastUpdateNotRec(FastRecommendation rec)
+    {
+        Tuple2<List<FastRating>, FastRecommendation> updateValues = this.update.selectUpdate(rec, this.selection);
+
+        FastRecommendation fastRec = updateValues.v2();
+        metrics.forEach((name, metric) -> metric.update(fastRec));
+        endCond.update(fastRec);
+    }
+
+    @Override
+    public void fastUpdateRec(Stream<Pair<Integer>> pairs)
+    {
+        pairs.forEach(pair ->
+        {
+            int uidx = pair.v1();
+            int iidx = pair.v2();
+            Pair<List<FastRating>> updateValues = this.update.selectUpdate(uidx, iidx, this.selection);
+            List<FastRating> recValues = updateValues.v1();
+            for(FastRating value : recValues)
+            {
+                recommender.update(value.uidx(), value.iidx(), value.value());
+                selection.update(value.uidx(), value.iidx(), value.value());
+            }
+        });
+    }
+
+    @Override
+    public void fastUpdateRecList(Stream<FastRecommendation> pairs)
+    {
+        pairs.forEach(fastRec ->
+        {
+            Tuple2<List<FastRating>, FastRecommendation> updateValues = this.update.selectUpdate(fastRec, this.selection);
+            List<FastRating> recValues = updateValues.v1();
+            for(FastRating value : recValues)
+            {
+                recommender.update(value.uidx(), value.iidx(), value.value());
+                selection.update(value.uidx(), value.iidx(), value.value());
+            }
+        });
     }
 
     @Override

@@ -56,7 +56,10 @@ public class CumulativeGini<U, I> implements CumulativeMetric<U, I>
     }
 
     @Override
-    public void update(int uidx, int iidx, double value) {this.gini.increaseFrequency(1);}
+    public void update(int uidx, int iidx, double value)
+    {
+        this.gini.increaseFrequency(iidx);
+    }
 
     @Override
     public void reset()
