@@ -11,25 +11,11 @@ package es.uam.eps.ir.knnbandit.recommendation.clusters.cofiba;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.graph.Graph;
 import es.uam.eps.ir.knnbandit.graph.generator.ErdosGenerator;
-import es.uam.eps.ir.knnbandit.graph.generator.GeneratorBadConfiguredException;
-import es.uam.eps.ir.knnbandit.graph.generator.GeneratorNotConfiguredException;
 import es.uam.eps.ir.knnbandit.graph.generator.GraphGenerator;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.clusters.ClusteringAlgorithm;
-import es.uam.eps.ir.knnbandit.recommendation.clusters.Clusters;
-import es.uam.eps.ir.knnbandit.recommendation.clusters.ClustersImpl;
-import es.uam.eps.ir.knnbandit.recommendation.clusters.ConnectedComponents;
-import es.uam.eps.ir.knnbandit.utils.FastRating;
-import it.unimi.dsi.fastutil.ints.*;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Implementation of the COllaborative FIltering BAndits algorithm (Li et al. 2016 SIGIR).

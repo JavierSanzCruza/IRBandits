@@ -7,9 +7,10 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.recommendation.bandits.item;
+package es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms;
 
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import it.unimi.dsi.fastutil.PriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -19,46 +20,60 @@ import org.ranksys.core.util.tuples.Tuple2id;
 import java.util.Comparator;
 
 /**
- * Item bandit using the UCB1 algorithm.
+ * Simple multi-armed bandit using the UCB1 algorithm.
  *
- * @param <U> User type.
- * @param <I> Item type.
  * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class UCB1ItemBandit<U, I> extends ItemBandit<U, I>
+public class UCB1 extends AbstractMultiArmedBandit
 {
     /**
      * The values for each user.
      */
-    double[] values;
+    private double[] values;
     /**
      * The number of times each item has been selected.
      */
-    double[] numTimes;
+    private int[] numTimes;
     /**
      * The number of iterations.
      */
-    int numIter;
+    private int numIter;
+
     /**
-     * The number of items.
+     * A parameter regulating the upper confidence bound for the algorithm.
      */
-    int numItems;
+    private final double alpha;
 
     /**
      * Constructor.
      *
-     * @param numItems The number of items.
+     * @param numArms the number of arms.
      */
-    public UCB1ItemBandit(int numItems)
+    public UCB1(int numArms)
     {
-        this.numItems = numItems;
-        this.values = new double[numItems];
-        this.numTimes = new double[numItems];
+        super(numArms);
+        this.values = new double[numArms];
+        this.numTimes = new int[numArms];
+        this.alpha = 2.0;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param numArms the number of arms.
+     * @param alpha   the value of the parameter that regulates the upper confidence bound.
+     */
+    public UCB1(int numArms, double alpha)
+    {
+        super(numArms);
+        this.values = new double[numArms];
+        this.numTimes = new int[numArms];
+        this.alpha = alpha;
     }
 
     @Override
-    public int next(int uidx, int[] available, ValueFunction valF)
+    public int next(int[] available, ValueFunction valF)
     {
         if (available == null || available.length == 0)
         {
@@ -81,7 +96,7 @@ public class UCB1ItemBandit<U, I> extends ItemBandit<U, I>
                 }
                 else
                 {
-                    val = valF.apply(uidx, i, values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i])), numTimes[i]);
+                    val = valF.apply(i, values[i] + Math.sqrt(alpha * Math.log(numIter + 1) / (numTimes[i]+0.0)), numTimes[i]+0.0);
                 }
 
                 if (val > max)
@@ -112,7 +127,7 @@ public class UCB1ItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
-    public int next(int uidx, IntList available, ValueFunction valF)
+    public int next(IntList available, ValueFunction valF)
     {
         if (available == null || available.isEmpty())
         {
@@ -135,7 +150,7 @@ public class UCB1ItemBandit<U, I> extends ItemBandit<U, I>
                 }
                 else
                 {
-                    val = valF.apply(uidx, i, values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i])), numTimes[i]);
+                    val = valF.apply(i, values[i] + Math.sqrt(alpha * Math.log(numIter + 1) / (numTimes[i]+0.0)), numTimes[i]+0.0);
                 }
 
                 if (val > max)
@@ -167,7 +182,7 @@ public class UCB1ItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
-    public IntList next(int uidx, IntList available, ValueFunction valFunc, int k)
+    public IntList next(IntList available, ValueFunction valFunc, int k)
     {
         if (available == null || available.isEmpty())
         {
@@ -186,7 +201,7 @@ public class UCB1ItemBandit<U, I> extends ItemBandit<U, I>
                 if(this.numTimes[i] == 0)
                     val = Double.POSITIVE_INFINITY;
                 else
-                    val = valFunc.apply(uidx, i, values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i])), numTimes[i]);
+                    val = valFunc.apply(i, values[i] + Math.sqrt(alpha * Math.log(numIter + 1) / (numTimes[i]+0.0)), numTimes[i]+0.0);
 
                 if(queue.size() < num)
                 {
@@ -229,8 +244,16 @@ public class UCB1ItemBandit<U, I> extends ItemBandit<U, I>
     @Override
     public void reset()
     {
-        this.values = new double[numItems];
-        this.numTimes = new double[numItems];
+        this.values = new double[numArms];
+        this.numTimes = new int[numArms];
     }
 
+    @Override
+    public Pair<Integer> getStats(int arm)
+    {
+        if(arm < 0 || arm >= numArms) return null;
+
+        int numHits = Double.valueOf(numTimes[arm]*values[arm]).intValue();
+        return new Pair<>(numHits, numTimes[arm] - numHits);
+    }
 }

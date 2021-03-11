@@ -7,32 +7,27 @@
  * file, you can obtain one at http://mozilla.org/MPL/2.0.
  *
  */
-package es.uam.eps.ir.knnbandit.recommendation.bandits.item;
+package es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms;
 
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.util.Random;
 
 /**
- * Variable Epsilon-Greedy item bandit.
+ * Epsilon Greedy bandit.
  *
- * @param <U> User type.
- * @param <I> Item type.
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
+public class EpsilonGreedy extends AbstractMultiArmedBandit
 {
     /**
-     * Slope parameter.
+     * Probability of exploration.
      */
-    private final double alpha;
-    /**
-     * The number of items.
-     */
-    private final int numItems;
+    private final double epsilon;
     /**
      * Random number generator.
      */
@@ -48,37 +43,31 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
     /**
      * Number of times an arm has been selected.
      */
-    double[] numTimes;
+    int[] numTimes;
     /**
      * The sum of the values.
      */
     double sumValues;
-    /**
-     * Number of iterations.
-     */
-    private int numIter;
 
     /**
      * Constructor.
      *
-     * @param alpha slope parameter.
-     * @param numItems the number of arms of the bandit.
-     * @param updateFunction the update function for the arms.
+     * @param numArms        The number of arms in the bandit.
+     * @param epsilon        Exploration probability.
+     * @param updateFunction An update function.
      */
-    public EpsilonTGreedyItemBandit(double alpha, int numItems, EpsilonGreedyUpdateFunction updateFunction)
+    public EpsilonGreedy(int numArms, double epsilon, EpsilonGreedyUpdateFunction updateFunction)
     {
-        super();
-        this.alpha = alpha;
-        this.numItems = numItems;
+        super(numArms);
+        this.epsilon = epsilon;
         this.sumValues = 0.0;
-        this.values = new double[numItems];
-        this.numTimes = new double[numItems];
+        this.values = new double[numArms];
+        this.numTimes = new int[numArms];
         this.updateFunction = updateFunction;
-        this.numIter = 1;
     }
 
     @Override
-    public int next(int uidx, int[] available, ValueFunction valF)
+    public int next(int[] available, ValueFunction valF)
     {
         if (available == null || available.length == 0)
         {
@@ -90,7 +79,6 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
         }
         else
         {
-            double epsilon = Math.min(1.0, this.alpha * numItems / (numIter + 0.0));
             if (rng.nextDouble() < epsilon)
             {
                 int item = untierng.nextInt(available.length);
@@ -103,7 +91,7 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
 
                 for (int i : available)
                 {
-                    double val = valF.apply(uidx, i, values[i], numTimes[i]);
+                    double val = valF.apply(i, values[i], numTimes[i]+0.0);
                     if (val > max)
                     {
                         max = val;
@@ -133,7 +121,7 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
-    public int next(int uidx, IntList available, ValueFunction valF)
+    public int next(IntList available, ValueFunction valF)
     {
         if (available == null || available.isEmpty())
         {
@@ -145,10 +133,10 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
         }
         else
         {
-            double epsilon = Math.min(1.0, this.alpha * numItems / (numIter + 0.0));
+            int asize = available.size();
             if (rng.nextDouble() < epsilon)
             {
-                int item = untierng.nextInt(available.size());
+                int item = untierng.nextInt(asize);
                 return available.get(item);
             }
             else
@@ -158,7 +146,7 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
 
                 for (int i : available)
                 {
-                    double val = valF.apply(uidx, i, values[i], numTimes[i]);
+                    double val = valF.apply(i, values[i], numTimes[i]+0.0);
                     if (val > max)
                     {
                         max = val;
@@ -188,34 +176,14 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
     }
 
     @Override
-    public IntList next(int uidx, IntList available, ValueFunction valFunc, int k)
-    {
-        IntList avCopy = new IntArrayList();
-        available.forEach(avCopy::add);
-
-        IntList list = new IntArrayList();
-        int num = Math.min(available.size(), k);
-        for(int i = 0; i < num; ++i)
-        {
-            int elem = this.next(uidx, avCopy, valFunc);
-            list.add(elem);
-            avCopy.remove(avCopy.indexOf(elem));
-        }
-
-        return list;
-    }
-
-    @Override
-    public void update(int i, double value)
+    public void update(int i, double increment)
     {
         double oldSum = this.sumValues;
-        double increment = value;
-        double nTimes = this.numTimes[i] + 1;
+        double nTimes = this.numTimes[i] + 1.0;
         double oldVal = this.values[i];
 
         numTimes[i]++;
-        numIter++;
-        double newVal = this.updateFunction.apply(oldVal, value, oldSum, increment, nTimes);
+        double newVal = this.updateFunction.apply(oldVal, increment, oldSum, increment, nTimes);
         this.values[i] = newVal;
         this.sumValues += (newVal - oldVal);
     }
@@ -224,8 +192,17 @@ public class EpsilonTGreedyItemBandit<U, I> extends ItemBandit<U, I>
     public void reset()
     {
         this.sumValues = 0.0;
-        this.values = new double[numItems];
-        this.numTimes = new double[numItems];
-        this.numIter = 1;
+        this.values = new double[numArms];
+        this.numTimes = new int[numArms];
     }
+
+    @Override
+    public Pair<Integer> getStats(int arm)
+    {
+        if(arm < 0 || arm >= numArms) return null;
+
+        int numHits = Double.valueOf(numTimes[arm]*values[arm]).intValue();
+        return new Pair<>(numHits, numTimes[arm] - numHits);
+    }
+
 }

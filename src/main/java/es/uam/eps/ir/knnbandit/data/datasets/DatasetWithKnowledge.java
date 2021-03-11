@@ -14,6 +14,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastU
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.SimpleFastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.data.preference.userknowledge.fast.SimpleFastUserKnowledgePreferenceData;
 import es.uam.eps.ir.knnbandit.recommendation.KnowledgeDataUse;
+import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
 import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
@@ -273,6 +274,12 @@ public class DatasetWithKnowledge<U, I> extends GeneralDataset<U, I>
     public int getNumRatings()
     {
         return this.prefData.numPreferences();
+    }
+
+    @Override
+    public Dataset<U,I> load(List<Pair<Integer>> pairs)
+    {
+        return DatasetWithKnowledge.load(this, pairs);
     }
 
 }

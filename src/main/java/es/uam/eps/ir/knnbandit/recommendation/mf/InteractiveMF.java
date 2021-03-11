@@ -56,7 +56,7 @@ public class InteractiveMF<U, I> extends AbstractInteractiveMF<U, I>
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))

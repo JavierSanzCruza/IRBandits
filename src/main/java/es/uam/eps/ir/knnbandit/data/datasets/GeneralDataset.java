@@ -62,7 +62,7 @@ public class GeneralDataset<U,I> implements OfflineDataset<U,I>
      * @param prefData Preference data.
      * @param numRel   Number of relevant (user, item) pairs.
      */
-    protected GeneralDataset(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, int numRel, DoublePredicate relevance)
+    public GeneralDataset(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, SimpleFastPreferenceData<U, I> prefData, int numRel, DoublePredicate relevance)
     {
         this.userIndex = uIndex;
         this.itemIndex = iIndex;
@@ -135,6 +135,12 @@ public class GeneralDataset<U,I> implements OfflineDataset<U,I>
     public int getNumRatings()
     {
         return this.prefData.numPreferences();
+    }
+
+    @Override
+    public Dataset<U, I> load(List<Pair<Integer>> pairs)
+    {
+        return GeneralDataset.load(this, pairs);
     }
 
     @Override
@@ -230,6 +236,12 @@ public class GeneralDataset<U,I> implements OfflineDataset<U,I>
     public Stream<? extends IdPref<U>> getItemPreferences(I i)
     {
         return this.prefData.getItemPreferences(i);
+    }
+
+    @Override
+    public SimpleFastPreferenceData<U, I> getPreferenceData()
+    {
+        return this.prefData;
     }
 
     /**

@@ -193,4 +193,10 @@ public class ContactDataset<U> extends GeneralDataset<U, U>
         return this.getNumRel();
     }
 
+    @Override
+    public Dataset<U,U> load(List<Pair<Integer>> pairs)
+    {
+        return ContactDataset.load(this, pairs);
+    }
+
 }

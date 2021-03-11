@@ -122,7 +122,7 @@ public class AlgorithmSelector<U, I>
                 conf = new ItemBasedKNNBanditConfigurator<>();
                 break;
             case AlgorithmIdentifiers.MF:
-                conf = new MFConfigurator<>();
+                conf = new MatrixFactorizationConfigurator<>();
                 break;
             case AlgorithmIdentifiers.PMFBANDIT:
                 conf = new PMFBanditConfigurator<>();
@@ -144,6 +144,25 @@ public class AlgorithmSelector<U, I>
                 break;
             case AlgorithmIdentifiers.COFIBA:
                 conf = new COFIBAConfigurator<>();
+                break;
+            case AlgorithmIdentifiers.AVGUSERCOS:
+                conf = new AverageCosineUserDistanceConfigurator<>(this.relevanceChecker);
+                break;
+            case AlgorithmIdentifiers.MAXUSERCOS:
+                conf = new MaximumCosineUserDistanceConfigurator<>(this.relevanceChecker);
+                break;
+            case AlgorithmIdentifiers.ITEMCENTR:
+                conf = new ItemCentroidDistanceConfigurator<>(this.relevanceChecker);
+                break;
+
+            case AlgorithmIdentifiers.DYNAMICENSEMBLE:
+                conf = new DynamicEnsembleConfigurator<>();
+                break;
+            case AlgorithmIdentifiers.BANDITENSEMBLE:
+                conf = new MultiArmedBanditEnsembleConfigurator<>();
+                break;
+            case AlgorithmIdentifiers.RANKINGCOMB:
+                conf = new RankingCombinerConfigurator<>();
                 break;
             default:
                 conf = null;

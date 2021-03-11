@@ -11,12 +11,11 @@ package es.uam.eps.ir.knnbandit.recommendation.mf.ictr;
 import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.mf.Particle;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ictr.particles.ICTRParticle;
 import es.uam.eps.ir.knnbandit.recommendation.mf.ictr.particles.ICTRParticleFactory;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -37,7 +36,7 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
+public abstract class ICTRRecommender<U, I> extends AbstractInteractiveRecommender<U, I>
 {
     /**
      * The list of particles.
@@ -200,7 +199,7 @@ public abstract class ICTRRecommender<U, I> extends InteractiveRecommender<U, I>
     protected abstract double getEstimatedReward(int uidx, int iidx);
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))

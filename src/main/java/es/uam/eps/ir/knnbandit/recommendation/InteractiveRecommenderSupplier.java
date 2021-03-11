@@ -29,14 +29,14 @@ public interface InteractiveRecommenderSupplier<U,I>
      * @param rngSeed a random number generator seed.
      * @return an interactive recommender.
      */
-    InteractiveRecommender<U,I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed);
+    FastInteractiveRecommender<U,I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex, int rngSeed);
     /**
      * Given the user and item data, builds an interactive recommendation algorithm.
      * @param userIndex user index.
      * @param itemIndex item index.
      * @return an interactive recommender.
      */
-    InteractiveRecommender<U,I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex);
+    FastInteractiveRecommender<U,I> apply(FastUpdateableUserIndex<U> userIndex, FastUpdateableItemIndex<I> itemIndex);
     /**
      * Obtains the name of the algorithm.
      * @return the name of the algorithm.

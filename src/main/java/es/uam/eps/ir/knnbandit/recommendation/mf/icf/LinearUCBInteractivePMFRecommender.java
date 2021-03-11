@@ -38,7 +38,7 @@ import java.util.PriorityQueue;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFRecommender<U, I>
+public class LinearUCBInteractivePMFRecommender<U, I> extends InteractivePMFRecommender<U, I>
 {
     private final double alpha;
 
@@ -55,7 +55,7 @@ public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFReco
      * @param numIter   Number of training iterations.
      * @param alpha     Parameter for indicating the importance of the UCB term.
      */
-    public LinearUCBPMFRecommenderInteractive(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
+    public LinearUCBInteractivePMFRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
     {
         super(uIndex, iIndex, hasRating, k, stdevP, stdevQ, stdev, numIter);
         this.alpha = alpha;
@@ -74,7 +74,7 @@ public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFReco
      * @param numIter   Number of training iterations.
      * @param alpha     Parameter for indicating the importance of the UCB term.
      */
-    public LinearUCBPMFRecommenderInteractive(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
+    public LinearUCBInteractivePMFRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean hasRating, int rngSeed, int k, double stdevP, double stdevQ, double stdev, int numIter, double alpha)
     {
         super(uIndex, iIndex, hasRating, rngSeed, k, stdevP, stdevQ, stdev, numIter);
         this.alpha = alpha;
@@ -186,7 +186,7 @@ public class LinearUCBPMFRecommenderInteractive<U, I> extends InteractivePMFReco
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))

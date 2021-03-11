@@ -16,8 +16,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.List;
-import java.util.Random;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -86,123 +84,83 @@ public abstract class InteractiveRecommender<U, I>
     /**
      * Initializes the specific variables of a method.
      */
-    public void init()
-    {
-        this.rng = new Random(rngSeed);
-    }
+    void init();
 
     /**
      * Initializes the specific variables of a method, using some information as training data.
      * @param values a stream of (user, item, value) triplets.
      */
-    public abstract void init(Stream<FastRating> values);
-
-    /**
-     * Obtains the set of identifiers of the users.
-     *
-     * @return the set of identifiers of the users.
-     */
-    public IntStream getUidx()
-    {
-        return uIndex.getAllUidx();
-    }
-
-    /**
-     * Obtains the set of identifiers of the items.
-     *
-     * @return the set of identifiers of the items.
-     */
-    public IntStream getIidx()
-    {
-        return iIndex.getAllIidx();
-    }
+    void initialize(Stream<Rating<U,I>> values);
 
     /**
      * Obtains the users.
      *
      * @return the users.
      */
-    public Stream<U> getUsers()
-    {
-        return uIndex.getAllUsers();
-    }
+    Stream<U> getUsers();
+
 
     /**
      * Obtains the items.
      *
      * @return the items.
      */
-    public Stream<I> getItems()
-    {
-        return iIndex.getAllItems();
-    }
+    Stream<I> getItems();
 
     /**
      * Obtains the number of users.
      *
      * @return the number of users.
      */
-    public int numUsers()
-    {
-        return uIndex.numUsers();
-    }
+    int numUsers();
 
     /**
      * Obtains the number of items.
      *
      * @return the number of items.
      */
-    public int numItems()
-    {
-        return iIndex.numItems();
-    }
+    int numItems();
 
     /**
      * Given a user, and a list of items, returns the next value.
-     * @param uidx user identifier.
+     * @param u user.
      * @param available the list of identifiers of the candidate items.
      * @return the identifier of the recommended item if everything went OK, -1 otherwise i.e. when a user cannot be recommended an item)
      */
-    public abstract int next(int uidx, IntList available);
+    I next(U u, List<I> available);
 
     /**
      * Given a user, and the list of available items, returns a top-k recommendation (when possible).
      * If the algorithm can only recommend l < k items, but there are more available, those are
      * recommended randomly.
      *
-     * @param uidx user identifier.
+     * @param u user identifier.
      * @param available the list of identifiers of the candidate items.
      * @param k the number of items to recommend.
      * @return a list of recommended items.
      */
-    public abstract IntList next(int uidx, IntList available, int k);
+    List<I> next(U u, List<I> available, int k);
 
     /**
      * Updates the method.
      *
-     * @param uidx  User identifier.
-     * @param iidx  Item identifier.
-     * @param value The rating uidx provides to iidx.
+     * @param u  User.
+     * @param i  Item.
+     * @param value The rating u provides to i.
      */
-    public abstract void update(int uidx, int iidx, double value);
+    void update(U u, I i, double value);
 
     /**
      * Updates the method.
      *
      * @param train Training data.
      */
-    public void update(List<Tuple3<Integer, Integer, Double>> train)
-    {
-        train.forEach(tuple -> this.update(tuple.v1, tuple.v2, tuple.v3));
-    }
+    void update(List<Tuple3<U, I, Double>> train);
 
     /**
      * Checks if the recommender uses all the received information, or only known data.
      *
      * @return true if the recommender uses all the received information, false otherwise.
      */
-    public boolean usesAll()
-    {
-        return !this.ignoreNotRated;
-    }
+    boolean usesAll();
 }

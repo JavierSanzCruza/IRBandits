@@ -12,30 +12,30 @@ package es.uam.eps.ir.knnbandit.recommendation.bandits;
 import es.uam.eps.ir.knnbandit.Constants;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
-import es.uam.eps.ir.knnbandit.recommendation.bandits.item.ItemBandit;
+import es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms.MultiArmedBandit;
+import es.uam.eps.ir.knnbandit.selector.algorithms.bandit.BanditSupplier;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
-import es.uam.eps.ir.ranksys.fast.preference.FastPreferenceData;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.stream.Stream;
 
 /**
  * Simple non-personalized item-based multi-armed bandit recommender.
  *
- * @param <U> User type.
- * @param <I> Item type.
+ * @param <U> type of the users.
+ * @param <I> type of the items.
+ *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
+public class ItemBanditRecommender<U, I> extends AbstractInteractiveRecommender<U, I>
 {
     /**
      * Implementation of an item bandit.
      */
-    private final ItemBandit<U, I> itemBandit;
+    private final MultiArmedBandit multiArmedBandit;
     /**
      * Function for evaluating the value.
      */
@@ -47,13 +47,13 @@ public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
      * @param uIndex        User index
      * @param iIndex        Item index.
      * @param ignoreNotRated True if we want to ignore missing ratings when updating, false if we want to count them as failures.
-     * @param itemBandit    An item bandit.
+     * @param mabFunc       A function to obtain a multi-armed bandit.
      * @param valFunc       A value function of the reward.
      */
-    public ItemBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, ItemBandit<U, I> itemBandit, ValueFunction valFunc)
+    public ItemBanditRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, BanditSupplier mabFunc, ValueFunction valFunc)
     {
         super(uIndex, iIndex, ignoreNotRated);
-        this.itemBandit = itemBandit;
+        this.multiArmedBandit = mabFunc.apply(iIndex.numItems());
         this.valFunc = valFunc;
     }
 
@@ -62,38 +62,38 @@ public class ItemBanditRecommender<U, I> extends InteractiveRecommender<U, I>
     {
         super.init();
 
-        this.itemBandit.reset();
+        this.multiArmedBandit.reset();
     }
 
     @Override
     public void init(Stream<FastRating> values)
     {
         this.init();
-        values.forEach(triplet -> this.itemBandit.update(triplet.iidx(), triplet.value()));
+        values.forEach(triplet -> this.multiArmedBandit.update(triplet.iidx(), triplet.value()));
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         if(!Double.isNaN(value)) // If the (uidx, iidx) pair exists.
         {
-            this.itemBandit.update(iidx, value);
+            this.multiArmedBandit.update(iidx, value);
         }
         else if(!this.ignoreNotRated) // If we update the bandit even when the (uidx, iidx) pair does not exist.
         {
-            this.itemBandit.update(iidx, Constants.NOTRATEDNOTIGNORED);
+            this.multiArmedBandit.update(iidx, Constants.NOTRATEDNOTIGNORED);
         }
     }
 
     @Override
     public int next(int uidx, IntList availability)
     {
-        return this.itemBandit.next(uidx, availability.toIntArray(), valFunc);
+        return this.multiArmedBandit.next(availability.toIntArray(), valFunc);
     }
 
     @Override
     public IntList next(int uidx, IntList availability, int k)
     {
-        return this.itemBandit.next(uidx, availability, valFunc, k);
+        return this.multiArmedBandit.next(availability, valFunc, k);
     }
 }

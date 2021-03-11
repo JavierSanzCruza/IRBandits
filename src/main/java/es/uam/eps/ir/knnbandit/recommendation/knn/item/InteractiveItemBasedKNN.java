@@ -39,7 +39,7 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
      * @param iIndex      Item index.
      * @param hasRating   True if we must ignore unknown items when updating.
      * @param ignoreZeros True if we ignore zero ratings when updating.
-     * @param userK       Number of users to select.
+     * @param userK       Number of items rated by the target user to select as possible neighbors.
      * @param itemK       Number of items to take as neighbors
      * @param sim         Updateable similarity
      */
@@ -56,7 +56,7 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
      * @param hasRating   True if we must ignore unknown items when updating.
      * @param rngSeed     Random number generator seed.
      * @param ignoreZeros True if we ignore zero ratings when updating.
-     * @param userK       Number of users to select.
+     * @param userK       Number of items rated by the target user to select as possible neighbors.
      * @param itemK       Number of items to take as neighbors
      * @param sim         Updateable similarity
      */
@@ -66,7 +66,7 @@ public class InteractiveItemBasedKNN<U, I> extends AbstractInteractiveItemBasedK
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
         if(!Double.isNaN(value))

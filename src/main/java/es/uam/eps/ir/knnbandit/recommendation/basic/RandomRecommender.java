@@ -11,7 +11,7 @@ package es.uam.eps.ir.knnbandit.recommendation.basic;
 import es.uam.eps.ir.knnbandit.UntieRandomNumber;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
+public class RandomRecommender<U, I> extends AbstractInteractiveRecommender<U, I>
 {
     /**
      * Random number generator.
@@ -106,13 +106,13 @@ public class RandomRecommender<U, I> extends InteractiveRecommender<U, I>
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
 
     }
 
     @Override
-    public void update(List<Tuple3<Integer, Integer, Double>> train)
+    public void fastUpdate(List<Tuple3<Integer, Integer, Double>> train)
     {
 
     }

@@ -17,7 +17,16 @@ package es.uam.eps.ir.knnbandit.selector.algorithms.factorizer;
  */
 public class FactorizerIdentifiers
 {
+    /**
+     * Implicit matrix factorization -- original algorithm.
+     */
     public final static String IMF = "imf";
+    /**
+     * Implicit matrix factorization -- fast implementation.
+     */
     public final static String FASTIMF = "fastimf";
+    /**
+     * Probabilistic Latent Semantic Analysis.
+     */
     public final static String PLSA = "plsa";
 }

@@ -10,6 +10,7 @@ package es.uam.eps.ir.knnbandit.data.datasets;
 
 import es.uam.eps.ir.ranksys.core.preference.IdPref;
 import es.uam.eps.ir.ranksys.fast.preference.IdxPref;
+import es.uam.eps.ir.ranksys.fast.preference.SimpleFastPreferenceData;
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
@@ -105,4 +106,10 @@ public interface OfflineDataset<U,I> extends Dataset<U,I>
      * @return an stream containing the preferences of the user.
      */
     Stream<? extends IdPref<U>> getItemPreferences(I i);
+
+    /**
+     * Obtains a preference data from the dataset.
+     * @return the preference data.
+     */
+    SimpleFastPreferenceData<U,I> getPreferenceData();
 }

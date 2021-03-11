@@ -75,7 +75,7 @@ public class PopularityRecommender<U, I> extends AbstractBasicInteractiveRecomme
     }
 
     @Override
-    public void update(int uidx, int iidx, double value)
+    public void fastUpdate(int uidx, int iidx, double value)
     {
         this.values[iidx] += (relevanceChecker.test(value) ? 1.0 : 0.0);
     }
