@@ -10,9 +10,6 @@
 package es.uam.eps.ir.knnbandit.selector;
 
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
-import es.uam.eps.ir.knnbandit.recommendation.wisdom.AverageCosineUserDistance;
-import es.uam.eps.ir.knnbandit.recommendation.wisdom.ItemCentroidDistance;
-import es.uam.eps.ir.knnbandit.recommendation.wisdom.MaximumCosineUserDistance;
 import es.uam.eps.ir.knnbandit.selector.algorithms.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -119,7 +116,7 @@ public class AlgorithmSelector<U, I>
                 conf = new ItemBasedKNNBanditConfigurator<>();
                 break;
             case AlgorithmIdentifiers.MF:
-                conf = new MFConfigurator<>();
+                conf = new MatrixFactorizationConfigurator<>();
                 break;
             case AlgorithmIdentifiers.PMFBANDIT:
                 conf = new PMFBanditConfigurator<>();
@@ -150,6 +147,16 @@ public class AlgorithmSelector<U, I>
                 break;
             case AlgorithmIdentifiers.ITEMCENTR:
                 conf = new ItemCentroidDistanceConfigurator<>(this.relevanceChecker);
+                break;
+
+            case AlgorithmIdentifiers.DYNAMICENSEMBLE:
+                conf = new DynamicEnsembleConfigurator<>();
+                break;
+            case AlgorithmIdentifiers.BANDITENSEMBLE:
+                conf = new MultiArmedBanditEnsembleConfigurator<>();
+                break;
+            case AlgorithmIdentifiers.RANKINGCOMB:
+                conf = new RankingCombinerConfigurator<>();
                 break;
             default:
                 conf = null;

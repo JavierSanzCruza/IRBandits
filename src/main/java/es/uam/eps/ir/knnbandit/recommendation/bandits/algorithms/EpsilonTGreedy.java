@@ -22,7 +22,7 @@ import java.util.Random;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class EpsilonTGreedyItemBandit extends AbstractMultiArmedBandit
+public class EpsilonTGreedy extends AbstractMultiArmedBandit
 {
     /**
      * Slope parameter.
@@ -60,7 +60,7 @@ public class EpsilonTGreedyItemBandit extends AbstractMultiArmedBandit
      * @param alpha             slope parameter.
      * @param updateFunction    the update function for the arms.
      */
-    public EpsilonTGreedyItemBandit(int numArms, double alpha, EpsilonGreedyUpdateFunction updateFunction)
+    public EpsilonTGreedy(int numArms, double alpha, EpsilonGreedyUpdateFunction updateFunction)
     {
         super(numArms);
         this.alpha = alpha;

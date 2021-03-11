@@ -10,6 +10,15 @@ package es.uam.eps.ir.knnbandit.recommendation.ensembles;
 
 import es.uam.eps.ir.knnbandit.recommendation.FastInteractiveRecommender;
 
+/**
+ * Fast implementation of an ensemble.
+ *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
 public interface FastEnsemble<U,I> extends Ensemble<U,I>, FastInteractiveRecommender<U,I>
 {
 

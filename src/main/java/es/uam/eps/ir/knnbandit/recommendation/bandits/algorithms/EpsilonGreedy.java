@@ -22,7 +22,7 @@ import java.util.Random;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class EpsilonGreedyItemBandit extends AbstractMultiArmedBandit
+public class EpsilonGreedy extends AbstractMultiArmedBandit
 {
     /**
      * Probability of exploration.
@@ -56,7 +56,7 @@ public class EpsilonGreedyItemBandit extends AbstractMultiArmedBandit
      * @param epsilon        Exploration probability.
      * @param updateFunction An update function.
      */
-    public EpsilonGreedyItemBandit(int numArms, double epsilon, EpsilonGreedyUpdateFunction updateFunction)
+    public EpsilonGreedy(int numArms, double epsilon, EpsilonGreedyUpdateFunction updateFunction)
     {
         super(numArms);
         this.epsilon = epsilon;

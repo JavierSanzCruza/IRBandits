@@ -25,7 +25,7 @@ import java.util.Comparator;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class UCB1TunedItemBandit extends AbstractMultiArmedBandit
+public class UCB1Tuned extends AbstractMultiArmedBandit
 {
     /**
      * The values for each arm.
@@ -49,7 +49,7 @@ public class UCB1TunedItemBandit extends AbstractMultiArmedBandit
      *
      * @param numArms the number of arms.
      */
-    public UCB1TunedItemBandit(int numArms)
+    public UCB1Tuned(int numArms)
     {
         super(numArms);
         this.values = new double[numArms];

@@ -10,6 +10,7 @@
 package es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms;
 
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
+import es.uam.eps.ir.knnbandit.stats.BetaDistribution;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import it.unimi.dsi.fastutil.PriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -20,36 +21,98 @@ import org.ranksys.core.util.tuples.Tuple2id;
 import java.util.Comparator;
 
 /**
- * Simple multi-armed bandit using the UCB1 algorithm.
+ * Multi-armed bandit using the Thompson sampling algorithm.
+ * It considers that rewards of each arm follow a Bernoulli distribution.
  *
- * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class UCB1ItemBandit extends AbstractMultiArmedBandit
+public class ThompsonSampling extends AbstractMultiArmedBandit
 {
     /**
-     * The values for each user.
+     * A Beta distribution for each possible arm.
      */
-    double[] values;
+    private final BetaDistribution[] betas;
+
     /**
-     * The number of times each item has been selected.
+     * The initial alphas for each arm.
      */
-    int[] numTimes;
+    private final double[] initialAlphas;
     /**
-     * The number of iterations.
+     * The initial betas for each arm.
      */
-    int numIter;
+    private final double[] initialBetas;
+    /**
+     * The unique initial alpha value for all the arms.
+     */
+    private final double initialAlpha;
+    /**
+     * The unique initial beta value for all the arms.
+     */
+    private final double initialBeta;
 
     /**
      * Constructor.
      *
-     * @param numArms The number of items.
+     * @param numArms The number of arms.
      */
-    public UCB1ItemBandit(int numArms)
+    public ThompsonSampling(int numArms)
     {
         super(numArms);
-        this.values = new double[numArms];
-        this.numTimes = new int[numArms];
+        this.betas = new BetaDistribution[numArms];
+        for (int i = 0; i < numArms; ++i)
+        {
+            betas[i] = new BetaDistribution(1.0, 1.0);
+        }
+
+        this.initialAlpha = 1.0;
+        this.initialBeta = 1.0;
+        this.initialAlphas = null;
+        this.initialBetas = null;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param numArms      Number of arms.
+     * @param initialAlpha The initial value for the alpha parameter of Beta distributions.
+     * @param initialBeta  The initial value for the beta parameter of the Beta distributions.
+     */
+    public ThompsonSampling(int numArms, double initialAlpha, double initialBeta)
+    {
+        super(numArms);
+        this.betas = new BetaDistribution[numArms];
+        for (int i = 0; i < numArms; ++i)
+        {
+            betas[i] = new BetaDistribution(initialAlpha, initialBeta);
+        }
+
+        this.initialAlpha = initialAlpha;
+        this.initialBeta = initialBeta;
+        this.initialAlphas = null;
+        this.initialBetas = null;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param numArms       Number of arms.
+     * @param initialAlphas The initial values for the alpha parameters of Beta distributions.
+     * @param initialBetas  The initial values for the beta parameters of Beta distributions.
+     */
+    public ThompsonSampling(int numArms, double[] initialAlphas, double[] initialBetas)
+    {
+        super(numArms);
+        this.betas = new BetaDistribution[numArms];
+        for (int i = 0; i < numArms; ++i)
+        {
+            betas[i] = new BetaDistribution(initialAlphas[i], initialBetas[i]);
+        }
+
+        this.initialAlpha = 1.0;
+        this.initialBeta = 1.0;
+        this.initialAlphas = initialAlphas;
+        this.initialBetas = initialBetas;
     }
 
     @Override
@@ -69,16 +132,7 @@ public class UCB1ItemBandit extends AbstractMultiArmedBandit
             IntList top = new IntArrayList();
             for (int i : available)
             {
-                double val;
-                if (this.numTimes[i] == 0)
-                {
-                    val = Double.POSITIVE_INFINITY;
-                }
-                else
-                {
-                    val = valF.apply(i, values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i]+0.0)), numTimes[i]+0.0);
-                }
-
+                double val = valF.apply(i, this.betas[i].sample(), 0);
                 if (val > max)
                 {
                     max = val;
@@ -92,17 +146,14 @@ public class UCB1ItemBandit extends AbstractMultiArmedBandit
             }
 
             int size = top.size();
-            int item;
             if (size == 1)
             {
-                item = top.get(0);
+                return top.get(0);
             }
             else
             {
-                item = top.get(untierng.nextInt(size));
+                return top.get(untierng.nextInt(size));
             }
-
-            return item;
         }
     }
 
@@ -123,16 +174,7 @@ public class UCB1ItemBandit extends AbstractMultiArmedBandit
             IntList top = new IntArrayList();
             for (int i : available)
             {
-                double val;
-                if (this.numTimes[i] == 0)
-                {
-                    val = Double.POSITIVE_INFINITY;
-                }
-                else
-                {
-                    val = valF.apply(i, values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i]+0.0)), numTimes[i]+0.0);
-                }
-
+                double val = valF.apply(i, this.betas[i].sample(), 0);
                 if (val > max)
                 {
                     max = val;
@@ -146,18 +188,14 @@ public class UCB1ItemBandit extends AbstractMultiArmedBandit
             }
 
             int size = top.size();
-            int item;
             if (size == 1)
             {
-                item = top.get(0);
+                return top.get(0);
             }
             else
             {
-                item = top.get(untierng.nextInt(size));
+                return top.get(untierng.nextInt(size));
             }
-
-
-            return item;
         }
     }
 
@@ -177,12 +215,7 @@ public class UCB1ItemBandit extends AbstractMultiArmedBandit
 
             for(int i : available)
             {
-                double val;
-                if(this.numTimes[i] == 0)
-                    val = Double.POSITIVE_INFINITY;
-                else
-                    val = valFunc.apply(i, values[i] + Math.sqrt(2 * Math.log(numIter + 1) / (numTimes[i]+0.0)), numTimes[i]+0.0);
-
+                double val = valFunc.apply(i, this.betas[i].sample(), 0);
                 if(queue.size() < num)
                 {
                     queue.enqueue(new Tuple2id(i, val));
@@ -212,20 +245,29 @@ public class UCB1ItemBandit extends AbstractMultiArmedBandit
         }
     }
 
-
     @Override
     public void update(int i, double value)
     {
-        numTimes[i]++;
-        numIter++;
-        values[i] = values[i] + 1.0 / (numTimes[i] + 0.0) * (value - values[i]);
+        this.betas[i].updateAdd(value, (1.0 - value));
     }
 
     @Override
     public void reset()
     {
-        this.values = new double[numArms];
-        this.numTimes = new int[numArms];
+        if (initialAlphas == null || initialBetas == null)
+        {
+            for (int i = 0; i < numArms; ++i)
+            {
+                betas[i] = new BetaDistribution(initialAlpha, initialBeta);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < numArms; ++i)
+            {
+                betas[i] = new BetaDistribution(initialAlphas[i], initialBetas[i]);
+            }
+        }
     }
 
     @Override
@@ -233,7 +275,17 @@ public class UCB1ItemBandit extends AbstractMultiArmedBandit
     {
         if(arm < 0 || arm >= numArms) return null;
 
-        int numHits = Double.valueOf(numTimes[arm]*values[arm]).intValue();
-        return new Pair<>(numHits, numTimes[arm] - numHits);
+        if(initialAlphas == null || initialBetas == null)
+        {
+            int numHits = Double.valueOf(this.betas[arm].getAlpha() - initialAlpha).intValue();
+            int numMisses = Double.valueOf(this.betas[arm].getBeta() - initialBeta).intValue();
+            return new Pair<>(numHits, numMisses);
+        }
+        else
+        {
+            int numHits = Double.valueOf(this.betas[arm].getAlpha() - initialAlphas[arm]).intValue();
+            int numMisses = Double.valueOf(this.betas[arm].getBeta() - initialBetas[arm]).intValue();
+            return new Pair<>(numHits, numMisses);
+        }
     }
 }

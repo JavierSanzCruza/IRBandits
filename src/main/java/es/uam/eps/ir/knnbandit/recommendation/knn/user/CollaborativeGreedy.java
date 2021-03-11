@@ -47,7 +47,9 @@ public class CollaborativeGreedy<U,I> extends AbstractInteractiveRecommender<U, 
      * Relation between users and jointly explored objects (including ratings)
      */
     SimpleFastUpdateablePreferenceData<U, I> jointData;
-
+    /**
+     * The complete retrieved data.
+     */
     SimpleFastUpdateablePreferenceData<U,I> retrievedData;
     /**
      * Number of times each user has been recommended an item.

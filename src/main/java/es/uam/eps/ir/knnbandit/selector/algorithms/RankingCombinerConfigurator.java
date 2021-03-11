@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2021 Information Retrieval Group at Universidad Autónoma
+ * de Madrid, http://ir.ii.uam.es.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at http://mozilla.org/MPL/2.0.
+ *
+ */
 package es.uam.eps.ir.knnbandit.selector.algorithms;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -19,10 +28,25 @@ import org.json.JSONObject;
  */
 public class RankingCombinerConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
 {
+    /**
+     * Identifier for the parameter that selects whether we use unknown information or not.
+     */
     private static final String IGNOREUNKNOWN = "ignoreUnknown";
+    /**
+     * Identifier for the base algorithm.
+     */
     private static final String FIRST = "first";
+    /**
+     * Identifier for the reranking algorithm.
+     */
     private static final String SECOND = "second";
+    /**
+     * Identifier for the number of items to include in the initial ranking.
+     */
     private static final String K = "k";
+    /**
+     * Identifier for the trade-off between the base and reranking algorithms.
+     */
     private static final String LAMBDA = "lambda";
 
     @Override
@@ -35,10 +59,11 @@ public class RankingCombinerConfigurator<U,I> extends AbstractAlgorithmConfigura
         }
 
         AlgorithmSelector<U,I> selector = new AlgorithmSelector<>();
-
+        // Select the base algorithm
         JSONObject firstAlgorithm = object.getJSONObject(FIRST);
         InteractiveRecommenderSupplier<U,I> first = selector.getAlgorithm(firstAlgorithm);
 
+        // Select the reranking algorithm.
         JSONObject secondAlgorithm = object.getJSONObject(SECOND);
         InteractiveRecommenderSupplier<U,I> second = selector.getAlgorithm(secondAlgorithm);
 
@@ -55,11 +80,26 @@ public class RankingCombinerConfigurator<U,I> extends AbstractAlgorithmConfigura
      */
     private static class RankingCombinerRecommenderSupplier<U,I> implements InteractiveRecommenderSupplier<U,I>
     {
-        InteractiveRecommenderSupplier<U,I> firstAlg;
-        InteractiveRecommenderSupplier<U,I> secondAlg;
-        boolean ignoreUnknown;
-        int k;
-        double lambda;
+        /**
+         * A supplier for the first algorithm (the base algorithm)
+         */
+        private final InteractiveRecommenderSupplier<U,I> firstAlg;
+        /**
+         * A supplier for the second algorithm (the reranking algorithm)
+         */
+        private final InteractiveRecommenderSupplier<U,I> secondAlg;
+        /**
+         * True if we ignore the unknown ratings, false otherwise.
+         */
+        private final boolean ignoreUnknown;
+        /**
+         * The cutoff we consider for the recommendation.
+         */
+        private final int k;
+        /**
+         * The trade-off between the base algorithm and the reranking one.
+         */
+        private final double lambda;
 
         /**
          * Constructor.

@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2021 Information Retrieval Group at Universidad Autónoma
+ * de Madrid, http://ir.ii.uam.es.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at http://mozilla.org/MPL/2.0.
+ *
+ */
 package es.uam.eps.ir.knnbandit.selector.algorithms;
 
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
@@ -20,6 +29,7 @@ import java.util.Map;
 
 /**
  * Class for configuring a dynamic ensemble.
+ *
  * @param <U> type of the users.
  * @param <I> type of the items.
  *
@@ -28,12 +38,33 @@ import java.util.Map;
  */
 public class DynamicEnsembleConfigurator<U,I> extends AbstractAlgorithmConfigurator<U,I>
 {
+    /**
+     * Identifier for selecting whether the algorithm is updated with items unknown by the system or not.
+     */
     private static final String IGNOREUNKNOWN = "ignoreUnknown";
+    /**
+     * Identifier for the list of algorithms to retrieve.
+     */
     private static final String ALGORITHMS = "algorithms";
+    /**
+     * Identifier for the number of epochs before a new algorithm is selected.
+     */
     private static final String NUMEPOCHS = "numEpochs";
+    /**
+     * Identifier for the validation cut-off.
+     */
     private static final String VALIDCUTOFF = "validCutoff";
+    /**
+     * Identifier for the proportion of the known data that is used as input in the algorithm selection.
+     */
     private static final String PERCVALID = "percValid";
+    /**
+     * Identifier for the metric which has to be used to select the algorithm.
+     */
     private static final String OPTIMIZER = "optimizer";
+    /**
+     * Identifier for the metric name.
+     */
     private static final String NAME = "name";
 
     @Override
@@ -63,9 +94,14 @@ public class DynamicEnsembleConfigurator<U,I> extends AbstractAlgorithmConfigura
         DynamicOptimizer<U,I> optimizer = this.selectDynamicOptimizerConfigurator(optim.getString(NAME));
         // Select the metric to optimize
 
-        return new DynamicEnsembleRecommenderSupplier<>(recs, numEpochs, validationCutoff, percValid, optimizer, ignoreUnknown);
+        return new DynamicEnsembleRecommenderSupplier(recs, numEpochs, validationCutoff, percValid, optimizer, ignoreUnknown);
     }
 
+    /**
+     * Given its name, it selects the metric to optimize.
+     * @param name the metric name.
+     * @return the metric to optimize.
+     */
     protected DynamicOptimizer<U,I> selectDynamicOptimizerConfigurator(String name)
     {
         switch(name)
@@ -83,17 +119,34 @@ public class DynamicEnsembleConfigurator<U,I> extends AbstractAlgorithmConfigura
 
     /**
      * Supplier for RankingCombiner algorithms.
-     * @param <U> type of the users.
-     * @param <I> type of the items.
      */
-    private static class DynamicEnsembleRecommenderSupplier<U,I> implements InteractiveRecommenderSupplier<U,I>
+    private class DynamicEnsembleRecommenderSupplier implements InteractiveRecommenderSupplier<U,I>
     {
+        /**
+         * A map containing algorithm suppliers.
+         */
         Map<String, InteractiveRecommenderSupplier<U,I>> algs;
+        /**
+         * The number of epochs befor updating the algorithm.
+         */
         int numEpochs;
+        /**
+         * The cutoff for the validation recommendations.
+         */
         int validCutoff;
+        /**
+         * The percentage of the available data which is used as training for the algorithm selection.
+         */
         double percValid;
+        /**
+         * The metric we optimize during validation.
+         */
         DynamicOptimizer<U,I> optimizer;
+        /**
+         * True if we ignore the unknown ratings, false otherwise.
+         */
         boolean ignoreUnknown;
+
         /**
          * Constructor.
          * @param algs          the list of interactive recommenders to combine.

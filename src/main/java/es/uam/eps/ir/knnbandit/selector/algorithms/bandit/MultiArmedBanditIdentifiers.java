@@ -15,14 +15,38 @@ package es.uam.eps.ir.knnbandit.selector.algorithms.bandit;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class ItemBanditIdentifiers
+public class MultiArmedBanditIdentifiers
 {
+    /**
+     * Identifier for epsilon greedy
+     */
     public static final String EGREEDY = "epsilon";
+    /**
+     * Identifier for UCB1
+     */
     public static final String UCB1 = "ucb1";
+    /**
+     * Identifier for UCB1-tuned
+     */
     public static final String UCB1TUNED = "ucb1tuned";
+    /**
+     * Identifier for Thompson sampling
+     */
     public static final String THOMPSON = "thompson";
+    /**
+     * Identifier for the delayed Thompson sampling.
+     */
     public static final String DELAYTHOMPSON = "delaythompson";
+    /**
+     * Identifier for epsilon-t greedy
+     */
     public static final String ETGREEDY = "epsilont";
+    /**
+     * Identifier for the algorithm that selects arms according to their popularity.
+     */
     public static final String MLEPOP = "mlepop";
+    /**
+     * Identifier for the algorithm that selects arms according to their average estimated value.
+     */
     public static final String MLEAVG = "mleavg";
 }

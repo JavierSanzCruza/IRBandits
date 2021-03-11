@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2020 Information Retrieval Group at Universidad Autónoma
+ *  de Madrid, http://ir.ii.uam.es
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package es.uam.eps.ir.knnbandit.recommendation.ensembles;
 
 import es.uam.eps.ir.knnbandit.Constants;
@@ -5,11 +13,9 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.FastInteractiveRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
@@ -18,18 +24,50 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+/**
+ * Abstract implementation of an interactive recommendation ensemble.
+ *
+ * @param <U> type of the users.
+ * @param <I> type of the items.
+ *
+ * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
+ * @author Pablo Castells (pablo.castells@uam.es)
+ */
 public abstract class AbstractEnsemble<U,I> extends AbstractInteractiveRecommender<U,I> implements FastEnsemble<U,I>
 {
+    /**
+     * A list of algorithm suppliers.
+     */
     protected final List<InteractiveRecommenderSupplier<U,I>> suppliers;
+    /**
+     * The current list of interactive recommendation algorithms.
+     */
     protected final List<FastInteractiveRecommender<U,I>> recommenders;
+    /**
+     * The names of the interactive recommendation algorithms in the comparison.
+     */
     protected final List<String> recNames;
 
+    /**
+     * The number of hits of each algorithm.
+     */
     protected final IntList hits;
+    /**
+     * The number of misses of each algorithm.
+     */
     protected final IntList misses;
-
+    /**
+     * The identifier of the currently used algorithm.
+     */
     protected int currentAlgorithm;
 
-
+    /**
+     * Constructor.
+     * @param uIndex            user index.
+     * @param iIndex            item index.
+     * @param ignoreNotRated    true if items not in the definitive dataset are used to update the recommendation algorithms.
+     * @param recs              a map, indexed by the recommender name, containing recommender suppliers.
+     */
     public AbstractEnsemble(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, Map<String, InteractiveRecommenderSupplier<U,I>> recs)
     {
         super(uIndex, iIndex, ignoreNotRated);
@@ -48,6 +86,14 @@ public abstract class AbstractEnsemble<U,I> extends AbstractInteractiveRecommend
         this.misses = new IntArrayList();
     }
 
+    /**
+     * Constructor.
+     * @param uIndex            user index.
+     * @param iIndex            item index.
+     * @param ignoreNotRated    true if items not in the definitive dataset are used to update the recommendation algorithms.
+     * @param rngSeed           the random number generator seed to solve ties.
+     * @param recs              a map, indexed by the recommender name, containing recommender suppliers.
+     */
     public AbstractEnsemble(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed, Map<String, InteractiveRecommenderSupplier<U,I>> recs)
     {
         super(uIndex, iIndex, ignoreNotRated, rngSeed);

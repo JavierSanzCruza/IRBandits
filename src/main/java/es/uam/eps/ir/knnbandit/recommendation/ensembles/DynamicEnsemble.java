@@ -16,13 +16,10 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.recommendation.FastInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.ensembles.dynamic.optimizers.DynamicOptimizer;
-import es.uam.eps.ir.knnbandit.recommendation.loop.selection.NonSequentialSelection;
-import es.uam.eps.ir.knnbandit.recommendation.loop.selection.user.RoundRobinSelector;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.knnbandit.warmup.GeneralWarmup;
 import es.uam.eps.ir.knnbandit.warmup.OfflineWarmup;
-import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.knnbandit.warmup.WarmupType;
 import es.uam.eps.ir.ranksys.core.Recommendation;
 import it.unimi.dsi.fastutil.ints.IntArrayList;

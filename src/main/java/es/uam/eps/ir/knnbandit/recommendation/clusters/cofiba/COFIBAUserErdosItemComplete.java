@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
  */
 public class COFIBAUserErdosItemComplete<U,I> extends AbstractCOFIBA<U,I>
 {
-
     /**
      * Constructor.
      *

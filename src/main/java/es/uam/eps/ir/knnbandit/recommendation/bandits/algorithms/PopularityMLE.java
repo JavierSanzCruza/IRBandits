@@ -2,64 +2,64 @@ package es.uam.eps.ir.knnbandit.recommendation.bandits.algorithms;
 
 import es.uam.eps.ir.knnbandit.recommendation.bandits.functions.ValueFunction;
 import es.uam.eps.ir.knnbandit.utils.Pair;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.util.Arrays;
 
 /**
+ * Simple bandit-like algorithm that selects an arm proportionally to its popularity
+ * i.e. by sampling from a categorical distribution.
+ *
  * Bandit that selects an item proportionally to its popularity.
  *
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class MLECategoricalAverageItemBandit extends AbstractMultiArmedBandit
+public class PopularityMLE extends AbstractMultiArmedBandit
 {
     /**
-     * The number of hits of the item.
+     * The number of hits for each arm.
      */
     private final double[] hits;
     /**
-     * The number of failures of the item.
+     * The number of misses for each arm.
      */
-    private final double[] misses;
+    private final int[] misses;
 
     /**
-     * The values of the initial alphas for each item.
+     * The sum of the values.
+     */
+    private double sum;
+
+    /**
+     * Initial alphas for the different items.
      */
     private final double[] initialAlphas;
     /**
-     * The values of the initial betas for each item.
-     */
-    private final double[] initialBetas;
-    /**
-     * A unique value for the initial alpha.
+     * The initial alpha.
      */
     private final double initialAlpha;
-    /**
-     * A unique value for the initial beta.
-     */
-    private final double initialBeta;
 
     /**
      * Constructor.
      *
      * @param numArms The number of arms.
      */
-    public MLECategoricalAverageItemBandit(int numArms)
+    public PopularityMLE(int numArms)
     {
         super(numArms);
         this.initialAlpha = 1.0;
-        this.initialBeta = 1.0;
         this.initialAlphas = null;
-        this.initialBetas = null;
 
         this.hits = new double[numArms];
-        this.misses = new double[numArms];
+        this.misses = new int[numArms];
         for(int i = 0; i < numArms; ++i)
         {
             this.hits[i] = this.initialAlpha;
-            this.misses[i] = this.initialBeta;
+            this.misses[i] = 0;
         }
+        sum = this.numArms*initialAlpha;
     }
 
     /**
@@ -68,21 +68,21 @@ public class MLECategoricalAverageItemBandit extends AbstractMultiArmedBandit
      * @param numArms      Number of arms.
      * @param initialAlpha The initial value for the alpha parameter of Beta distributions.
      */
-    public MLECategoricalAverageItemBandit(int numArms, double initialAlpha, double initialBeta)
+    public PopularityMLE(int numArms, double initialAlpha)
     {
         super(numArms);
         this.initialAlpha = initialAlpha;
-        this.initialBeta = initialBeta;
         this.initialAlphas = null;
-        this.initialBetas = null;
 
         this.hits = new double[numArms];
-        this.misses = new double[numArms];
+        this.misses = new int[numArms];
         for(int i = 0; i < numArms; ++i)
         {
             this.hits[i] = this.initialAlpha;
-            this.misses[i] = this.initialBeta;
+            this.misses[i] = 0;
+
         }
+        sum = this.numArms*initialAlpha;
     }
 
     /**
@@ -91,20 +91,19 @@ public class MLECategoricalAverageItemBandit extends AbstractMultiArmedBandit
      * @param numArms       Number of arms.
      * @param initialAlphas The initial values for the alpha parameters of Beta distributions.
      */
-    public MLECategoricalAverageItemBandit(int numArms, double[] initialAlphas, double[] initialBetas)
+    public PopularityMLE(int numArms, double[] initialAlphas)
     {
         super(numArms);
         this.initialAlpha = 1.0;
         this.initialAlphas = initialAlphas;
-        this.initialBeta = 1.0;
-        this.initialBetas = initialBetas;
 
         this.hits = new double[numArms];
-        this.misses = new double[numArms];
-        for (int i = 0; i < numArms; ++i)
+        this.misses = new int[numArms];
+        for(int i = 0; i < numArms; ++i)
         {
-            hits[i] = this.initialAlphas[i];
-            misses[i] = this.initialBetas[i];
+            this.hits[i] = this.initialAlpha;
+            this.misses[i] = 0;
+
         }
     }
 
@@ -121,13 +120,13 @@ public class MLECategoricalAverageItemBandit extends AbstractMultiArmedBandit
         }
         else
         {
-            double availableSum = Arrays.stream(available).mapToDouble(i -> hits[i]/(hits[i]+misses[i])).sum();
+            double availableSum = Arrays.stream(available).mapToDouble(i -> hits[i]).sum();
             double val = untierng.nextDouble();
 
             double current = 0.0;
             for (int i : available)
             {
-                double value = (hits[i]/(hits[i]+misses[i]))/availableSum;
+                double value = hits[i]/availableSum;
                 if ((current + value) >= val)
                 {
                     return i;
@@ -155,13 +154,13 @@ public class MLECategoricalAverageItemBandit extends AbstractMultiArmedBandit
         }
         else
         {
-            double availableSum = available.stream().mapToDouble(i -> hits[i]/(misses[i]+hits[i])).sum();
+            double availableSum = available.stream().mapToDouble(i -> hits[i]).sum();
             double val = untierng.nextDouble();
 
             double current = 0.0;
             for (int i : available)
             {
-                double value = (hits[i]/(hits[i]+misses[i]))/availableSum;
+                double value = hits[i]/availableSum;
                 if ((current + value) >= val)
                 {
                     return i;
@@ -177,30 +176,44 @@ public class MLECategoricalAverageItemBandit extends AbstractMultiArmedBandit
     }
 
     @Override
+    public IntList next(IntList available, ValueFunction valFunc, int k)
+    {
+        IntList avCopy = new IntArrayList();
+        available.forEach(avCopy::add);
+
+        IntList list = new IntArrayList();
+        int num = Math.min(available.size(), k);
+        for(int i = 0; i < num; ++i)
+        {
+            int elem = this.next(avCopy, valFunc);
+            list.add(elem);
+            avCopy.remove(avCopy.indexOf(elem));
+        }
+
+        return list;
+    }
+
+    @Override
     public void update(int iidx, double value)
     {
         this.hits[iidx] += value;
-        this.misses[iidx] += (1.0-value);
+        this.misses[iidx] += (value == 0.0) ? 1 : 0;
     }
 
     @Override
     public void reset()
     {
-        if (initialAlphas == null || initialBetas == null)
+        if (initialAlphas == null)
         {
             for (int i = 0; i < numArms; ++i)
             {
                 hits[i] = initialAlpha;
-                misses[i] = initialBeta;
+                misses[i] = 0;
             }
         }
         else
         {
-            for (int i = 0; i < numArms; ++i)
-            {
-                hits[i] = initialAlphas[i];
-                misses[i] = initialBetas[i];
-            }
+            if (numArms >= 0) System.arraycopy(initialAlphas, 0, hits, 0, numArms);
         }
     }
 
@@ -208,18 +221,16 @@ public class MLECategoricalAverageItemBandit extends AbstractMultiArmedBandit
     public Pair<Integer> getStats(int arm)
     {
         if(arm < 0 || arm >= numArms) return null;
-
-        if(initialAlphas == null || initialBetas == null)
+        int hits;
+        if(initialAlphas == null)
         {
-            int numHits = Double.valueOf(this.hits[arm] - initialAlpha).intValue();
-            int numMisses = Double.valueOf(this.misses[arm] - initialBeta).intValue();
-            return new Pair<>(numHits, numMisses);
+            hits = Double.valueOf(this.hits[arm]-initialAlpha).intValue();
         }
         else
         {
-            int numHits = Double.valueOf(this.hits[arm] - initialAlphas[arm]).intValue();
-            int numMisses = Double.valueOf(this.misses[arm] - initialBetas[arm]).intValue();
-            return new Pair<>(numHits, numMisses);
+            hits = Double.valueOf(this.hits[arm] - initialAlphas[arm]).intValue();
         }
+
+        return new Pair<>(hits, misses[arm]);
     }
 }
