@@ -170,7 +170,11 @@ public abstract class AbstractEnsemble<U,I> extends AbstractInteractiveRecommend
     public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
-        if(!Double.isNaN(value) || !this.ignoreNotRated)
+        if(!Double.isNaN(value) && value != Constants.NOTRATEDRATING)
+        {
+            newValue = value;
+        }
+        else if(!this.ignoreNotRated)
         {
             newValue = Constants.NOTRATEDNOTIGNORED;
         }

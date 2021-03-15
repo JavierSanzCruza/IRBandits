@@ -78,7 +78,7 @@ public class UserMultiArmedBanditRecommender<U, I> extends AbstractInteractiveRe
     @Override
     public void fastUpdate(int uidx, int iidx, double value)
     {
-        if(!Double.isNaN(value)) // If the (uidx, iidx) pair exists.
+        if(!Double.isNaN(value) && value != Constants.NOTRATEDRATING) // If the (uidx, iidx) pair exists.
         {
             this.multiArmedBandit[uidx].update(iidx, value);
         }

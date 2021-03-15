@@ -59,7 +59,7 @@ public class InteractiveMF<U, I> extends AbstractInteractiveMF<U, I>
     public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
-        if(!Double.isNaN(value))
+        if(!Double.isNaN(value) && value != Constants.NOTRATEDRATING)
             newValue = value;
         else if(!this.ignoreNotRated)
             newValue = Constants.NOTRATEDNOTIGNORED;

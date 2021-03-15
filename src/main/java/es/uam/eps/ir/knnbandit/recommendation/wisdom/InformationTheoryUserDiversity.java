@@ -15,6 +15,7 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.fast.AdditiveRatingFas
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.FastInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -36,7 +37,7 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<U, I>
+public class InformationTheoryUserDiversity<U,I> extends AbstractInteractiveRecommender<U, I>
 {
     /**
      * For the probabilities, the numerator for each user.
@@ -193,12 +194,13 @@ public class InformationTheoryUserDiversity<U,I> extends InteractiveRecommender<
     public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
-        if(!Double.isNaN(value))
+        if(!Double.isNaN(value) && value != Constants.NOTRATEDRATING)
             newValue = value;
         else if(!this.ignoreNotRated)
             newValue = Constants.NOTRATEDNOTIGNORED;
         else
             return;
+
         this.retrievedData.updateRating(uidx, iidx, predicate.test(newValue) ? 1.0 : 0.0);
         this.num.addTo(uidx, predicate.test(newValue) ? 1.0 : 0.0);
         this.den.addTo(uidx, 1.0);

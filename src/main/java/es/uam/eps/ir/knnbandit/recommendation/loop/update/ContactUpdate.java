@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static es.uam.eps.ir.knnbandit.Constants.NOTRATEDRATING;
+
 /**
  * Considering a contact recommendation dataset, where the items are users, this
  * mechanism always selects the (uidx, iidx, value) rating. If the network is undirected,
@@ -84,8 +86,8 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
             if(selection.isAvailable(uidx, item.v1))
             {
                 Optional<Double> value = dataset.getPreference(uidx, iidx);
-                fastRatingList.add(new FastRating(uidx, iidx, value.orElse(Double.NaN)));
-                ranking.add(new Tuple2id(iidx, value.orElse(Double.NaN)));
+                fastRatingList.add(new FastRating(uidx, iidx, value.orElse(NOTRATEDRATING)));
+                ranking.add(new Tuple2id(iidx, value.orElse(NOTRATEDRATING)));
 
                 if(value.isPresent())
                 {
@@ -97,7 +99,7 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
                     else if (this.notReciprocal && selection.isAvailable(iidx, uidx))
                     {
                         value = dataset.getPreference(iidx, uidx);
-                        FastRating pair = new FastRating(iidx, uidx, value.orElse(Double.NaN));
+                        FastRating pair = new FastRating(iidx, uidx, value.orElse(NOTRATEDRATING));
                         fastRatingList.add(pair);
                     }
                 }
@@ -116,7 +118,7 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
             List<FastRating> metricList = new ArrayList<>();
 
             Optional<Double> value = dataset.getPreference(uidx, iidx);
-            FastRating rating = new FastRating(uidx, iidx, value.orElse(Double.NaN));
+            FastRating rating = new FastRating(uidx, iidx, value.orElse(NOTRATEDRATING));
             list.add(rating);
             metricList.add(rating);
 
@@ -130,7 +132,7 @@ public class ContactUpdate<U> implements UpdateStrategy<U,U>
                 else if (this.notReciprocal && selection.isAvailable(iidx, uidx))
                 {
                     value = dataset.getPreference(iidx, uidx);
-                    FastRating pair = new FastRating(iidx, uidx, value.orElse(Double.NaN));
+                    FastRating pair = new FastRating(iidx, uidx, value.orElse(NOTRATEDRATING));
                     list.add(pair);
                 }
             }

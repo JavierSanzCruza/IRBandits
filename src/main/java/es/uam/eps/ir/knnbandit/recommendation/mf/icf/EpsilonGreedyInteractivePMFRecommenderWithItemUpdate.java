@@ -65,7 +65,7 @@ public class EpsilonGreedyInteractivePMFRecommenderWithItemUpdate<U, I> extends 
     public void fastUpdate(int uidx, int iidx, double value)
     {
         double newValue;
-        if(!Double.isNaN(value))
+        if(!Double.isNaN(value) && value != Constants.NOTRATEDRATING)
             newValue = value;
         else if(!this.ignoreNotRated)
             newValue = Constants.NOTRATEDNOTIGNORED;

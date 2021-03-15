@@ -8,11 +8,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation;
 
-import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableItemIndex;
-import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
-import es.uam.eps.ir.knnbandit.utils.FastRating;
-
-import it.unimi.dsi.fastutil.ints.IntList;
+import es.uam.eps.ir.knnbandit.utils.Rating;
 import org.jooq.lambda.tuple.Tuple3;
 
 import java.util.List;
@@ -27,60 +23,8 @@ import java.util.stream.Stream;
  * @author Javier Sanz-Cruzado Puig (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public abstract class InteractiveRecommender<U, I>
+public interface InteractiveRecommender<U, I>
 {
-    /**
-     * User index.
-     */
-    protected final FastUpdateableUserIndex<U> uIndex;
-    /**
-     * Item index.
-     */
-    protected final FastUpdateableItemIndex<I> iIndex;
-    /**
-     * The random number seed
-     */
-    protected final int rngSeed;
-    /**
-     * Random number generator.
-     */
-    protected Random rng;
-    /**
-     * True if the algorithm ignores the not rated ratings.
-     */
-    protected boolean ignoreNotRated;
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex    User index.
-     * @param iIndex    Item index.
-     * @param ignoreNotRated true if we only consider known ratings, false otherwise.
-     */
-    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated)
-    {
-        this.uIndex = uIndex;
-        this.iIndex = iIndex;
-        this.rngSeed = 0;
-        this.ignoreNotRated = ignoreNotRated;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uIndex    User index.
-     * @param iIndex    Item index.
-     * @param ignoreNotRated true if we only consider known ratings, false otherwise.
-     * @param rngSeed the random number generator seed.
-     */
-    public InteractiveRecommender(FastUpdateableUserIndex<U> uIndex, FastUpdateableItemIndex<I> iIndex, boolean ignoreNotRated, int rngSeed)
-    {
-        this.uIndex = uIndex;
-        this.iIndex = iIndex;
-        this.rngSeed = rngSeed;
-        this.ignoreNotRated = ignoreNotRated;
-    }
-
     /**
      * Initializes the specific variables of a method.
      */

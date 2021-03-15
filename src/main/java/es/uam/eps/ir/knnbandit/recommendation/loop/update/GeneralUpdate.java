@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static es.uam.eps.ir.knnbandit.Constants.NOTRATEDRATING;
+
 /**
  * General recommendation update. It assumes that, if we do receive the (uidx, iidx) value,
  * we take its payoff, and use it for updating both recommenders and metrics.
@@ -49,7 +51,7 @@ public class GeneralUpdate<U,I> implements UpdateStrategy<U,I>
         {
             Optional<Double> value = dataset.getPreference(uidx, iidx);
             List<FastRating> list = new ArrayList<>();
-            list.add(new FastRating(uidx, iidx, value.orElse(Double.NaN)));
+            list.add(new FastRating(uidx, iidx, value.orElse(NOTRATEDRATING)));
             return new Pair<>(list, list);
         }
         return new Pair<>(new ArrayList<>(), new ArrayList<>());
@@ -68,8 +70,8 @@ public class GeneralUpdate<U,I> implements UpdateStrategy<U,I>
             if(selection.isAvailable(uidx, item.v1))
             {
                 Optional<Double> value = dataset.getPreference(uidx, iidx);
-                fastRatingList.add(new FastRating(uidx, iidx, value.orElse(Double.NaN)));
-                ranking.add(new Tuple2id(iidx, value.orElse(Double.NaN)));
+                fastRatingList.add(new FastRating(uidx, iidx, value.orElse(NOTRATEDRATING)));
+                ranking.add(new Tuple2id(iidx, value.orElse(NOTRATEDRATING)));
             }
         }
 

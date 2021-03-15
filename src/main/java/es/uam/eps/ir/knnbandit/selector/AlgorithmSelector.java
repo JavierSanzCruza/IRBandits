@@ -162,7 +162,7 @@ public class AlgorithmSelector<U, I>
                 conf = new MultiArmedBanditEnsembleConfigurator<>();
                 break;
             case AlgorithmIdentifiers.RANKINGCOMB:
-                conf = new RankingCombinerConfigurator<>();
+                conf = new RankingCombinerConfigurator<>(this.relevanceChecker);
                 break;
             default:
                 conf = null;

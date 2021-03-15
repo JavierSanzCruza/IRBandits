@@ -326,7 +326,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             List<FastRating> recValues = updateValues.v1();
             for(FastRating value : recValues)
             {
-                recommender.update(value.uidx(), value.iidx(), value.value());
+                recommender.fastUpdate(value.uidx(), value.iidx(), value.value());
                 selection.update(value.uidx(), value.iidx(), value.value());
             }
         });
@@ -341,7 +341,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             List<FastRating> recValues = updateValues.v1();
             for(FastRating value : recValues)
             {
-                recommender.update(value.uidx(), value.iidx(), value.value());
+                recommender.fastUpdate(value.uidx(), value.iidx(), value.value());
                 selection.update(value.uidx(), value.iidx(), value.value());
             }
         });

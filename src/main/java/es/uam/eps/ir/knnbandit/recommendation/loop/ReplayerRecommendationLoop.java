@@ -62,7 +62,7 @@ public class ReplayerRecommendationLoop<U,I> extends GenericRecommendationLoop<U
 
         for(FastRating value : recValues)
         {
-            recommender.update(value.uidx(), value.iidx(),value.value());
+            recommender.fastUpdate(value.uidx(), value.iidx(), value.value());
         }
 
         // Then, update the metrics:

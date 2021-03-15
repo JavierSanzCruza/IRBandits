@@ -18,6 +18,8 @@ import es.uam.eps.ir.knnbandit.selector.AlgorithmIdentifiers;
 import es.uam.eps.ir.knnbandit.selector.AlgorithmSelector;
 import org.json.JSONObject;
 
+import java.util.function.DoublePredicate;
+
 /**
  * Class for configuring a RankingCombiner algorithm.
  * @param <U> type of the users.
@@ -49,6 +51,20 @@ public class RankingCombinerConfigurator<U,I> extends AbstractAlgorithmConfigura
      */
     private static final String LAMBDA = "lambda";
 
+    /**
+     * Checks whether a value is relevant or not for an algorithm.
+     */
+    private final DoublePredicate predicate;
+
+    /**
+     * Constructor.
+     * @param predicate checks whether a value is relevant or not for an algorithm.
+     */
+    public RankingCombinerConfigurator(DoublePredicate predicate)
+    {
+        this.predicate = predicate;
+    }
+
     @Override
     public InteractiveRecommenderSupplier<U, I> getAlgorithm(JSONObject object)
     {
@@ -59,6 +75,7 @@ public class RankingCombinerConfigurator<U,I> extends AbstractAlgorithmConfigura
         }
 
         AlgorithmSelector<U,I> selector = new AlgorithmSelector<>();
+        selector.configure(predicate);
         // Select the base algorithm
         JSONObject firstAlgorithm = object.getJSONObject(FIRST);
         InteractiveRecommenderSupplier<U,I> first = selector.getAlgorithm(firstAlgorithm);

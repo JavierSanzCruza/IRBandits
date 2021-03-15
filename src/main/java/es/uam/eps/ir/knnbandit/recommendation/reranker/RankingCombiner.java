@@ -12,7 +12,6 @@ import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdatea
 import es.uam.eps.ir.knnbandit.data.preference.updateable.index.fast.FastUpdateableUserIndex;
 import es.uam.eps.ir.knnbandit.recommendation.AbstractInteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.FastInteractiveRecommender;
-import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.utils.FastRating;
 import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
@@ -130,7 +129,7 @@ public class RankingCombiner<U,I> extends AbstractInteractiveRecommender<U, I>
         // ranking combination using the rank-sim normalization.
         for(int iidx : fastRerRec)
         {
-            double value = (1.0-lambda)*map.get(fastRerRec) + lambda*(size - i + 0.0)/(size + 0.0);
+            double value = (1.0-lambda)*map.get(iidx) + lambda*(size - i + 0.0)/(size + 0.0);
             if(value > max)
             {
                 top.clear();
@@ -177,7 +176,7 @@ public class RankingCombiner<U,I> extends AbstractInteractiveRecommender<U, I>
         PriorityQueue<Tuple2id> queue = new PriorityQueue<>(num, Comparator.comparingDouble(x -> x.v2));
         for(int iidx : fastRerRec)
         {
-            double val = (1.0-lambda)*map.get(fastRerRec) + lambda*(size - i + 0.0)/(size + 0.0);
+            double val = (1.0-lambda)*map.get(iidx) + lambda*(size - i + 0.0)/(size + 0.0);
             if(queue.size() < num)
             {
                 queue.add(new Tuple2id(iidx, val));
