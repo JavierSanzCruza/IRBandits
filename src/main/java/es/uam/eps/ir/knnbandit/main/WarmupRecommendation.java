@@ -70,7 +70,7 @@ public abstract class WarmupRecommendation<U,I>
      * @param output folder in which to store the outcomes.
      * @param endCond end condition for the recommendation loop.
      * @param resume true if we want to retrieve previous values.
-     * @param warmupData file containing a previous warmup execution.
+     * @param warmupData file containing a previous warmup execution. If it is a folder, executes the recommendation for each file.
      * @param partition the partition strategy.
      * @param numParts the number of parts.
      * @param k the number of times we want to execute each approach.
@@ -112,36 +112,68 @@ public abstract class WarmupRecommendation<U,I>
             }
         }
 
-        // Read the warmup data
-        Reader warmupReader = warmupIOSelector.getReader();
-        InputStream stream = warmupIOSelector.getInputStream(warmupData);
-        List<Pair<Integer>> train = warmupReader.readFile(stream);
-        System.out.println("The warmup data has been read");
+        // Read the warmup data:
+        List<List<Pair<Integer>>> warmups = new ArrayList<>();
+        List<List<Integer>> splits = new ArrayList<>();
+        File f = new File(warmupData);
 
-        List<Integer> splitPoints;
-        if(Double.isNaN(percTrain) || percTrain <= 0.0 || percTrain >= 1.0)
+        // We check the different warm-up files we want to use. We assume that they are similar to each other
+        // (for example, they have the same number of ratings / the same number of positive ratings).
+        List<String> files = new ArrayList<>();
+        if(f.isDirectory())
         {
-            splitPoints = partition.split(dataset, train, numParts);
+            File[] listFiles = f.listFiles();
+            assert listFiles != null;
+            for(File file : listFiles)
+            {
+                if(!f.isDirectory())
+                    files.add(file.getAbsolutePath());
+            }
         }
         else
         {
-            splitPoints = new ArrayList<>();
-            for(int i = 0; i < numParts; ++i)
-            {
-                splitPoints.add(partition.split(dataset, train, percTrain*(i+1.0)));
-            }
+            files.add(warmupData);
         }
 
-        // We parallely execute the different parts.
+        // Then, we read the warm-up data:
+        for(String file : files)
+        {
+            // Read the warmup data
+            Reader warmupReader = warmupIOSelector.getReader();
+            InputStream stream = warmupIOSelector.getInputStream(file);
+            List<Pair<Integer>> train = warmupReader.readFile(stream);
+            System.out.println("The warmup data has been read");
+
+            List<Integer> splitPoints;
+            if(Double.isNaN(percTrain) || percTrain <= 0.0 || percTrain >= 1.0)
+            {
+                splitPoints = partition.split(dataset, train, numParts);
+            }
+            else
+            {
+                splitPoints = new ArrayList<>();
+                for(int i = 0; i < numParts; ++i)
+                {
+                    splitPoints.add(partition.split(dataset, train, percTrain*(i+1.0)));
+                }
+            }
+
+            warmups.add(train);
+            splits.add(splitPoints);
+        }
+
+
+        int numWarmups = warmups.size();
+        // We execute the different parts in parallel.
         IntStream.range(0, numParts).parallel().forEach(part ->
         {
             try
             {
                 String currentOutputFolder = outputFolder + part + File.separator;
-                File f = new File(currentOutputFolder);
-                if (!f.exists())
+                File faux = new File(currentOutputFolder);
+                if (!faux.exists())
                 {
-                    if (!f.mkdirs())
+                    if (!faux.mkdirs())
                     {
                         System.err.println("ERROR: Invalid output folder");
                         return;
@@ -149,6 +181,25 @@ public abstract class WarmupRecommendation<U,I>
                 }
 
                 System.out.println("Started part " + (part + 1) + "/" + numParts);
+
+                // We first initialize the corresponding part:
+                List<Warmup> warmupList = new ArrayList<>();
+                for(int j = 0; j < numWarmups; ++j)
+                {
+                    List<Pair<Integer>> train = warmups.get(j);
+                    List<Integer> splitPoints = splits.get(j);
+                    List<Pair<Integer>> partTrain = train.subList(0, splitPoints.get(part));
+                    Warmup warmup = this.getWarmup(partTrain);
+                    int notRel = warmup.getNumRel();
+
+                    warmupList.add(warmup);
+
+                    System.out.println("WARMUP " + j + "for part " + part + " . Split: ");
+                    System.out.println("Training: " + splitPoints.get(part) + " recommendations (" + (part + 1) + "/" + numParts + ")");
+                    System.out.println(dataset.toString());
+                    System.out.println("Training recommendations: " + splitPoints.get(part) + " (" + (part + 1) + "/" + numParts + ")");
+                    System.out.println("Relevant recommendations (with training): " + (dataset.getNumRel() - notRel));
+                }
 
                 AlgorithmSelector<U, I> algorithmSelector = new AlgorithmSelector<>();
                 algorithmSelector.configure(dataset.getRelevanceChecker());
@@ -158,15 +209,6 @@ public abstract class WarmupRecommendation<U,I>
 
                 // Obtain the lists: only the first "numParts" algorithms shall be considered
                 System.out.println("Recommenders for part " + (part + 1) + " prepared (" + (b - a) + " ms.)");
-
-                List<Pair<Integer>> partTrain = train.subList(0, splitPoints.get(part));
-                Warmup warmup = this.getWarmup(partTrain);
-                int notRel = warmup.getNumRel();
-
-                System.out.println("Training: " + splitPoints.get(part) + " recommendations (" + (part + 1) + "/" + numParts + ")");
-                System.out.println(dataset.toString());
-                System.out.println("Training recommendations: " + splitPoints.get(part) + " (" + (part + 1) + "/" + numParts + ")");
-                System.out.println("Relevant recommendations (with training): " + (dataset.getNumRel() - notRel));
 
                 // Run each algorithm
                 recs.forEach((name, rec) ->
@@ -182,68 +224,69 @@ public abstract class WarmupRecommendation<U,I>
                     // Configure and initialize the recommendation loop:
                     System.out.println("Starting algorithm " + name + " for the " + (part + 1) + "/" + numParts + " part.");
                     long aaa = System.nanoTime();
-                    // Create a map storing the average values for each metric:
-                    Map<String, Double> averagedLastIteration = new HashMap<>();
-                    this.getMetrics().keySet().forEach(metricName -> averagedLastIteration.put(metricName, 0.0));
 
-                    // Execute each recommender k times.
-                    for (int i = 0; i < k; ++i)
+                    // For each warm-up file, execute the recommendation k times.
+                    for(int j = 0; j < numWarmups; ++j)
                     {
-                        // Obtain the random seed:
-                        int rngSeed = rngSeedGen.nextSeed();
-                        long bbb = System.nanoTime();
-                        System.out.println("Algorithm " + name + " (" + i + ") " + " for the " + (part + 1) + "/" + numParts + " split starting (" + (bbb - aaa) / 1000000.0 + " ms.)");
-
-                        // Create the recommendation loop: in this case, a general offline dataset loop
-                        FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
-                        // Execute the loop:
-                        Executor<U, I> executor = new Executor<>(ioSelector);
-                        String fileName = currentOutputFolder + name + "_" + i + ".txt" + ((ioSelector.isCompressed()) ? ".gz" : "");
-                        Map<String, List<Double>> metricValues = executor.executeWithWarmup(loop, fileName, resume, interval, warmup);
-                        int currentIter = loop.getCurrentIter();
-                        if (currentIter > 0) // if at least one iteration has been recorded:
+                        // Execute each recommender k times.
+                        for (int i = 0; i < k; ++i)
                         {
-                            int currentSize = counter.size();
-                            String someMetric = new TreeSet<>(getMetrics().keySet()).first();
-                            int auxSize = metricValues.get(someMetric).size();
+                            // Obtain the random seed:
+                            int rngSeed = rngSeedGen.nextSeed();
+                            long bbb = System.nanoTime();
+                            System.out.println("Algorithm " + name + " (" + j*k + i + ") " + " for the " + (part + 1) + "/" + numParts + " split starting (" + (bbb - aaa) / 1000000.0 + " ms.)");
 
-                            if (auxSize > currentSize)
+                            // Create the recommendation loop: in this case, a general offline dataset loop
+                            FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
+                            // Execute the loop:
+                            Executor<U, I> executor = new Executor<>(ioSelector);
+                            String fileName = currentOutputFolder + name + "_" + (j*k + i) + ".txt" + ((ioSelector.isCompressed()) ? ".gz" : "");
+                            Map<String, List<Double>> metricValues = executor.executeWithWarmup(loop, fileName, resume, interval, warmupList.get(j));
+                            int currentIter = loop.getCurrentIter();
+                            if (currentIter > 0) // if at least one iteration has been recorded:
                             {
-                                IntStream.range(currentSize, auxSize).forEach(j -> counter.add(1));
-                            }
-                            IntStream.range(0, Math.min(auxSize,currentSize)).forEach(j -> counter.set(j, counter.get(j) + 1));
+                                int currentSize = counter.size();
+                                String someMetric = new TreeSet<>(getMetrics().keySet()).first();
+                                int auxSize = metricValues.get(someMetric).size();
 
-                            //Map<String, Double> metricValues = loop.getMetricValues();
-                            for (String metric : this.getMetrics().keySet())
-                            {
-                                List<Double> newVals = metricValues.get(metric);
-
-                                if (i == 0)
+                                if (auxSize > currentSize)
                                 {
-                                    averagedValues.get(metric).addAll(newVals);
+                                    IntStream.range(currentSize, auxSize).forEach(l -> counter.add(1));
                                 }
-                                else
+                                IntStream.range(0, Math.min(auxSize, currentSize)).forEach(l -> counter.set(l, counter.get(l) + 1));
+
+                                //Map<String, Double> metricValues = loop.getMetricValues();
+                                for (String metric : this.getMetrics().keySet())
                                 {
-                                    List<Double> oldVals = averagedValues.get(metric);
-                                    for (int j = 0; j < auxSize; ++j)
+                                    List<Double> newVals = metricValues.get(metric);
+
+                                    if (i == 0)
                                     {
-                                        if (j >= currentSize)
+                                        averagedValues.get(metric).addAll(newVals);
+                                    }
+                                    else
+                                    {
+                                        List<Double> oldVals = averagedValues.get(metric);
+                                        for (int l = 0; l < auxSize; ++l)
                                         {
-                                            averagedValues.get(metric).add(newVals.get(j));
-                                        }
-                                        else
-                                        {
-                                            double oldM = oldVals.get(j);
-                                            double averaged = oldM + (newVals.get(j) - oldM) / (counter.get(j));
-                                            oldVals.set(j, averaged);
+                                            if (l >= currentSize)
+                                            {
+                                                averagedValues.get(metric).add(newVals.get(l));
+                                            }
+                                            else
+                                            {
+                                                double oldM = oldVals.get(l);
+                                                double averaged = oldM + (newVals.get(l) - oldM) / (counter.get(l));
+                                                oldVals.set(l, averaged);
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        bbb = System.nanoTime();
-                        System.out.println("Algorithm " + name + " (" + i + ") " + " for the " + (part+1) + "/" + numParts + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                            bbb = System.nanoTime();
+                            System.out.println("Algorithm " + name + " (" + j*k + i + ") " + " for the " + (part + 1) + "/" + numParts + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                        }
                     }
 
                     int size = counter.size();
@@ -269,14 +312,15 @@ public abstract class WarmupRecommendation<U,I>
                         System.err.println("ERROR: Something ocurred while writing the summary for algorithm " + name);
                     }
 
-                    long bbb = System.nanoTime();
-                    System.out.println("Algorithm " + name + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
+                        long bbb = System.nanoTime();
+                        System.out.println("Algorithm " + name + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
                 });
             }
             catch(UnconfiguredException ioe)
             {
                 System.err.println("ERROR: Something occurred while reading the algorithm list");
             }
+
         });
     }
 
