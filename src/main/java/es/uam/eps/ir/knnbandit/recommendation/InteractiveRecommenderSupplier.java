@@ -42,4 +42,13 @@ public interface InteractiveRecommenderSupplier<U,I>
      * @return the name of the algorithm.
      */
     String getName();
+
+    /**
+     * Obtains whether the recommendation algorithm to execute is an ensemble.
+     * @return true if it is an ensemble, false otherwise.
+     */
+    default boolean isEnsemble()
+    {
+        return false;
+    }
 }

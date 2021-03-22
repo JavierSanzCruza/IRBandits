@@ -9,6 +9,7 @@
  */
 package es.uam.eps.ir.knnbandit.recommendation.loop;
 
+import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.warmup.Warmup;
 import es.uam.eps.ir.ranksys.core.Recommendation;
 import org.jooq.lambda.tuple.Tuple2;
@@ -110,4 +111,10 @@ public interface RecommendationLoop<U,I>
      * @return the number of items to recommend each time.
      */
     int getCutoff();
+
+    /**
+     * Obtains the current interactive recommendation algorithm in the loop.
+     * @return the interactive recommendation algorithm.
+     */
+    InteractiveRecommender<U,I> getRecommender();
 }

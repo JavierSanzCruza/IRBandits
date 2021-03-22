@@ -141,6 +141,10 @@ public class AvgRecommender<U, I> extends AbstractBasicInteractiveRecommender<U,
             {
                 nextItem = top.get(0);
             }
+            else if(size == 0)
+            {
+                nextItem = availability.get(rng.nextInt(availability.size()));
+            }
             else
             {
                 nextItem = top.get(rng.nextInt(size));

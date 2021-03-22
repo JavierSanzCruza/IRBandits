@@ -246,4 +246,10 @@ public abstract class AbstractEnsemble<U,I> extends AbstractInteractiveRecommend
      * @return the identifier of the next recommendation algorithm to apply.
      */
     protected abstract int selectAlgorithm(int uidx);
+
+    @Override
+    public void setCurrentAlgorithm(int idx)
+    {
+        this.currentAlgorithm = idx;
+    }
 }

@@ -13,6 +13,7 @@ import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple3;
+import org.jooq.lambda.tuple.Tuple4;
 import org.ranksys.core.util.tuples.Tuple2id;
 import org.ranksys.formats.parsing.Parsers;
 
@@ -27,7 +28,7 @@ import java.util.List;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class TextReader implements Reader
+public class TextReader implements EnsembleReader
 {
     /**
      * A writer, for printing the results into a file.
@@ -180,6 +181,115 @@ public class TextReader implements Reader
             }
 
             list.add(new Pair<>(Parsers.ip.parse(split[1]), Parsers.ip.parse(split[2])));
+        }
+        this.close();
+        return list;
+    }
+
+    @Override
+    public Tuple4<Integer, FastRecommendation, Long, String> readIterationEnsemble() throws IOException
+    {
+        if(nextLine == null)
+        {
+            nextLine = br.readLine();
+            if(nextLine == null)
+            {
+                return null;
+            }
+        }
+
+        String[] split = nextLine.split("\t");
+        int currentIter = Parsers.ip.parse(split[0]);
+        int uidx = Parsers.ip.parse(split[1]);
+        int iidx = Parsers.ip.parse(split[2]);
+        long time = Parsers.lp.parse(split[split.length-2]);
+        String algorithm = split[split.length-1];
+        IntList recs = new IntArrayList();
+        recs.add(iidx);
+
+        boolean stop = false;
+        boolean store = true;
+
+        while(!stop)
+        {
+            nextLine = br.readLine();
+            if(nextLine != null)
+            {
+                split = nextLine.split("\t");
+                int iter = Parsers.ip.parse(split[0]);
+                if(iter != currentIter)
+                {
+                    stop = true;
+                }
+
+                if(split.length < headerSize)
+                {
+                    nextLine = null;
+                    store = stop;
+                }
+                else if(!stop)
+                {
+                    iidx = Parsers.ip.parse(split[2]);
+                    recs.add(iidx);
+                }
+            }
+            else
+            {
+                stop = true;
+            }
+        }
+
+        if(store)
+        {
+            List<Tuple2id> rec = new ArrayList<>();
+            for (int i = 0; i < recs.size(); ++i)
+            {
+                rec.add(new Tuple2id(recs.getInt(i), (recs.size() - i + 0.0) / (recs.size() + 0.0)));
+            }
+
+            return new Tuple4<>(currentIter, new FastRecommendation(uidx, rec), time, algorithm);
+        }
+
+        return null;
+    }
+
+    @Override
+    public List<Tuple3<Integer, Integer, String>> readEnsembleFile(String filename) throws IOException
+    {
+        this.initialize(filename);
+        List<String> header = this.readHeader();
+        List<Tuple3<Integer, Integer, String>> list = new ArrayList<>();
+        String line;
+        while((line = br.readLine()) != null)
+        {
+            String[] split = line.split("\t");
+            if(split.length < header.size())
+            {
+                break;
+            }
+
+            list.add(new Tuple3<>(Parsers.ip.parse(split[1]), Parsers.ip.parse(split[2]), split[split.length-1]));
+        }
+        this.close();
+        return list;
+    }
+
+    @Override
+    public List<Tuple3<Integer, Integer, String>> readEnsembleFile(InputStream stream) throws IOException
+    {
+        this.initialize(stream);
+        List<String> header = this.readHeader();
+        List<Tuple3<Integer, Integer, String>> list = new ArrayList<>();
+        String line;
+        while((line = br.readLine()) != null)
+        {
+            String[] split = line.split("\t");
+            if(split.length < header.size())
+            {
+                break;
+            }
+
+            list.add(new Tuple3<>(Parsers.ip.parse(split[1]), Parsers.ip.parse(split[2]), split[split.length-1]));
         }
         this.close();
         return list;

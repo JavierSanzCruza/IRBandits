@@ -19,7 +19,7 @@ import java.io.*;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class BinaryWriter implements Writer
+public class BinaryWriter implements EnsembleWriter
 {
     /**
      * The output stream.
@@ -73,5 +73,35 @@ public class BinaryWriter implements Writer
     {
         output.close();
         output = null;
+    }
+
+    @Override
+    public void writeEnsembleLine(int numIter, int uidx, int iidx, long time, String algorithm) throws IOException
+    {
+        output.writeInt(numIter);
+        output.writeInt(uidx);
+        output.writeInt(1);
+        output.writeInt(iidx);
+        output.writeLong(time);
+        output.writeUTF(algorithm);
+    }
+
+    @Override
+    public void writeEnsembleRanking(int numIter, FastRecommendation rec, long time, String algorithm) throws IOException
+    {
+        output.writeInt(numIter);
+        output.writeInt(rec.getUidx());
+        output.writeInt(rec.getIidxs().size());
+        for(Tuple2id iidx : rec.getIidxs())
+        {
+            output.writeInt(iidx.v1);
+        }
+        output.writeLong(time);
+        output.writeUTF(algorithm);
+    }
+
+    @Override
+    public void writeEnsembleHeader()
+    {
     }
 }

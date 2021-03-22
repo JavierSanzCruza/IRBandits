@@ -66,5 +66,7 @@ public interface FastRecommendationLoop<U,I> extends RecommendationLoop<U,I>
     void fastUpdateNotRec(FastRecommendation rec);
     void fastUpdateRec(Stream<Pair<Integer>> pair);
     void fastUpdateRecList(Stream<FastRecommendation> recs);
+    void fastUpdateRec(int uidx, int iidx);
+    void fastUpdateRec(FastRecommendation rec);
 
 }

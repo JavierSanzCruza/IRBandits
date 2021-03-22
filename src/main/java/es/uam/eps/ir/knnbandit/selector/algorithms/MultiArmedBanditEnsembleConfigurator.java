@@ -166,5 +166,11 @@ public class MultiArmedBanditEnsembleConfigurator<U,I> extends AbstractAlgorithm
         {
             return AlgorithmIdentifiers.BANDITENSEMBLE + "-" + banditSupplier.getName() + "-" + (ignoreUnknown ? "ignore" : "all");
         }
+
+        @Override
+        public boolean isEnsemble()
+        {
+            return true;
+        }
     }
 }

@@ -182,5 +182,11 @@ public class DynamicEnsembleConfigurator<U,I> extends AbstractAlgorithmConfigura
         {
             return AlgorithmIdentifiers.RANKINGCOMB + "-" + numEpochs + "-" + validCutoff + "-" + percValid;
         }
+
+        @Override
+        public boolean isEnsemble()
+        {
+            return true;
+        }
     }
 }

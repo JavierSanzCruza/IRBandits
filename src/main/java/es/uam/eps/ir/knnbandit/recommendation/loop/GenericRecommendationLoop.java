@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.recommendation.loop;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.FastInteractiveRecommender;
+import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommender;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.loop.end.EndCondition;
 import es.uam.eps.ir.knnbandit.recommendation.loop.selection.Selection;
@@ -348,6 +349,30 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     }
 
     @Override
+    public void fastUpdateRec(int uidx, int iidx)
+    {
+        Pair<List<FastRating>> updateValues = this.update.selectUpdate(uidx, iidx, this.selection);
+        List<FastRating> recValues = updateValues.v1();
+        for(FastRating value : recValues)
+        {
+            recommender.fastUpdate(value.uidx(), value.iidx(), value.value());
+            selection.update(value.uidx(), value.iidx(), value.value());
+        }
+    }
+
+    @Override
+    public void fastUpdateRec(FastRecommendation rec)
+    {
+        Tuple2<List<FastRating>, FastRecommendation> updateValues = this.update.selectUpdate(rec, this.selection);
+        List<FastRating> recValues = updateValues.v1();
+        for(FastRating value : recValues)
+        {
+            recommender.fastUpdate(value.uidx(), value.iidx(), value.value());
+            selection.update(value.uidx(), value.iidx(), value.value());
+        }
+    }
+
+    @Override
     public Tuple2<U,I> nextIteration()
     {
         Pair<Integer> rec = this.fastNextRecommendation();
@@ -418,5 +443,11 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     public int getCutoff()
     {
         return this.cutoff;
+    }
+
+    @Override
+    public InteractiveRecommender<U, I> getRecommender()
+    {
+        return this.recommender;
     }
 }

@@ -60,4 +60,10 @@ public interface Ensemble<U, I> extends InteractiveRecommender<U,I>
      * if the algorithm does not exist or success information is not available.
      */
     Pair<Integer> getAlgorithmStats(int idx);
+
+    /**
+     * Sets the current algorithm in the ensemble to apply.
+     * @param idx the identifier of the algorithm.
+     */
+    void setCurrentAlgorithm(int idx);
 }

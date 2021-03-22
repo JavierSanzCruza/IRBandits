@@ -66,7 +66,6 @@ public interface Reader
      */
     List<Pair<Integer>> readFile(String filename) throws IOException;
 
-
     /**
      * Reads a whole file, and obtains the different user-item pairs.
      * @param stream an input stream.

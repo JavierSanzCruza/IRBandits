@@ -206,10 +206,9 @@ public abstract class WarmupValidation<U,I>
                     FastRecommendationLoop<U, I> loop = this.getRecommendationLoop(validDataset, rec, endCond.get(), rngSeed);
 
                     // Execute the loop:
-                    Executor<U, I> executor = new Executor<>(ioSelector);
+                    Executor<U,I> executor = rec.isEnsemble() ? new EnsembleExecutor<>(ioSelector) : new BasicExecutor<>(ioSelector);
                     String fileName = currentOutputFolder + name + "_" + i + ".txt" + ((ioSelector.isCompressed()) ? ".gz" : "");
-                    executor.executeWithWarmup(loop, fileName, resume, interval, warmup);
-                    int currentIter = loop.getCurrentIter();
+                    int currentIter = executor.executeWithWarmup(loop, fileName, resume, interval, warmup);
                     if (currentIter > 0) // if at least one iteration has been recorded:
                     {
                         Map<String, Double> metricValues = loop.getMetricValues();

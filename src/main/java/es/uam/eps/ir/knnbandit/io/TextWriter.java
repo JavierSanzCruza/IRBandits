@@ -19,7 +19,7 @@ import java.io.*;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class TextWriter implements Writer
+public class TextWriter implements EnsembleWriter
 {
     /**
      * A writer, for printing the results into a file.
@@ -79,5 +79,38 @@ public class TextWriter implements Writer
             this.bw.close();
         }
         this.bw = null;
+    }
+
+    @Override
+    public void writeEnsembleLine(int numIter, int uidx, int iidx, long time, String algorithm) throws IOException
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.append("\n");
+        builder.append(numIter);
+        builder.append("\t");
+        builder.append(uidx);
+        builder.append("\t");
+        builder.append(iidx);
+        builder.append("\t");
+        builder.append(time);
+        builder.append("\t");
+        builder.append(algorithm);
+        bw.write(builder.toString());
+    }
+
+    @Override
+    public void writeEnsembleRanking(int numIter, FastRecommendation rec, long time, String algorithm) throws IOException
+    {
+        int uidx = rec.getUidx();
+        for(Tuple2id iidx : rec.getIidxs())
+        {
+            this.writeEnsembleLine(numIter, uidx, iidx.v1, time, algorithm);
+        }
+    }
+
+    @Override
+    public void writeEnsembleHeader() throws IOException
+    {
+        bw.write("numIter\tuidx\tiidx\ttime\talgorithm");
     }
 }

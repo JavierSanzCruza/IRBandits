@@ -11,6 +11,7 @@ package es.uam.eps.ir.knnbandit.io;
 import es.uam.eps.ir.knnbandit.utils.Pair;
 import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 import org.jooq.lambda.tuple.Tuple3;
+import org.jooq.lambda.tuple.Tuple4;
 import org.ranksys.core.util.tuples.Tuple2id;
 
 import java.io.*;
@@ -23,7 +24,7 @@ import java.util.List;
  * @author Javier Sanz-Cruzado (javier.sanz-cruzado@uam.es)
  * @author Pablo Castells (pablo.castells@uam.es)
  */
-public class BinaryReader implements Reader
+public class BinaryReader implements EnsembleReader
 {
     /**
      * The input stream.
@@ -113,6 +114,69 @@ public class BinaryReader implements Reader
             for(Tuple2id tuple : indiv.v2.getIidxs())
             {
                 rec.add(new Pair<>(uidx, tuple.v1));
+            }
+        }
+        this.close();
+        return rec;
+    }
+
+    @Override
+    public Tuple4<Integer, FastRecommendation, Long, String> readIterationEnsemble() throws IOException
+    {
+        try
+        {
+            int numIter = inputStream.readInt();
+            int uidx = inputStream.readInt();
+            int numItems = inputStream.readInt();
+            List<Tuple2id> list = new ArrayList<>();
+            long time;
+
+            for(int i = 0; i < numItems; ++i)
+            {
+                list.add(new Tuple2id(inputStream.readInt(), (numItems-i+0.0)/(numItems)));
+            }
+            time = inputStream.readLong();
+            String algorithm = inputStream.readUTF();
+            return new Tuple4<>(numIter, new FastRecommendation(uidx, list), time, algorithm);
+        }
+        catch(EOFException eof)
+        {
+            return null;
+        }
+    }
+
+    @Override
+    public List<Tuple3<Integer, Integer, String>> readEnsembleFile(String filename) throws IOException
+    {
+        this.initialize(filename);
+        this.readHeader();
+        List<Tuple3<Integer, Integer, String>> rec = new ArrayList<>();
+        Tuple4<Integer, FastRecommendation, Long, String> indiv;
+        while((indiv = this.readIterationEnsemble()) != null)
+        {
+            int uidx = indiv.v2.getUidx();
+            for(Tuple2id tuple : indiv.v2.getIidxs())
+            {
+                rec.add(new Tuple3<>(uidx, tuple.v1, indiv.v4));
+            }
+        }
+        this.close();
+        return rec;
+    }
+
+    @Override
+    public List<Tuple3<Integer, Integer, String>> readEnsembleFile(InputStream stream) throws IOException
+    {
+        this.initialize(stream);
+        this.readHeader();
+        List<Tuple3<Integer, Integer, String>> rec = new ArrayList<>();
+        Tuple4<Integer, FastRecommendation, Long, String> indiv;
+        while((indiv = this.readIterationEnsemble()) != null)
+        {
+            int uidx = indiv.v2.getUidx();
+            for(Tuple2id tuple : indiv.v2.getIidxs())
+            {
+                rec.add(new Tuple3<>(uidx, tuple.v1, indiv.v4));
             }
         }
         this.close();

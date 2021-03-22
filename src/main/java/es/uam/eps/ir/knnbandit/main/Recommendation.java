@@ -122,10 +122,11 @@ public abstract class Recommendation<U,I>
                 // Create the recommendation loop: in this case, a general offline dataset loop
                 FastRecommendationLoop<U,I> loop = this.getRecommendationLoop(rec, endCond.get(), rngSeed);
                 // Execute the loop:
-                Executor<U, I> executor = new Executor<>(ioSelector);
+                Executor<U,I> executor = rec.isEnsemble() ? new EnsembleExecutor<>(ioSelector) : new BasicExecutor<>(ioSelector);
                 String fileName = outputFolder + name + "_" + i + ".txt" + ((ioSelector.isCompressed()) ? ".gz" : "");
-                Map<String, List<Double>> metricValues = executor.executeWithoutWarmup(loop, fileName, resume, interval);
-                int currentIter = loop.getCurrentIter();
+
+                int currentIter = executor.executeWithoutWarmup(loop, fileName, resume, interval);
+                Map<String, List<Double>> metricValues = executor.getMetrics();
                 if(currentIter > 0) // if at least one iteration has been recorded:
                 {
                     int currentSize = counter.size();
