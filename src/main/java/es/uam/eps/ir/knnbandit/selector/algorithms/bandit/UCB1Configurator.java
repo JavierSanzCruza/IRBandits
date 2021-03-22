@@ -61,7 +61,7 @@ public class UCB1Configurator extends AbstractBanditConfigurator
         @Override
         public String getName()
         {
-            return MultiArmedBanditIdentifiers.UCB1;
+            return MultiArmedBanditIdentifiers.UCB1 + "-" + alpha;
         }
     }
 }
