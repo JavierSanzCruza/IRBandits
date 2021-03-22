@@ -120,6 +120,8 @@ public class ItemCentroidDistance<U,I> extends AbstractInteractiveRecommender<U,
     @Override
     public void init()
     {
+        super.init();
+
         this.retrievedData.clear();
         this.itemScores.clear();
         this.userNorm.clear();
@@ -207,6 +209,10 @@ public class ItemCentroidDistance<U,I> extends AbstractInteractiveRecommender<U,
             if (size == 1)
             {
                 nextItem = top.get(0);
+            }
+            else if(size == 0)
+            {
+                nextItem = availability.get(rng.nextInt(availability.size()));
             }
             else
             {

@@ -100,6 +100,7 @@ public class MaximumCosineUserDistance<U,I> extends AbstractInteractiveRecommend
     @Override
     public void init()
     {
+        super.init();
         this.retrievedData.clear();
         this.sims.clear();
         this.itemScores.clear();
@@ -190,6 +191,10 @@ public class MaximumCosineUserDistance<U,I> extends AbstractInteractiveRecommend
             if (size == 1)
             {
                 nextItem = top.get(0);
+            }
+            else if(size == 0)
+            {
+                nextItem = availability.get(rng.nextInt(availability.size()));
             }
             else
             {

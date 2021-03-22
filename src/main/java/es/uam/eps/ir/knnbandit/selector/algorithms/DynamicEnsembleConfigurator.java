@@ -26,6 +26,7 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.DoublePredicate;
 
 /**
  * Class for configuring a dynamic ensemble.
@@ -66,6 +67,19 @@ public class DynamicEnsembleConfigurator<U,I> extends AbstractAlgorithmConfigura
      * Identifier for the metric name.
      */
     private static final String NAME = "name";
+    /**
+     * Checks whether a value is relevant or not for an algorithm.
+     */
+    private final DoublePredicate predicate;
+
+    /**
+     * Constructor.
+     * @param predicate checks whether a value is relevant or not for an algorithm.
+     */
+    public DynamicEnsembleConfigurator(DoublePredicate predicate)
+    {
+        this.predicate = predicate;
+    }
 
     @Override
     public InteractiveRecommenderSupplier<U, I> getAlgorithm(JSONObject object)
@@ -77,6 +91,7 @@ public class DynamicEnsembleConfigurator<U,I> extends AbstractAlgorithmConfigura
         }
 
         AlgorithmSelector<U,I> selector = new AlgorithmSelector<>();
+        selector.configure(predicate);
 
         JSONArray algorithms = object.getJSONArray(ALGORITHMS);
         Map<String, InteractiveRecommenderSupplier<U,I>> recs = new HashMap<>();

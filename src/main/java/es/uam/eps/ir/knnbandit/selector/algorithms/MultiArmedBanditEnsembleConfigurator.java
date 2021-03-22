@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.DoublePredicate;
 
 /**
  * Class for configuring a dynamic ensemble.
@@ -50,6 +51,20 @@ public class MultiArmedBanditEnsembleConfigurator<U,I> extends AbstractAlgorithm
      */
     private static final String BANDIT = "bandit";
 
+    /**
+     * Checks whether a value is relevant or not for an algorithm.
+     */
+    private final DoublePredicate predicate;
+
+    /**
+     * Constructor.
+     * @param predicate checks whether a value is relevant or not for an algorithm.
+     */
+    public MultiArmedBanditEnsembleConfigurator(DoublePredicate predicate)
+    {
+        this.predicate = predicate;
+    }
+
     @Override
     public List<InteractiveRecommenderSupplier<U, I>> getAlgorithms(JSONArray array)
     {
@@ -67,6 +82,7 @@ public class MultiArmedBanditEnsembleConfigurator<U,I> extends AbstractAlgorithm
             }
 
             AlgorithmSelector<U,I> selector = new AlgorithmSelector<>();
+            selector.configure(predicate);
 
             JSONArray algorithms = object.getJSONArray(ALGORITHMS);
             Map<String, InteractiveRecommenderSupplier<U,I>> recs = new HashMap<>();

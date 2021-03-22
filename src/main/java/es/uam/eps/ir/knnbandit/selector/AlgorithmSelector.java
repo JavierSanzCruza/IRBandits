@@ -156,10 +156,10 @@ public class AlgorithmSelector<U, I>
                 break;
 
             case AlgorithmIdentifiers.DYNAMICENSEMBLE:
-                conf = new DynamicEnsembleConfigurator<>();
+                conf = new DynamicEnsembleConfigurator<>(this.relevanceChecker);
                 break;
             case AlgorithmIdentifiers.BANDITENSEMBLE:
-                conf = new MultiArmedBanditEnsembleConfigurator<>();
+                conf = new MultiArmedBanditEnsembleConfigurator<>(this.relevanceChecker);
                 break;
             case AlgorithmIdentifiers.RANKINGCOMB:
                 conf = new RankingCombinerConfigurator<>(this.relevanceChecker);

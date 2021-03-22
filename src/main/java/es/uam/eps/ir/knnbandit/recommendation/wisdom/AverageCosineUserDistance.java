@@ -91,6 +91,7 @@ public class AverageCosineUserDistance<U,I> extends AbstractInteractiveRecommend
     @Override
     public void init()
     {
+        super.init();
         this.retrievedData.clear();
         this.sim.initialize();
         this.itemScores.clear();
@@ -155,6 +156,10 @@ public class AverageCosineUserDistance<U,I> extends AbstractInteractiveRecommend
             if (size == 1)
             {
                 nextItem = top.get(0);
+            }
+            else if(size == 0)
+            {
+                nextItem = availability.get(rng.nextInt(availability.size()));
             }
             else
             {
