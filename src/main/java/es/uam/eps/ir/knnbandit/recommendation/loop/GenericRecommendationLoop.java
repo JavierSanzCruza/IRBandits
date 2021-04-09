@@ -23,6 +23,7 @@ import es.uam.eps.ir.ranksys.core.Recommendation;
 import es.uam.eps.ir.ranksys.fast.FastRecommendation;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jooq.lambda.tuple.Tuple2;
+import org.jooq.lambda.tuple.Tuple3;
 import org.ranksys.core.util.tuples.Tuple2id;
 import org.ranksys.core.util.tuples.Tuple2od;
 
@@ -161,15 +162,16 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
 
 
     @Override
-    public Pair<Integer> fastNextIteration()
+    public Tuple3<Integer, Integer, Boolean> fastNextIteration()
     {
         Pair<Integer> rec = fastNextRecommendation();
         if(rec != null)
         {
-            this.fastUpdate(rec.v1(), rec.v2());
+            boolean valid = this.fastUpdate(rec.v1(), rec.v2());
             this.increaseIteration();
+            return new Tuple3<>(rec.v1(), rec.v2(), valid);
         }
-        return rec;
+        return null;
     }
 
     @Override
@@ -256,7 +258,7 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
     }
 
     @Override
-    public void fastUpdate(int uidx, int iidx)
+    public boolean fastUpdate(int uidx, int iidx)
     {
         Pair<List<FastRating>> updateValues = this.update.selectUpdate(uidx, iidx, this.selection);
         // First, update the recommender:
@@ -274,10 +276,12 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             metrics.forEach((name, metric) -> metric.update(value.uidx(), value.iidx(),value.value()));
             endCond.update(value.uidx(), value.iidx(),value.value());
         }
+
+        return true;
     }
 
     @Override
-    public void fastUpdate(FastRecommendation rec)
+    public boolean fastUpdate(FastRecommendation rec)
     {
         // First, we do select the values to update:
         Tuple2<List<FastRating>, FastRecommendation> updateValues = this.update.selectUpdate(rec, this.selection);
@@ -291,10 +295,11 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
         FastRecommendation fastRec = updateValues.v2();
         metrics.forEach((name, metric) -> metric.update(fastRec));
         endCond.update(fastRec);
+        return true;
     }
 
     @Override
-    public void fastUpdateNotRec(int uidx, int iidx)
+    public boolean fastUpdateNotRec(int uidx, int iidx)
     {
         Pair<List<FastRating>> updateValues = this.update.selectUpdate(uidx, iidx, this.selection);
 
@@ -304,20 +309,24 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             metrics.forEach((name, metric) -> metric.update(value.uidx(), value.iidx(),value.value()));
             endCond.update(value.uidx(), value.iidx(),value.value());
         }
+
+        return true;
     }
 
     @Override
-    public void fastUpdateNotRec(FastRecommendation rec)
+    public boolean fastUpdateNotRec(FastRecommendation rec)
     {
         Tuple2<List<FastRating>, FastRecommendation> updateValues = this.update.selectUpdate(rec, this.selection);
 
         FastRecommendation fastRec = updateValues.v2();
         metrics.forEach((name, metric) -> metric.update(fastRec));
         endCond.update(fastRec);
+
+        return true;
     }
 
     @Override
-    public void fastUpdateRec(Stream<Pair<Integer>> pairs)
+    public boolean fastUpdateRec(Stream<Pair<Integer>> pairs)
     {
         pairs.forEach(pair ->
         {
@@ -331,10 +340,12 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
                 selection.update(value.uidx(), value.iidx(), value.value());
             }
         });
+
+        return true;
     }
 
     @Override
-    public void fastUpdateRecList(Stream<FastRecommendation> pairs)
+    public boolean fastUpdateRecList(Stream<FastRecommendation> pairs)
     {
         pairs.forEach(fastRec ->
         {
@@ -346,10 +357,12 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
                 selection.update(value.uidx(), value.iidx(), value.value());
             }
         });
+
+        return true;
     }
 
     @Override
-    public void fastUpdateRec(int uidx, int iidx)
+    public boolean fastUpdateRec(int uidx, int iidx)
     {
         Pair<List<FastRating>> updateValues = this.update.selectUpdate(uidx, iidx, this.selection);
         List<FastRating> recValues = updateValues.v1();
@@ -358,10 +371,12 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             recommender.fastUpdate(value.uidx(), value.iidx(), value.value());
             selection.update(value.uidx(), value.iidx(), value.value());
         }
+
+        return true;
     }
 
     @Override
-    public void fastUpdateRec(FastRecommendation rec)
+    public boolean fastUpdateRec(FastRecommendation rec)
     {
         Tuple2<List<FastRating>, FastRecommendation> updateValues = this.update.selectUpdate(rec, this.selection);
         List<FastRating> recValues = updateValues.v1();
@@ -370,6 +385,8 @@ public class GenericRecommendationLoop<U,I> implements FastRecommendationLoop<U,
             recommender.fastUpdate(value.uidx(), value.iidx(), value.value());
             selection.update(value.uidx(), value.iidx(), value.value());
         }
+
+        return true;
     }
 
     @Override

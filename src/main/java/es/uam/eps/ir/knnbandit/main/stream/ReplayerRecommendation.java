@@ -12,12 +12,9 @@ package es.uam.eps.ir.knnbandit.main.stream;
 import es.uam.eps.ir.knnbandit.data.datasets.Dataset;
 import es.uam.eps.ir.knnbandit.data.datasets.ReplayerStreamDataset;
 import es.uam.eps.ir.knnbandit.data.datasets.StreamDataset;
+import es.uam.eps.ir.knnbandit.metrics.*;
 import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
 import es.uam.eps.ir.knnbandit.main.Recommendation;
-import es.uam.eps.ir.knnbandit.metrics.ClickthroughRate;
-import es.uam.eps.ir.knnbandit.metrics.CumulativeCounter;
-import es.uam.eps.ir.knnbandit.metrics.CumulativeGini;
-import es.uam.eps.ir.knnbandit.metrics.CumulativeMetric;
 import es.uam.eps.ir.knnbandit.recommendation.InteractiveRecommenderSupplier;
 import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.recommendation.loop.ReplayerRecommendationLoop;
@@ -101,6 +98,7 @@ public class ReplayerRecommendation<U,I> extends Recommendation<U,I>
         metrics.put("ctr", ClickthroughRate::new);
         metrics.put("gini", CumulativeGini::new);
         metrics.put("counter", CumulativeCounter::new);
+        metrics.put("counter-pos", CumulativeHits::new);
     }
 
     @Override

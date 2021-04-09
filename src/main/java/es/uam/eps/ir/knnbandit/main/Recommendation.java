@@ -168,6 +168,38 @@ public abstract class Recommendation<U,I>
                     }
                 }
 
+                if(rec.isEnsemble())
+                {
+                    String ensembleFile = outputFolder + name + "_" + i + "-ensembledata.txt";
+                    Map<String, List<Long>> list = ((EnsembleExecutor<U,I>) executor).getEnsembleUsage();
+                    try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(ensembleFile))))
+                    {
+                        // Header:
+                        List<String> algs = new ArrayList<>(list.keySet());
+                        bw.write("numIter");
+                        for(String alg : algs)
+                        {
+                            bw.write("\t"+alg);
+                        }
+                        bw.write("\n");
+
+                        int size = list.get(algs.get(0)).size();
+                        for(int j = 0; j < size; ++j)
+                        {
+                            bw.write(""+interval*(j+1));
+                            for(String alg : algs)
+                            {
+                                bw.write("\t" + list.get(alg).get(j));
+                            }
+                            bw.write("\n");
+                        }
+                    }
+                    catch(IOException ioe)
+                    {
+                        System.err.println("ERROR: Something failed while trying to read the ensemble file");
+                    }
+                }
+
                 bbb = System.nanoTime();
                 System.out.println("Algorithm " + name + " (" + i + ") " + " has finished (" + (bbb - aaa) / 1000000.0 + " ms.)");
             }

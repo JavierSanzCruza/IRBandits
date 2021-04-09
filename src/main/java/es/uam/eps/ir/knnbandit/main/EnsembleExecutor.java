@@ -11,7 +11,7 @@ package es.uam.eps.ir.knnbandit.main;
 
 import es.uam.eps.ir.knnbandit.io.EnsembleReader;
 import es.uam.eps.ir.knnbandit.io.EnsembleWriter;
-import es.uam.eps.ir.knnbandit.io.Writer;
+import es.uam.eps.ir.knnbandit.recommendation.ensembles.Ensemble;
 import es.uam.eps.ir.knnbandit.recommendation.ensembles.FastEnsemble;
 import es.uam.eps.ir.knnbandit.recommendation.loop.FastRecommendationLoop;
 import es.uam.eps.ir.knnbandit.selector.io.IOSelector;
@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import org.jooq.lambda.tuple.Tuple2;
 import org.jooq.lambda.tuple.Tuple3;
 import org.jooq.lambda.tuple.Tuple4;
 import org.ranksys.core.util.tuples.Tuple2id;
@@ -338,8 +339,11 @@ public class EnsembleExecutor<U,I> implements Executor<U,I>
      * @return a map containing the values of the metrics in certain time points.
      * @throws IOException if something fails while writing.
      */
-    private int updateWithPrevious(FastRecommendationLoop<U, I> loop, List<Tuple4<Integer,Integer,Long, String>> recovered, int interval, Writer writer) throws IOException
+    private int updateWithPrevious(FastRecommendationLoop<U, I> loop, List<Tuple4<Integer,Integer,Long, String>> recovered, int interval, EnsembleWriter writer) throws IOException
     {
+        Ensemble<U,I> ensemble = (Ensemble<U,I>) loop.getRecommender();
+        List<String> algs = ensemble.getAlgorithms();
+
         for(Tuple4<Integer,Integer,Long, String> triplet : recovered)
         {
             int uidx = triplet.v1();
@@ -347,13 +351,17 @@ public class EnsembleExecutor<U,I> implements Executor<U,I>
             long time = triplet.v3();
             String algorithm = triplet.v4();
 
-            loop.fastUpdateNotRec(uidx, iidx);
+            int alg = algs.indexOf(algorithm);
+            ensemble.setCurrentAlgorithm(alg);
+            boolean valid = loop.fastUpdateNotRec(uidx, iidx);
             loop.increaseIteration();
             int iter = loop.getCurrentIter();
-            ((Object2LongOpenHashMap<String>) this.currentCounter).addTo(algorithm, 1L);
+
+            if(valid)
+                ((Object2LongOpenHashMap<String>) this.currentCounter).addTo(algorithm, 1L);
 
             Map<String, Double> metricVals = loop.getMetricValues();
-            writer.writeLine(iter, uidx, iidx, time);
+            writer.writeEnsembleLine(iter, uidx, iidx, time, algorithm);
 
             if(iter % interval == 0)
             {
@@ -375,7 +383,7 @@ public class EnsembleExecutor<U,I> implements Executor<U,I>
         {
             for(Tuple4<Integer, Integer, Long, String> tuple : recovered)
             {
-                ensemble.setCurrentAlgorithm(this.alg2index.get(tuple.v3));
+                ensemble.setCurrentAlgorithm(this.alg2index.get(tuple.v4));
                 loop.fastUpdateRec(tuple.v1, tuple.v2);
             }
         }
@@ -403,7 +411,7 @@ public class EnsembleExecutor<U,I> implements Executor<U,I>
             if(!ranking)
             {
                 long aa = System.currentTimeMillis();
-                Pair<Integer> rating = loop.fastNextIteration();
+                Tuple3<Integer, Integer, Boolean> rating = loop.fastNextIteration();
                 long bb = System.currentTimeMillis();
 
                 if (rating == null)
@@ -411,13 +419,17 @@ public class EnsembleExecutor<U,I> implements Executor<U,I>
 
                 int uidx = rating.v1();
                 int iidx = rating.v2();
+                boolean valid = rating.v3();
                 time = bb - aa;
                 numIter = loop.getCurrentIter();
                 metrics = loop.getMetricValues();
                 int currentAlg = ensemble.getCurrentAlgorithm();
                 String algName = ensemble.getAlgorithmName(currentAlg);
-                ((Object2LongOpenHashMap<String>) currentCounter).addTo(algName, 1);
 
+                if(valid)
+                {
+                    ((Object2LongOpenHashMap<String>) currentCounter).addTo(algName, 1);
+                }
                 writer.writeEnsembleLine(numIter, uidx, iidx, time, algName);
             }
             else

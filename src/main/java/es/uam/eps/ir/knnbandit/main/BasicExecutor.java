@@ -347,7 +347,7 @@ public class BasicExecutor<U,I> implements Executor<U,I>
             if(!ranking)
             {
                 long aa = System.currentTimeMillis();
-                Pair<Integer> rating = loop.fastNextIteration();
+                Tuple3<Integer, Integer, Boolean> rating = loop.fastNextIteration();
                 long bb = System.currentTimeMillis();
 
                 if (rating == null)

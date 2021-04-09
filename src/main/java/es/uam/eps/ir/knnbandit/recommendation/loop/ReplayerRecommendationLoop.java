@@ -51,7 +51,7 @@ public class ReplayerRecommendationLoop<U,I> extends GenericRecommendationLoop<U
     }
 
     @Override
-    public void fastUpdate(int uidx, int iidx)
+    public boolean fastUpdate(int uidx, int iidx)
     {
         Pair<List<FastRating>> updateValues = this.update.selectUpdate(uidx, iidx, this.selection);
         // First, update the recommender:
@@ -72,6 +72,19 @@ public class ReplayerRecommendationLoop<U,I> extends GenericRecommendationLoop<U
             metrics.forEach((name, metric) -> metric.update(value.uidx(), value.iidx(),value.value()));
             endCond.update(value.uidx(), value.iidx(),value.value());
         }
-        numIter++;
+
+        return !recValues.isEmpty();
+    }
+
+    @Override
+    public boolean fastUpdateNotRec(int uidx, int iidx)
+    {
+        return this.fastUpdate(uidx, iidx);
+    }
+
+    @Override
+    public boolean fastUpdateRec(int uidx, int iidx)
+    {
+        return true;
     }
 }
