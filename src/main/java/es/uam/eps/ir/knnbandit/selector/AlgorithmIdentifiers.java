@@ -48,6 +48,7 @@ public class AlgorithmIdentifiers
     public static final String AVGUSERCOS = "avg-user-cosine";
     public static final String MAXUSERCOS = "max-user-cosine";
     public static final String ITEMCENTR = "item-centroid-cosine";
+    public static final String UNION = "union";
 
     public static final String RANKINGCOMB = "ranking-combiner";
     public static final String BANDITENSEMBLE = "bandit-ensemble";

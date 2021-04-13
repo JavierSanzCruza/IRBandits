@@ -187,10 +187,13 @@ public class ItemCentroidDistance<U,I> extends AbstractInteractiveRecommender<U,
 
             for (int item : availability)
             {
-                double value = itemScores.getOrDefault(item, itemScores.defaultReturnValue());
+                double itemNorm = Math.sqrt(this.itemNorm.getOrDefault(item, 0.0));
                 int size = retrievedData.numUsers(item);
+                double value = this.itemScores.getOrDefault(item, 0.0);
                 if(size >= 1)
-                    value = 1.0 - value/(this.itemNorm.get(item)*(size + 1.0));
+                {
+                    value = 1.0 - value/(itemNorm*size);
+                }
 
                 if (value > val)
                 {
@@ -239,11 +242,13 @@ public class ItemCentroidDistance<U,I> extends AbstractInteractiveRecommender<U,
 
             for (int iidx : availability)
             {
-
-                double value = itemScores.getOrDefault(iidx, itemScores.defaultReturnValue());
+                double itemNorm = Math.sqrt(this.itemNorm.getOrDefault(iidx, 0.0));
                 int size = retrievedData.numUsers(iidx);
+                double value = this.itemScores.getOrDefault(iidx, 0.0);
                 if(size >= 1)
-                    value = 1.0 - value/(this.itemNorm.get(iidx)*(size + 1.0));
+                {
+                    value = 1.0 - value/(itemNorm*size);
+                }
 
                 if(queue.size() < num)
                 {
@@ -286,82 +291,128 @@ public class ItemCentroidDistance<U,I> extends AbstractInteractiveRecommender<U,
             item2userSimilarity.put(iidx, new Int2DoubleOpenHashMap());
         }
 
-        double oldVal = this.retrievedData.getPreference(uidx, iidx).orElse(new IdxPref(iidx, 0.0)).v2();
+        // Step 1: obtain the data to update the user vector and norm:
+        double rui = this.retrievedData.getPreference(uidx, iidx).orElse(new IdxPref(iidx, 0.0)).v2;
         double userNorm = this.userNorm.getOrDefault(uidx, 0.0);
-        double incrUNorm = 2*oldVal*value + value*value;
+        double origSimIU = this.item2userSimilarity.get(iidx).getOrDefault(uidx, 0.0);
+        double squareValue = value*value;
+        double incrUNorm = 2*rui*value + squareValue;
 
-        // We run over the different items rated by uidx in the past.
+        // Now, we run over the different items that user uidx has rated in the past:
         this.retrievedData.getUidxPreferences(uidx).forEach(j ->
         {
             int jidx = j.v1;
             double ruj = j.v2;
 
-            // Step 1: we run over the users who have rated both i and j (except for uidx).
+            double ijIncr = ruj*value;
+
+            // Step 2: we run over the users who have rated both i and j (except for uidx).
             this.retrievedData.getIidxPreferences(jidx).filter(pref -> set.contains(pref.v1)).forEach(v ->
             {
                 int vidx = v.v1;
                 double rvj = j.v2;
+                double rvi = this.retrievedData.getPreference(vidx, iidx).orElse(new IdxPref(iidx, 0.0)).v2;
 
-                // We have to update the dot product values between iidx, jidx and vidx:
-                // For this, we consider that the i_j and j_i indexes are modified:
-                // the new i_j = i_j + r_u(j)
-                // the new j_i = j_i + value
+                // First, we do have to update the item vectors for i and j
+                // the new i_j = i_j + r_u(j) * value
+                // the new j_i = j_i + r_u(j) * value
+                // We update the similarity between v and i, and the similarity between v and j:
+                double simIV = item2userSimilarity.get(iidx).getOrDefault(vidx, 0.0) + rvj*ijIncr;
+                double simJV = item2userSimilarity.get(jidx).getOrDefault(vidx, 0.0) + rvi*ijIncr;
 
-                // so, the dot product between i and the user v is increased by r_u(j)*r_v(j):
-                double dotProdI = ruj*rvj;
-                // and, the dot product between j and user v is increased by r_v(i)*value:
-                double dotProdJ = this.retrievedData.getPreference(vidx, iidx).orElse(new IdxPref(iidx, 0.0)).v2 * value;
+                item2userSimilarity.get(iidx).put(vidx, simIV);
+                item2userSimilarity.get(jidx).put(vidx, simJV);
 
-                // Now that we have this increment, we can then update
-                // a) the dot product between iidx,jidx and vidx:
-                double simIV = item2userSimilarity.get(iidx).getOrDefault(vidx, 0.0);
-                double simJV = item2userSimilarity.get(jidx).get(vidx);
+                // Update the scores for both i and j items
+                double vMod = this.userNorm.get(vidx);
+                double jScore = this.itemScores.get(jidx);
+                jScore += rvi*ijIncr/vMod;
+                this.itemScores.put(jidx, jScore);
 
-                item2userSimilarity.get(iidx).put(vidx, simIV + dotProdI);
-                item2userSimilarity.get(jidx).put(vidx, simJV + dotProdJ);
-
-                // b) the item scores: in this case, as the norm of vidx is not modified, it is enough to sum up the
-                // increment in the dot product divided by the norm of the user.
-                double vidxNorm = this.userNorm.get(vidx);
-                double scoreI = this.itemScores.getOrDefault(iidx, 0.0);
-                double scoreJ = this.itemScores.get(jidx);
-
-                itemScores.put(iidx, scoreI + dotProdI/vidxNorm);
-                itemScores.put(jidx, scoreJ + dotProdJ/vidxNorm);
+                double iScore = this.itemScores.get(iidx);
+                iScore += rvj*ijIncr/vMod;
+                this.itemScores.put(iidx, iScore);
             });
 
-            // Step 2: Now, we update the distance between jidx and uidx:
-            double ji = this.itemVectors.get(jidx).getOrDefault(iidx, 0.0);
-            double dotProdJ = value*value + ji*value + oldVal*value;
-            double distJU = this.item2userSimilarity.get(jidx).get(uidx);
+            // Next step: update the scores for the j item:
 
-            // Update the similarity:
-            item2userSimilarity.get(jidx).put(uidx, distJU + dotProdJ);
-            itemScores.put(jidx, itemScores.get(jidx) - distJU/userNorm + (distJU + dotProdJ)/(userNorm + incrUNorm));
-            itemNorm.put(jidx, itemNorm.get(jidx) + 2.0*ji*value + value*value);
-            itemVectors.get(jidx).put(iidx, ji + value);
+            // Step 3: Update the similarity between vectors u and j:
+            double ji = this.itemVectors.getOrDefault(jidx, new Int2DoubleOpenHashMap()).getOrDefault(iidx, 0.0);
+            double simJU = item2userSimilarity.get(jidx).getOrDefault(uidx, 0.0);
 
-            // Step 3: Now, we update the vector and norm
+            double jScore = this.itemScores.get(jidx);
+            if(userNorm != 0.0)
+            {
+                jScore -= simJU/Math.sqrt(userNorm);
+            }
+
+            simJU += rui*ijIncr + ruj*squareValue + ji*value;
+            jScore += simJU/Math.sqrt(userNorm + incrUNorm);
+            item2userSimilarity.get(jidx).put(uidx, simJU);
+            this.itemScores.put(jidx, jScore);
+
+            // Step 4: Update the similarity between vectors u and i:
+            double simIU = item2userSimilarity.get(iidx).getOrDefault(uidx, 0.0) + ruj*ijIncr;
+            item2userSimilarity.get(iidx).put(uidx, simIU);
+
+            // Step 5: update the module and vector for item j:
+            double modJ = this.itemNorm.getOrDefault(jidx, 0.0);
+            modJ += 2*ji*ijIncr + ijIncr*ijIncr;
+            ji += ruj*value;
+            this.itemVectors.get(jidx).put(iidx, ji);
+            this.itemNorm.put(jidx, modJ);
+
+            // Step 6: update the module and vector for item i:
+            double modI = this.itemNorm.getOrDefault(iidx, 0.0);
             double ij = this.itemVectors.get(iidx).getOrDefault(jidx, 0.0);
-            double dotProdI = ruj*ruj;
-            double distIU = this.item2userSimilarity.get(iidx).getOrDefault(uidx, 0.0);
-            item2userSimilarity.get(iidx).put(uidx, distIU + dotProdI);
-            itemScores.put(iidx, itemScores.getOrDefault(iidx, 0.0) - distIU/userNorm + (distIU + dotProdI)/(userNorm + incrUNorm));
-            itemNorm.put(iidx, itemNorm.getOrDefault(iidx, 0.0) + 2.0*ij*ruj + ruj*ruj);
-            itemVectors.get(iidx).put(jidx, ij + ruj);
+            modI += 2*ji*ijIncr + ijIncr*ijIncr;
+            ij += ijIncr;
+            this.itemVectors.get(iidx).put(jidx, ij);
+            this.itemNorm.put(iidx, modI);
         });
 
-        // Finally, we update the i_i value:
-        double dist = this.item2userSimilarity.get(iidx).getOrDefault(uidx, 0.0);
+        // Step 7: update the similarity between u and i
         double ii = this.itemVectors.get(iidx).getOrDefault(iidx, 0.0);
-        double dotProd = value*value + ii*value+ value*oldVal;
-        item2userSimilarity.get(iidx).put(uidx, dist + dotProd);
-        if(userNorm > 0.0)
-            itemScores.put(iidx, itemScores.getOrDefault(iidx, 0.0) - dist/userNorm + (dist + dotProd)/(userNorm + incrUNorm));
-        else // in this case, dist == 0 by default..
-            itemScores.put(iidx, itemScores.getOrDefault(iidx, 0.0) + dotProd/incrUNorm);
-        itemNorm.put(iidx, itemNorm.getOrDefault(iidx,0.0) + 2.0*ii*value + value*value);
-        itemVectors.get(iidx).put(iidx, ii + value );
+        double iiIncr = 2*rui*value + squareValue;
+
+        double simIU = this.item2userSimilarity.get(iidx).getOrDefault(uidx, 0.0) + ii*value + 2*rui*rui*value + 3*rui*squareValue + value*squareValue;
+        this.item2userSimilarity.get(iidx).put(uidx, simIU);
+
+        // Step 8: update the norm for item i:
+        double modI = this.itemNorm.getOrDefault(iidx, 0.0);
+        modI += 2*ii*iiIncr + iiIncr*iiIncr;
+        this.itemNorm.put(iidx, modI);
+
+        ii += iiIncr;
+        this.itemVectors.get(iidx).put(iidx, ii);
+
+        // Step 9: finish updating the similarities between i and the rest of items that scored him:
+        set.forEach(vidx ->
+        {
+            double iScore = this.itemScores.getOrDefault(iidx, 0.0);
+            double vNorm = this.userNorm.get(vidx);
+
+
+            double rvi = this.retrievedData.getPreference(vidx, iidx).orElse(new IdxPref(iidx, 0.0)).v2;
+            double simIV = this.item2userSimilarity.get(iidx).getOrDefault(vidx, 0.0);
+            simIV += rvi*iiIncr;
+            iScore += rvi*iiIncr/vNorm;
+
+            this.item2userSimilarity.get(iidx).put(vidx.intValue(), simIV);
+            this.itemScores.put(iidx, iScore);
+        });
+
+        double iScore = this.itemScores.getOrDefault(iidx, 0.0);
+        if(userNorm != 0.0)
+        {
+            iScore -= origSimIU/Math.sqrt(userNorm);
+        }
+        iScore += this.item2userSimilarity.get(iidx).get(uidx)/Math.sqrt(userNorm+incrUNorm);
+        this.itemScores.put(iidx, iScore);
+
+        // Step 10: finally, update the user vector:
+        this.userNorm.put(uidx, userNorm + incrUNorm);
+        retrievedData.updateRating(uidx, iidx, value);
 
         // And the norm of the user.
         this.userNorm.put(uidx, userNorm + incrUNorm);

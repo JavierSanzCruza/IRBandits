@@ -154,6 +154,9 @@ public class AlgorithmSelector<U, I>
             case AlgorithmIdentifiers.ITEMCENTR:
                 conf = new ItemCentroidDistanceConfigurator<>(this.relevanceChecker);
                 break;
+            case AlgorithmIdentifiers.UNION:
+                conf = new UnionConfigurator<>(this.relevanceChecker);
+                break;
 
             case AlgorithmIdentifiers.DYNAMICENSEMBLE:
                 conf = new DynamicEnsembleConfigurator<>(this.relevanceChecker);
